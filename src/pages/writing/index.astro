@@ -1,0 +1,41 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('blog'))
+  .filter((p) => !p.data.draft)
+  .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+
+const fmt = (d: Date) =>
+  d.toLocaleDateString('en-GB', { year: 'numeric', month: 'short' });
+---
+
+<Base title="Writing — Reza Bina" description="Essays on privacy, on-device software, and building independent iOS apps.">
+  <header class="hero">
+    <div class="wrap">
+      <p class="eyebrow reveal">Writing</p>
+      <h1 class="reveal">Notes on private software.</h1>
+      <p class="lede reveal">
+        On building apps that respect the people who use them — privacy,
+        on-device processing, and the craft of shipping alone.
+      </p>
+    </div>
+  </header>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="posts reveal">
+        {
+          posts.map((post) => (
+            <a class="post" href={`/writing/${post.id}`}>
+              <span class="post-title">{post.data.title}</span>
+              <time datetime={post.data.pubDate.toISOString()}>
+                {fmt(post.data.pubDate)}
+              </time>
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+</Base>

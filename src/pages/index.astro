@@ -1,0 +1,135 @@
+---
+import Base from '../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('blog'))
+  .filter((p) => !p.data.draft)
+  .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime())
+  .slice(0, 4);
+
+const fmt = (d: Date) =>
+  d.toLocaleDateString('en-GB', { year: 'numeric', month: 'short' });
+---
+
+<Base>
+  <header class="hero">
+    <div class="wrap">
+      <span class="eyebrow reveal"><span class="pip"></span> Independent iOS developer · Berlin</span>
+      <h1 class="reveal">
+        Software that keeps your data
+        <span class="redactor"><span class="redactor-word">private</span></span>.
+      </h1>
+      <p class="lede reveal">
+        I design and build small, fast, native apps for iPhone that run
+        entirely on your device. No servers, no accounts, no tracking — your
+        data never leaves your phone, because it never has to.
+      </p>
+      <div class="hero-cta reveal">
+        <a class="btn primary magnetic" href="#apps">See the apps</a>
+        <a class="btn ghost magnetic" href="/writing">Read the writing</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Signature interaction: tap-to-redact -->
+  <section class="section">
+    <div class="wrap">
+      <div class="demo-card reveal">
+        <p class="demo-kicker">Tap any highlighted detail ↓</p>
+        <p class="demo-line">
+          Send the contract to
+          <span class="token hint">Anna Keller</span>, IBAN
+          <span class="token">DE89 3704 0044 0532 0130 00</span>, at
+          <span class="token">anna@example.com</span>.
+        </p>
+        <div class="demo-foot">
+          <span class="demo-hint">This is what Veil does — every keystroke stays on your iPhone.</span>
+          <button class="demo-reset" type="button">Reset</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Apps + values, bento -->
+  <section id="apps" class="section">
+    <div class="wrap">
+      <p class="section-label reveal">Apps</p>
+      <div class="bento">
+        <a
+          class="tile app reveal"
+          href="https://apps.apple.com/de/app/zumnum/id6748617262?l=en-GB"
+          target="_blank"
+          rel="noopener"
+        >
+          <img class="icon-img" src="/icons/zumnum.png" width="56" height="56" alt="ZumNum app icon" />
+          <h3>ZumNum <span class="tag live">On the App Store</span></h3>
+          <p>
+            Learn German numbers by ear. Hear a number, type what you heard, get
+            instant feedback. Fully offline, no ads.
+          </p>
+        </a>
+
+        <a class="tile app reveal" href="/writing">
+          <img class="icon-img" src="/icons/veil.png" width="56" height="56" alt="Veil app icon" />
+          <h3>Veil <span class="tag soon">Coming soon</span></h3>
+          <p>
+            Redact sensitive details from your documents — names, numbers, faces
+            — entirely on your iPhone. Nothing is uploaded; nothing leaves your
+            device.
+          </p>
+        </a>
+
+        <div class="tile stat reveal">
+          <div class="stat-num">100%</div>
+          <div class="stat-label">On-device processing</div>
+        </div>
+        <div class="tile stat reveal">
+          <div class="stat-num">Zero</div>
+          <div class="stat-label">Accounts, servers, trackers</div>
+        </div>
+        <div class="tile stat reveal">
+          <div class="stat-num">Offline</div>
+          <div class="stat-label">Works with no connection</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Writing -->
+  <section id="writing" class="section">
+    <div class="wrap">
+      <p class="section-label reveal">Writing</p>
+      <div class="posts reveal">
+        {
+          posts.map((post) => (
+            <a class="post" href={`/writing/${post.id}`}>
+              <span class="post-title">{post.data.title}</span>
+              <time datetime={post.data.pubDate.toISOString()}>
+                {fmt(post.data.pubDate)}
+              </time>
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section id="about" class="section about">
+    <div class="wrap">
+      <p class="section-label reveal">About</p>
+      <p class="reveal">
+        I'm an iOS engineer in Berlin building a small portfolio of
+        privacy-first, on-device apps for the Apple ecosystem. I believe the
+        best software is quiet, fast, and trustworthy — and that respecting
+        people's data isn't a feature, it's the default.
+      </p>
+      <div class="contact reveal">
+        <a href="mailto:rezabina.dev@gmail.com">Email</a>
+        <a href="https://github.com/rezabina86" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://www.linkedin.com/in/reza-bina/" target="_blank" rel="noopener">LinkedIn</a>
+        <a href="https://x.com/rezabina86" target="_blank" rel="noopener">X</a>
+      </div>
+    </div>
+  </section>
+</Base>

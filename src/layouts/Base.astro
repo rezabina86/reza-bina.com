@@ -1,0 +1,147 @@
+---
+import '@fontsource-variable/space-grotesk';
+import '@fontsource-variable/inter';
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'Reza Bina — Private, on-device apps for iPhone',
+  description = 'iOS engineer in Berlin building private, on-device apps that run entirely on your device. Maker of ZumNum and Veil.',
+} = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" content="#07070b" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="generator" content={Astro.generator} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary" />
+  </head>
+  <body>
+    <div class="aurora" aria-hidden="true"></div>
+    <div class="grain" aria-hidden="true"></div>
+
+    <nav class="nav">
+      <div class="wrap">
+        <a class="brand" href="/"><span class="pip"></span> Reza Bina</a>
+        <div class="nav-links">
+          <a href="/#apps">Apps</a>
+          <a href="/writing">Writing</a>
+          <a href="/#about">About</a>
+        </div>
+      </div>
+    </nav>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer class="footer">
+      <div class="wrap">
+        <span>© {new Date().getFullYear()} Reza Bina · Berlin</span>
+        <span>Built &amp; hosted independently. No trackers.</span>
+      </div>
+    </footer>
+
+    <script>
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      // 1. Reveal on scroll
+      const io = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((e) => {
+            if (e.isIntersecting) {
+              e.target.classList.add('in');
+              io.unobserve(e.target);
+            }
+          });
+        },
+        { threshold: 0.12 }
+      );
+      document.querySelectorAll('.reveal').forEach((el, i) => {
+        (el as HTMLElement).style.transitionDelay = Math.min(i, 7) * 55 + 'ms';
+        io.observe(el);
+      });
+
+      // 2. Spotlight on bento tiles
+      document.querySelectorAll<HTMLElement>('.tile').forEach((tile) => {
+        tile.addEventListener('pointermove', (ev) => {
+          const r = tile.getBoundingClientRect();
+          tile.style.setProperty('--mx', ev.clientX - r.left + 'px');
+          tile.style.setProperty('--my', ev.clientY - r.top + 'px');
+        });
+      });
+
+      // 3. Magnetic buttons
+      if (!reduced) {
+        document.querySelectorAll<HTMLElement>('.magnetic').forEach((btn) => {
+          btn.addEventListener('pointermove', (ev) => {
+            const r = btn.getBoundingClientRect();
+            const x = ev.clientX - r.left - r.width / 2;
+            const y = ev.clientY - r.top - r.height / 2;
+            btn.style.transform = `translate(${x * 0.18}px, ${y * 0.28}px)`;
+          });
+          btn.addEventListener('pointerleave', () => {
+            btn.style.transform = '';
+          });
+        });
+      }
+
+      // 4. Kinetic redaction headline
+      const redactor = document.querySelector<HTMLElement>('.redactor');
+      const word = redactor?.querySelector<HTMLElement>('.redactor-word');
+      if (redactor && word) {
+        const words = ['private', 'offline', 'yours', 'on-device'];
+        let i = 0;
+        if (!reduced) {
+          setInterval(() => {
+            redactor.classList.remove('exit');
+            redactor.classList.add('covering'); // bar wipes in from left
+            setTimeout(() => {
+              i = (i + 1) % words.length;
+              word.textContent = words[i];
+              redactor.classList.add('exit'); // wipe out to the right
+              redactor.classList.remove('covering');
+            }, 300);
+          }, 2800);
+        } else {
+          setInterval(() => {
+            i = (i + 1) % words.length;
+            word.textContent = words[i];
+          }, 3000);
+        }
+      }
+
+      // 5. Tap-to-redact demo
+      document.querySelectorAll<HTMLElement>('.token').forEach((t) => {
+        t.addEventListener('click', () => {
+          t.classList.toggle('redacted');
+          t.classList.remove('hint');
+        });
+      });
+      const resetBtn = document.querySelector<HTMLElement>('.demo-reset');
+      resetBtn?.addEventListener('click', () => {
+        document
+          .querySelectorAll<HTMLElement>('.token')
+          .forEach((t) => t.classList.remove('redacted'));
+      });
+    </script>
+  </body>
+</html>

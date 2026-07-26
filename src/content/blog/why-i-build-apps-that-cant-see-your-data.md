@@ -1,0 +1,36 @@
+---
+title: "Why I build apps that can't see your data"
+description: "The case for on-device software — and why 'we never see your data' should be architectural, not a privacy-policy promise."
+pubDate: 2026-07-26
+draft: false
+---
+
+Most apps ask you to trust them. On-device apps don't have to.
+
+There's a meaningful difference between an app that *promises* not to misuse your data and an app that is *built so it never has your data in the first place*. The first is a policy — a paragraph in a document you didn't read, enforced by a company you can't audit. The second is an architecture. One can change with a quarterly business review. The other can't, because the capability was never there.
+
+I build the second kind.
+
+## What "on-device" actually buys you
+
+When processing happens on your iPhone, three things become true at once, and none of them depend on my good intentions:
+
+Your data never travels. There's no server to breach, no bucket to misconfigure, no third party in the request path. The threat model shrinks to your own device.
+
+There's nothing to monetize on the back end. I can't sell what I never receive. That removes the incentive that quietly corrupts so much "free" software.
+
+The app keeps working offline, on a plane, in a dead zone, forever. It doesn't stop functioning because a service was sunset or a subscription lapsed on my side.
+
+This isn't a marketing angle bolted onto a normal app. It's a constraint I design *around* from the first line of code — and constraints, the good ones, make products better.
+
+## The cost, honestly
+
+On-device isn't free. Some things are genuinely harder without a server: heavy models have to fit in a few hundred megabytes and run on a phone's power budget, sync across devices takes real thought, and I lose the analytics that would tell me exactly how people use what I ship. I feel that last one most. I trade a clear view of my users for their privacy, and I think that's the right trade — but it *is* a trade, and pretending otherwise would be dishonest.
+
+## Why this matters more now, not less
+
+The industry is racing to put your data into ever-larger models running in someone else's data center. That makes the on-device path look old-fashioned. I'd argue it makes it rarer, and rare is valuable. As more of daily life runs through software that watches, the small category of software that *can't* watch becomes worth paying for.
+
+That's the portfolio I'm building — a few apps that do one thing well, keep your data on your device, and are still yours when the servers go dark.
+
+*More soon.*
