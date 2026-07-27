@@ -4,7 +4,10 @@ import TableOfContents from '../../components/TableOfContents.astro';
 import { getCollection, render } from 'astro:content';
 
 export async function getStaticPaths() {
-  const posts = await getCollection('blog');
+  // Drafts are readable with `npm run dev` but never get a production URL.
+  // Filtering only the index would still publish a reachable page — `draft`
+  // has to mean unpublished, not merely unlisted.
+  const posts = await getCollection('blog', ({ data }) => import.meta.env.DEV || !data.draft);
   return posts.map((post) => ({
     params: { slug: post.id },
     props: { post },

@@ -15,28 +15,39 @@ const latest = posts[0];
 const fmt = (d: Date) =>
   d.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
 
-// Real code from ZumNum (ZumNum/Mastery/MasteryMath.swift) — the one place the
-// app decides how practice adapts to the player. Only the comment line breaks
-// and the signature wrapping differ from the file, to fit the tile's width.
-const snippet = `/// The one memory model: an EMA in [0, 1].
-/// Do not replace with all-time accuracy (stops
-/// adapting) or a sliding window (weight jumps
-/// at the window edge).
-enum MasteryMath {
-
-    // MARK: - Publics
-
-    /// \`nil\` current means "no data yet" and
-    /// reads as neutral — absence is the signal.
-    static func updatedScore(
-        _ current: Double?,
-        correct: Bool
-    ) -> Double {
-        let old = current ?? MasteryTuning.neutralScore
-        let observation = correct ? 1.0 : 0.0
-        return (1 - MasteryTuning.alpha) * old
-             + MasteryTuning.alpha * observation
+// Real code from Veil (PII Detector/Detectors/Fusion/PIIFusionReconciler.swift)
+// — where the on-device model's guesses are merged with checksum-grounded
+// recognizers. Adapted to the tile's width: dedented out of its enum, comments
+// re-wrapped, and the two closure parameters shortened (glinerResult → g,
+// additiveResult → a). The blog post quotes the unabbreviated version.
+const snippet = `/// A model is probabilistic; a checksum is
+/// exact — so the deterministic stream
+/// outranks GLiNER on overlap.
+static func reconcile(
+    gliner: [PIIDetectionResult],
+    authoritative: [PIIDetectionResult],
+    additive: [PIIDetectionResult]
+) -> [PIIDetectionResult] {
+    // 1. Authoritative is top — drop the
+    //    GLiNER spans it overlaps.
+    let glinerKept = gliner.filter { g in
+        !authoritative.contains {
+            $0.range.overlaps(g.range)
+        }
     }
+    // 2. Additive fills gaps only — it can
+    //    never clobber a GLiNER true positive.
+    let additiveKept = additive.filter { a in
+        !authoritative.contains {
+            $0.range.overlaps(a.range)
+        } && !glinerKept.contains {
+            $0.range.overlaps(a.range)
+        }
+    }
+    // 3. Collapse any residual overlaps.
+    return PIIOverlapResolver.deduped(
+        authoritative + glinerKept + additiveKept
+    )
 }`;
 ---
 
@@ -117,11 +128,11 @@ enum MasteryMath {
         <div class="card card--soft snippet-card col-5 reveal">
           <div class="snippet-head">
             <span class="dots" aria-hidden="true"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
-            <span class="file">MasteryMath.swift</span>
+            <span class="file">PIIFusionReconciler.swift</span>
           </div>
           <!-- wrap: the tile is narrow, and truncated code reads as sloppy. -->
           <Code code={snippet} lang="swift" theme="github-dark-default" wrap />
-          <p class="snippet-note">From ZumNum — how a round learns which numbers you keep missing.</p>
+          <p class="snippet-note">From Veil — a checksum-valid IBAN outranks whatever the model guessed.</p>
         </div>
 
         <!-- About -->

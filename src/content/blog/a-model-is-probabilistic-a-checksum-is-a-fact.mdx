@@ -1,0 +1,186 @@
+---
+title: "A model is probabilistic. A checksum is a fact."
+description: "How Veil finds personal data in a document and actually removes it — an on-device NER model, a stack of deterministic validators, and the unglamorous work of cleaning up what the model gets wrong."
+pubDate: 2026-07-27
+draft: true
+---
+
+I'm building an app called Veil. You point it at a document — a payslip, a tax letter, a contract — and it finds the personal details and removes them, so you can share the rest. All of it happens on the phone.
+
+The pitch is one sentence. The interesting part is that almost none of the difficulty is where you'd expect.
+
+## The naive version
+
+The obvious build is three steps: read the text, ask a model which parts are personal, cover those parts. Apple's Vision framework does the reading. An on-device NER model does the finding. Core Graphics does the covering.
+
+I built that. Then I ran it over four real documents — a German payslip, two invoices, a foreign payment order — and counted.
+
+Those documents contain somewhere between six and nine genuinely sensitive values each. The model returned 40, 24, 68 and 62 detections. Precision on my benchmark corpus was **53%**, recall **43%**.
+
+Recall is the number that matters for a privacy tool. Missing something is not a cosmetic failure; it's the whole failure. And 43% recall means the tool was quietly leaving more than half of it on the page.
+
+## What the model actually got wrong
+
+The errors weren't random, which turned out to be the good news. They came in classes:
+
+**It tagged the label instead of the value.** The document says `Tax ID: 12345678901`. The model returns a detection covering the words *Tax ID* — and misses the number. This is the most dangerous failure a privacy tool can have, because the UI looks like it's working. Something got detected. It's just the wrong something, and the actual identifier ships unredacted.
+
+**Every date became a date of birth.** Invoice dates, payment dates, the date in a filename.
+
+**Money became identity.** Amounts came back as passport numbers, SSNs, phone numbers, tax IDs. German amounts use `.` as a thousands separator and `,` for decimals, so a figure like `7.412,90` reads to an English-trained model as a long run of digits — which is exactly what an identifier looks like.
+
+**Postal codes became IP addresses.** A German postal code followed by a city name — five digits next to a word — came back as an IP address.
+
+**Real identifiers got the wrong label.** An IBAN — which has a checksum, which is *verifiable* — came back as a "reference number". A BIC came back as a person's name.
+
+Look at that last one for a second. The model was uncertain about a value that mathematics can settle. An IBAN either passes the ISO 7064 mod-97 check or it doesn't. A credit card number either satisfies Luhn or it doesn't. A German Steuer-ID has a check digit.
+
+The model was guessing at things that aren't guesses.
+
+## Making the two halves collaborate
+
+Veil already had a second detector: a "lite" engine built from ordinary deterministic recognizers, for people who don't want to download a 834 MB model. Regexes plus checksums. IBAN with mod-97, cards with Luhn, tax IDs with their check digits, emails and phones via `NSDataDetector`, and a label-driven recognizer that reads `Kundennummer: …` and takes what follows.
+
+Those two engines had been alternatives — you got one or the other. The fix was to stop treating them as a choice and start treating them as one pipeline where each does what it's good at.
+
+A model is good at fuzzy, unbounded, free-text categories. Only a model finds a person's name, an organisation, a street address, when they could be any string in any language.
+
+A checksum is good at being *right*. Not probably right. Right.
+
+So the deterministic recognizers became **authoritative**, and the model's output became a proposal to be checked:
+
+```swift
+/// A model is probabilistic; a checksum is exact —
+/// so the deterministic stream outranks GLiNER.
+static func reconcile(
+    gliner: [PIIDetectionResult],
+    authoritative: [PIIDetectionResult],
+    additive: [PIIDetectionResult]
+) -> [PIIDetectionResult] {
+    // 1. Authoritative is top — keep all; drop the
+    //    GLiNER spans it overlaps.
+    let glinerKept = gliner.filter { glinerResult in
+        !authoritative.contains {
+            $0.range.overlaps(glinerResult.range)
+        }
+    }
+    // 2. Additive fills gaps only — it can never
+    //    clobber a GLiNER true positive.
+    let additiveKept = additive.filter { additiveResult in
+        !authoritative.contains {
+            $0.range.overlaps(additiveResult.range)
+        } && !glinerKept.contains {
+            $0.range.overlaps(additiveResult.range)
+        }
+    }
+    // 3. Collapse any residual overlaps.
+    return PIIOverlapResolver.deduped(
+        authoritative + glinerKept + additiveKept
+    )
+}
+```
+
+That's the whole arbitration. A checksum-valid IBAN overrides whatever the model called it — which both re-labels the mis-tiered ones and rescues the ones the model missed entirely.
+
+### The tier that had to exist
+
+My first version made *every* deterministic recognizer authoritative. It was simpler and it was wrong.
+
+Precision went up. Recall went **down**, 43% to 40%.
+
+The label-driven and `NSDataDetector` recognizers are loose. On an invoice they were overriding correct model detections — a real name, a real street address — with their own worse reading of the same span. They were winning arguments they should have lost.
+
+Hence the split above. Checksum-exact results may override the model. Loose label-driven results are *additive*: they fill gaps and are never allowed to clobber a model hit. Two tiers, because "deterministic" and "trustworthy" turned out not to be the same word.
+
+## Cleaning up what the model gets wrong
+
+The reconciler decides who wins a conflict. It doesn't help when the model produces confident garbage that conflicts with nothing.
+
+An 8-page NDA produced **199 detections**. Almost all of it was noise: `customers`, `software`, `third party`, `and`, `its`. Capitalised boilerplate like `Party A`, `Receiving Party`, `Disclosing Party`. Pronouns — `you`, `your`, `us`.
+
+The instinct is to raise the confidence threshold. I want to be specific about why that doesn't work, because it's the first thing everyone suggests.
+
+**The model emits that boilerplate at high confidence.** `Disclosing Party` looks exactly like a proper noun — it's capitalised, it repeats, it sits where a name sits. There is no floor that separates it from signal. And raising the floor *does* reliably drop something: genuine moderate-confidence foreign names. For a tool whose failure mode is leaking a name, trading recall on unusual names for precision on boilerplate is precisely the wrong trade.
+
+The second instinct is document frequency — a term repeated twenty times is boilerplate. That one is worse. In the document that motivated this work, the most-repeated proper noun *was the owner's own name*. Frequency suppression would have specifically suppressed the single most important thing on the page.
+
+So the gates are structural. They test the *shape* of a span, not the model's opinion of it, and each one is chosen so it cannot remove a real value.
+
+The first is almost embarrassingly simple:
+
+```swift
+// Rule B1 — a name/org always carries a capital letter. A span with
+// none ("computer software", "third party", "and", "us") is a
+// common-noun/function-word phrase GLiNER mislabelled. Case-sensitive
+// on purpose: "us" is dropped while the acronym "US" survives.
+guard value.contains(where: { $0.isUppercase }) else { return nil }
+```
+
+The case-sensitivity is load-bearing, and it's why this lives in code rather than in a stop-word list. A case-insensitive list containing `us` would also kill `US` and `IT`. The test is "no uppercase letter *anywhere*", not "starts lowercase", so a mixed-case entity like `von Müller GmbH` survives on its later tokens.
+
+That plus a small set of structural role terms — matched with a trailing party designator stripped, so `Party A`, `Party B` and `Party 2` all collapse to `party` — took the NDA from **199 detections to 49**, with recall held.
+
+### Then I pointed it at a German form
+
+German capitalises every noun. `Geburtsname`, `Anschrift`, `Arbeitnehmer`, `Nein` — all capitalised, all sail straight through the rule I'd just written.
+
+This is the moment the approach either scales or doesn't. The tempting fix is a German stop-word list. But that doesn't generalise to the next language, and there's good evidence it doesn't even generalise within a language: a study on GLiNER-BioMed found dictionary post-processing raised dev-set F1 from 0.79 to 0.83 while *hurting* the blind test set, 0.79 down to 0.77. Curated lists overfit to the documents you happened to look at.
+
+So: more structure, no vocabulary.
+
+A single-token span immediately followed by a colon is a form **caption**, never the value. `Straße:`, `Geburtsname:`, `Ortsteil:`. It's language-agnostic — it's punctuation, not words. The single-token requirement is what makes it safe: a real multi-word address can't be mistaken for a caption, because it contains spaces.
+
+A number-shaped span containing `§` is a legal citation, and one shaped like a date is a date. Neither is ever an identifier.
+
+My favourite one doesn't delete anything. A `person` span whose last token ends in a German street suffix — `…straße`, `…strasse`, `…weg`, `…ufer`, `…platz` — gets **re-tiered to an address** rather than dropped. A hyphenated, capitalised street name is shaped exactly like a personal name, and the model reads it as one. It's still personal data; it's just filed wrong. Keep detecting, fix the label.
+
+That rule is recall-safe by construction: re-tiering never removes a detection, so the worst case is a cosmetically miscategorised rare surname, never a missed value. It's the reason the validator has to `compactMap` rather than merely filter.
+
+One gate needed a subtlety I didn't anticipate. Dropping date-shaped numbers from the model's output wasn't enough, because `NSDataDetector` *also* mis-reports some ISO dates as phone numbers — so a date I'd just removed from one stream came straight back through the other and filled the gap I'd made. The shape test had to be shared by both streams. Removing something from one half of a pipeline isn't removing it.
+
+## What it added up to
+
+On the benchmark corpus, against the same documents:
+
+| | Precision | Recall | F1 |
+|---|---|---|---|
+| Model alone | 53% | 43% | 49% |
+| + reconciler | 54% | 52% | — |
+| + validator | **65%** | **52%** | **56%** |
+
+Precision +12, recall +9. The validator is the interesting column: it cut false positives from 19 to 12 while leaving true positives untouched. It removes noise, not signal — which is what "recall-safe" is supposed to mean, stated as a number.
+
+These are my numbers on my corpus, and the corpus is small. The first version of it was synthetic and too clean, and it flattered the baseline by nine points before I rebuilt it from real documents. I mention that because a benchmark you wrote yourself will tell you what you want to hear unless you go out of your way to make it hostile.
+
+## Removing is not covering
+
+Detection is only half. The other half is a distinction most people never have to think about: the difference between covering something and removing it.
+
+Draw a black rectangle over text in a PDF and the text is still there. It's underneath. Any tool that reads the content stream gets it back. This is how organisations leak redacted documents — the rectangle is real, and it's decoration.
+
+Veil offers both, and says so plainly:
+
+- **Preserve formatting** keeps the vector content and draws overlays. Fonts and quality survive. Covered text may still be extractable — so this mode adds a disclaimer footer to the exported file.
+- **Secure** rasterises each affected page and burns the boxes into pixels. No text operators survive. It's irreversible, and it's the default.
+
+The engine underneath is deliberately ignorant. It takes normalised rectangles and knows nothing about OCR, models, or what a "detection" is. Anything that can produce a box can drive it.
+
+Two things I learned the hard way.
+
+**Metadata counts.** A PDF's info dictionary routinely carries the author and title, and an official letter's title often contains the recipient's name. The preview never shows it. So document attributes are stripped on every export, in both modes — and the "nothing was selected" path re-serialises the stripped copy rather than handing back the original bytes.
+
+**And the failure I think about most.** PDFKit *silently refuses* to mutate a permission-locked PDF. No error, no exception — the calls just don't do anything. Which meant that for encrypted documents, the export re-emitted the original file: unredacted, metadata intact. The code was correct. The API said nothing. The output was a document the user believed was safe.
+
+The fix is upstream — encrypted PDFs are normalised to a clean, mutable copy at import, so the exporter never sees a locked document. But the lesson generalises past PDFKit: in a privacy tool, an operation that quietly does nothing is worse than one that crashes. A crash is visible. That was silent, and it produced a file whose entire purpose was a promise it wasn't keeping.
+
+Related: if any page fails to render during an export, the whole export throws. It would be easy to skip the bad page and ship the rest. It would also mean handing someone a document with one page of unredacted personal data in it.
+
+## The part I keep coming back to
+
+There's a rule in this project that committed test fixtures contain no real personal data — the corpus is synthetic, structurally faithful, with checksum-valid fake IBANs and tax IDs so the validators are genuinely exercised. Real documents get inspected locally and never committed.
+
+It would have been much easier to paste in real payslips. They were right there; they were what I was testing against.
+
+But writing a tool that removes personal data from documents, and casually committing my own personal data to build it, is the same failure the app exists to prevent — just with better intentions. The standard has to apply to the thing that enforces the standard.
+
+Veil isn't on the App Store yet. When it is, everything above still runs entirely on the phone.
