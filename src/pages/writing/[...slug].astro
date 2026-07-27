@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import TableOfContents from '../../components/TableOfContents.astro';
 import { getCollection, render } from 'astro:content';
+import { readingMinutes } from '../../lib/readingTime';
 
 export async function getStaticPaths() {
   // Drafts are readable with `npm run dev` but never get a production URL.
@@ -20,9 +21,7 @@ const { Content, headings } = await render(post);
 const fmt = (d: Date) =>
   d.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
 
-// Reading time from the raw body (~200 wpm), rounded up to a whole minute.
-const words = post.body?.trim().split(/\s+/).length ?? 0;
-const readingMinutes = Math.max(1, Math.ceil(words / 200));
+const minutes = readingMinutes(post.body);
 ---
 
 <Base title={`${post.data.title} — Reza Bina`} description={post.data.description}>
@@ -33,7 +32,7 @@ const readingMinutes = Math.max(1, Math.ceil(words / 200));
       <p class="meta">
         <time datetime={post.data.pubDate.toISOString()}>{fmt(post.data.pubDate)}</time>
         <span class="meta__dot" aria-hidden="true">·</span>
-        <span>{readingMinutes} min read</span>
+        <span>{minutes} min read</span>
       </p>
 
       <div class="article__layout">

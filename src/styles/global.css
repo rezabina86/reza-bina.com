@@ -281,6 +281,7 @@ a.card:focus-visible, button.card:focus-visible { outline-offset: 4px; }
 .col-7 { grid-column: span 7; }
 .col-5 { grid-column: span 5; }
 .col-4 { grid-column: span 4; }
+.col-8 { grid-column: span 8; }
 
 /* --- Hero tile --- */
 .hero-card { justify-content: center; min-height: 340px; gap: 18px; }
@@ -323,22 +324,39 @@ a.card:focus-visible, button.card:focus-visible { outline-offset: 4px; }
 .link-quiet { color: var(--label-2); font-size: 14px; text-decoration: none; }
 .link-quiet:hover { color: var(--label); }
 
-/* --- Blog highlight tile --- */
+/* --- Writing tile: the two most recent posts --- */
 .eyebrow-sm { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--label-3); margin-bottom: 14px; }
-.blog-card h2 { font-size: clamp(20px, 2.4vw, 26px); letter-spacing: -0.02em; margin-bottom: 12px; }
-.blog-card .desc { color: var(--label-2); font-size: 15px; }
-.blog-card time { font-size: 13px; color: var(--label-3); }
-.blog-more { margin-top: auto; padding-top: 18px; }
+.card h2.eyebrow-sm { font-size: 12px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; color: var(--label-3); display: block; }
+.writing-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+.writing-head .eyebrow-sm { margin-bottom: 0; }
 
-/* --- Snippet tile (Shiki output lives inside) --- */
-.snippet-card { padding: 0; }
-.snippet-head { display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; border-bottom: 1px solid var(--separator); }
-.snippet-head .dots { display: flex; gap: 7px; }
-.snippet-head .dot { width: 11px; height: 11px; border-radius: 50%; background: var(--separator-hi); }
-.snippet-head .file { font-family: var(--font-mono); font-size: 12px; color: var(--label-3); }
-.snippet-card pre { margin: 0; padding: 18px 20px; background: transparent !important; font-size: 12.5px; line-height: 1.7; overflow-x: auto; }
-.snippet-card pre code { font-family: var(--font-mono); }
-.snippet-note { padding: 12px 20px; border-top: 1px solid var(--separator); font-size: 12.5px; color: var(--label-3); }
+.post-list { list-style: none; display: grid; gap: 0; margin-top: 4px; }
+.post-item { padding: 20px 0; border-top: 1px solid var(--separator); }
+.post-item:first-child { border-top: none; padding-top: 16px; }
+.post-item:last-child { padding-bottom: 0; }
+
+.post-item__link { text-decoration: none; display: inline-block; }
+.post-item__title {
+  font-size: clamp(18px, 1.9vw, 21px); font-weight: 600; letter-spacing: -0.015em;
+  line-height: 1.3; color: var(--label);
+  transition: color .2s var(--ease-ios);
+}
+.post-item__link:hover .post-item__title { color: var(--accent); }
+
+/* Clamp keeps every entry the same height however long the description is. */
+.post-item__desc {
+  margin-top: 7px; color: var(--label-2); font-size: 14.5px; line-height: 1.55;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
+  overflow: hidden;
+}
+.post-item__meta {
+  margin-top: 11px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+  font-size: 12.5px; color: var(--label-3);
+}
+.topic {
+  color: var(--label-2); border: 1px solid var(--separator); border-radius: 999px;
+  padding: 3px 9px; font-size: 11.5px; letter-spacing: 0.01em;
+}
 
 /* --- Contact tile --- */
 .contact { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
@@ -624,3 +642,11 @@ a.card:focus-visible, button.card:focus-visible { outline-offset: 4px; }
   box-shadow: 0 24px 50px -28px rgba(0, 0, 0, 0.85);
 }
 .shot__caption { margin-top: 12px; font-size: 13.5px; color: var(--label-2); line-height: 1.5; }
+
+/* About prose keeps a readable measure even in a wide tile. */
+#about p:not(.eyebrow-sm) { max-width: 62ch; }
+
+/* col-8 / col-4 need the same collapse treatment as the other spans. */
+@container (max-width: 880px) {
+  .col-8 { grid-column: span 12; }
+}

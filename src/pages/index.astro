@@ -1,54 +1,29 @@
 ---
 import Base from '../layouts/Base.astro';
-import { Code } from 'astro:components';
 import { getCollection } from 'astro:content';
 import CaseStudyModal from '../components/CaseStudyModal.tsx';
 import { zumnum } from '../data/zumnum';
 import { veil } from '../data/veil';
+import { readingMinutes } from '../lib/readingTime';
 
 const posts = (await getCollection('blog'))
   .filter((p) => !p.data.draft)
   .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
 
-const latest = posts[0];
+// Two most recent, so the tile shows there is a body of writing rather than a
+// single post — and still reads well once there are more.
+const recent = posts.slice(0, 2).map((post) => ({
+  id: post.id,
+  title: post.data.title,
+  description: post.data.description,
+  pubDate: post.data.pubDate,
+  tags: post.data.tags,
+  minutes: readingMinutes(post.body),
+}));
 
 const fmt = (d: Date) =>
-  d.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
+  d.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' });
 
-// Real code from Veil (PII Detector/Detectors/Fusion/PIIFusionReconciler.swift)
-// — where the on-device model's guesses are merged with checksum-grounded
-// recognizers. Adapted to the tile's width: dedented out of its enum, comments
-// re-wrapped, and the two closure parameters shortened (glinerResult → g,
-// additiveResult → a). The blog post quotes the unabbreviated version.
-const snippet = `/// A model is probabilistic; a checksum is
-/// exact — so the deterministic stream
-/// outranks GLiNER on overlap.
-static func reconcile(
-    gliner: [PIIDetectionResult],
-    authoritative: [PIIDetectionResult],
-    additive: [PIIDetectionResult]
-) -> [PIIDetectionResult] {
-    // 1. Authoritative is top — drop the
-    //    GLiNER spans it overlaps.
-    let glinerKept = gliner.filter { g in
-        !authoritative.contains {
-            $0.range.overlaps(g.range)
-        }
-    }
-    // 2. Additive fills gaps only — it can
-    //    never clobber a GLiNER true positive.
-    let additiveKept = additive.filter { a in
-        !authoritative.contains {
-            $0.range.overlaps(a.range)
-        } && !glinerKept.contains {
-            $0.range.overlaps(a.range)
-        }
-    }
-    // 3. Collapse any residual overlaps.
-    return PIIOverlapResolver.deduped(
-        authoritative + glinerKept + additiveKept
-    )
-}`;
 ---
 
 <Base>
@@ -111,43 +86,35 @@ static func reconcile(
           </div>
         </article>
 
-        <!-- Blog highlight -->
-        {latest && (
-          <a class="card card--soft blog-card col-7 reveal" href={`/writing/${latest.id}`}>
-            <span class="card__spot" aria-hidden="true"></span>
-            <p class="eyebrow-sm">Latest writing</p>
-            <h2>{latest.data.title}</h2>
-            <p class="desc">{latest.data.description}</p>
-            <div class="blog-more">
-              <time datetime={latest.data.pubDate.toISOString()}>{fmt(latest.data.pubDate)}</time>
-            </div>
-          </a>
-        )}
-
-        <!-- Live Swift snippet -->
-        <div class="card card--soft snippet-card col-5 reveal">
-          <div class="snippet-head">
-            <span class="dots" aria-hidden="true"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
-            <span class="file">PIIFusionReconciler.swift</span>
+        <!-- Writing — the two most recent posts, each with enough metadata to
+             decide whether to read it. Not a single hero post: an index that
+             surfaces one entry hides the fact that there are others. -->
+        <section class="card card--soft writing-card col-7 reveal" aria-labelledby="writing-heading">
+          <div class="writing-head">
+            <h2 class="eyebrow-sm" id="writing-heading">Writing</h2>
+            <a class="link-quiet" href="/writing">All writing →</a>
           </div>
-          <!-- wrap: the tile is narrow, and truncated code reads as sloppy. -->
-          <Code code={snippet} lang="swift" theme="github-dark-default" wrap />
-          <p class="snippet-note">From Veil — a checksum-valid IBAN outranks whatever the model guessed.</p>
-        </div>
-
-        <!-- About -->
-        <section id="about" class="card card--soft col-4 reveal">
-          <p class="eyebrow-sm">About</p>
-          <p>
-            I'm a Senior iOS Engineer building a small portfolio of privacy-first,
-            on-device apps. I believe the best software is quiet, fast, and
-            trustworthy — respecting people's data isn't a feature, it's the default.
-          </p>
+          <ul class="post-list">
+            {recent.map((post) => (
+              <li class="post-item">
+                <a class="post-item__link" href={`/writing/${post.id}`}>
+                  <h3 class="post-item__title">{post.title}</h3>
+                </a>
+                <p class="post-item__desc">{post.description}</p>
+                <p class="post-item__meta">
+                  <time datetime={post.pubDate.toISOString()}>{fmt(post.pubDate)}</time>
+                  <span aria-hidden="true">·</span>
+                  <span>{post.minutes} min read</span>
+                  {post.tags.map((tag) => <span class="topic">{tag}</span>)}
+                </p>
+              </li>
+            ))}
+          </ul>
         </section>
 
         <!-- Veil — in development. Not on the App Store yet, so the card links
              to its case study rather than a store page. -->
-        <article class="card card--soft col-4 reveal card--interactive">
+        <article class="card glass featured col-5 reveal card--interactive">
           <span class="card__spot" aria-hidden="true"></span>
           <div class="app-head">
             <!-- 192px source for a 60px slot is deliberate: correct at @3x Retina. -->
@@ -158,11 +125,25 @@ static func reconcile(
             Find and remove the personal details in a document before you share
             it — detected, redacted and stored entirely on your iPhone.
           </p>
+          <div class="badges" aria-label="Built with">
+            {veil.badges.map((b) => <span class="badge">{b}</span>)}
+            <span class="badge">{veil.platform}</span>
+          </div>
           <div class="spacer"></div>
           <div class="cta-row">
             <a id="veil-trigger" class="link-arrow stretched-link" href="/work/veil" aria-label="View case study: Veil">View case study →</a>
           </div>
         </article>
+
+        <!-- About -->
+        <section id="about" class="card card--soft col-8 reveal">
+          <p class="eyebrow-sm">About</p>
+          <p>
+            I'm a Senior iOS Engineer building a small portfolio of privacy-first,
+            on-device apps. I believe the best software is quiet, fast, and
+            trustworthy — respecting people's data isn't a feature, it's the default.
+          </p>
+        </section>
 
         <!-- Contact -->
         <section class="card card--soft col-4 reveal">

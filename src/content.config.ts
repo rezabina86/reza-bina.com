@@ -8,6 +8,8 @@ const blog = defineCollection({
     description: z.string(),
     pubDate: z.coerce.date(),
     draft: z.boolean().default(false),
+    // Topic labels shown on post cards. Optional so older posts stay valid.
+    tags: z.array(z.string()).default([]),
   }),
 });
 
