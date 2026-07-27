@@ -33,6 +33,15 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta name="twitter:card" content="summary" />
+
+    <!-- Scroll-reveal starts at opacity:0 and is revealed by JS. Without this
+         override a JS-disabled visitor would get a blank page — the content is
+         in the HTML, so show it immediately instead. -->
+    <noscript>
+      <style>
+        .reveal { opacity: 1 !important; transform: none !important; }
+      </style>
+    </noscript>
   </head>
   <body>
     <LiquidGlassFilter />
