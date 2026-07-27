@@ -140,7 +140,7 @@ Deep-link/SEO note: the case study must exist as a real crawlable route, not mod
 
 ## 6. Content (real only)
 
-**Identity / hero:** "Reza Bina — Senior iOS Engineer" building high-quality, privacy-first, on-device apps for the Apple ecosystem. Keep the current honest thread (offline, no tracking, native). Do **not** foreground the employer name; "Senior iOS Engineer" as a title is fine.
+**Identity / hero:** "Reza Bina — Senior iOS Engineer" building high-quality, privacy-first, on-device apps for the Apple ecosystem. Keep the current honest thread (offline, no tracking, native). ~~Do **not** foreground the employer name~~ — **superseded 2026-07-27:** Reza asked for the employer named in one contextual clause in About ("By day I'm an iOS engineer at Goodnotes"). Seniority is conveyed through the work, not years or titles.
 
 **Featured app — ZumNum (real):**
 - Device frame plays a **real ZumNum screen recording** (Reza provides — see §10). Autoplay, muted, loop, `playsinline`, with a poster frame; pause when offscreen/modal closed.
