@@ -3,6 +3,8 @@ import Base from '../layouts/Base.astro';
 import { Code } from 'astro:components';
 import { getCollection } from 'astro:content';
 import CaseStudyModal from '../components/CaseStudyModal.tsx';
+import { zumnum } from '../data/zumnum';
+import { veil } from '../data/veil';
 
 const posts = (await getCollection('blog'))
   .filter((p) => !p.data.draft)
@@ -126,18 +128,24 @@ actor NumberSpeaker {
           </p>
         </section>
 
-        <!-- Veil — coming soon (link target TBD with Reza; non-clickable for now) -->
-        <section class="card card--soft col-4 reveal" aria-label="Veil — coming soon">
+        <!-- Veil — in development. Not on the App Store yet, so the card links
+             to its case study rather than a store page. -->
+        <article class="card card--soft col-4 reveal card--interactive">
+          <span class="card__spot" aria-hidden="true"></span>
           <div class="app-head">
             <!-- 192px source for a 60px slot is deliberate: correct at @3x Retina. -->
             <img class="icon-img" src="/icons/veil.png" width="60" height="60" alt="Veil app icon" loading="lazy" decoding="async" />
             <h2>Veil <span class="tag tag--soon">Coming soon</span></h2>
           </div>
           <p>
-            On-device document redaction — hide names, numbers, and faces before
-            you share. Nothing is uploaded; nothing leaves your iPhone.
+            Find and remove the personal details in a document before you share
+            it — detected, redacted and stored entirely on your iPhone.
           </p>
-        </section>
+          <div class="spacer"></div>
+          <div class="cta-row">
+            <a id="veil-trigger" class="link-arrow stretched-link" href="/work/veil" aria-label="View case study: Veil">View case study →</a>
+          </div>
+        </article>
 
         <!-- Contact -->
         <section class="card card--soft col-4 reveal">
@@ -153,7 +161,9 @@ actor NumberSpeaker {
     </div>
   </section>
 
-  <!-- Case-study modal island (the one React/Framer Motion island).
-       Intercepts #zumnum-trigger; degrades to the /work/zumnum route. -->
-  <CaseStudyModal client:idle triggerSelector="#zumnum-trigger" />
+  <!-- Case-study modal islands (the one React/Framer Motion component; both
+       instances share its chunk). Each intercepts its trigger link and
+       degrades to the real /work/<slug> route without JS. -->
+  <CaseStudyModal client:idle triggerSelector="#zumnum-trigger" study={zumnum} />
+  <CaseStudyModal client:idle triggerSelector="#veil-trigger" study={veil} />
 </Base>

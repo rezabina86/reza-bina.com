@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import DeviceFrame from './DeviceFrame';
-import { zumnum } from '../data/zumnum';
+import type { CaseStudy } from '../data/caseStudy';
 
 /**
  * CaseStudyModal (HANDOFF §7.3) — the ONE React/Framer-Motion island.
@@ -19,9 +19,11 @@ import { zumnum } from '../data/zumnum';
 
 export interface CaseStudyModalProps {
   triggerSelector: string;
+  /** The case study to render — same data the /work/<slug> route uses. */
+  study: CaseStudy;
 }
 
-export default function CaseStudyModal({ triggerSelector }: CaseStudyModalProps) {
+export default function CaseStudyModal({ triggerSelector, study }: CaseStudyModalProps) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const reduced = useReducedMotion();
@@ -32,6 +34,7 @@ export default function CaseStudyModal({ triggerSelector }: CaseStudyModalProps)
   const openedOnce = useRef(false);
 
   const close = useCallback(() => setOpen(false), []);
+  const titleId = `cs-title-${study.slug}`;
 
   // Portal only after client mount (avoids SSR/hydration issues).
   useEffect(() => setMounted(true), []);
@@ -120,7 +123,7 @@ export default function CaseStudyModal({ triggerSelector }: CaseStudyModalProps)
             className="modal-panel glass"
             role="dialog"
             aria-modal="true"
-            aria-labelledby="cs-title"
+            aria-labelledby={titleId}
             ref={panelRef}
             initial={panelInitial}
             animate={panelAnimate}
@@ -133,18 +136,24 @@ export default function CaseStudyModal({ triggerSelector }: CaseStudyModalProps)
             </button>
 
             <div className="modal-media">
-              <DeviceFrame video={zumnum.video} active={open} label={`${zumnum.name} preview`} />
+              <DeviceFrame
+                video={study.video}
+                image={study.shots?.[0]}
+                active={open}
+                label={`${study.name} preview`}
+                appName={study.name}
+              />
             </div>
 
             <div className="modal-body">
               <p className="eyebrow-sm">Case study</p>
-              <h2 id="cs-title" className="modal-title">
-                {zumnum.name} <span className="modal-tagline">— {zumnum.tagline}</span>
+              <h2 id={titleId} className="modal-title">
+                {study.name} <span className="modal-tagline">— {study.tagline}</span>
               </h2>
-              <p className="modal-summary">{zumnum.summary}</p>
+              <p className="modal-summary">{study.summary}</p>
 
               <ul className="feature-list">
-                {zumnum.features.map((f) => (
+                {study.features.map((f) => (
                   <li key={f.title}>
                     <strong>{f.title}</strong>
                     <span>{f.body}</span>
@@ -153,19 +162,24 @@ export default function CaseStudyModal({ triggerSelector }: CaseStudyModalProps)
               </ul>
 
               <div className="badges" aria-label="Built with">
-                {zumnum.badges.map((b) => (
+                {study.badges.map((b) => (
                   <span className="badge" key={b}>
                     {b}
                   </span>
                 ))}
-                <span className="badge">{zumnum.platform}</span>
+                <span className="badge">{study.platform}</span>
               </div>
 
               <div className="modal-cta">
-                <a className="btn primary" href={zumnum.appStoreUrl} target="_blank" rel="noopener">
-                  View on the App Store ↗
-                </a>
-                <a className="link-quiet" href="/work/zumnum">
+                {study.appStoreUrl ? (
+                  <a className="btn primary" href={study.appStoreUrl} target="_blank" rel="noopener">
+                    View on the App Store ↗
+                  </a>
+                ) : (
+                  /* Unreleased: state it plainly rather than linking nowhere. */
+                  <span className="badge badge--status">In development · not yet released</span>
+                )}
+                <a className="link-quiet" href={`/work/${study.slug}`}>
                   Open full page →
                 </a>
               </div>

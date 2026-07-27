@@ -1,0 +1,89 @@
+---
+import DeviceFrame from './DeviceFrame.tsx';
+import type { CaseStudy } from '../data/caseStudy';
+
+/**
+ * The static case-study page body, shared by every /work/<slug> route so the
+ * pages stay consistent with each other and with the modal (HANDOFF §5, §7.3).
+ */
+
+interface Props {
+  study: CaseStudy;
+}
+
+const { study } = Astro.props;
+const gallery = study.shots?.slice(1) ?? [];
+---
+
+<article class="case">
+  <div class="wrap">
+    <a class="back" href="/#apps">← Back</a>
+
+    <header class="case-head">
+      <img class="icon-img case-icon" src={study.icon} width="72" height="72" alt={`${study.name} app icon`} />
+      <div>
+        <p class="eyebrow-sm">Case study</p>
+        <h1 class="case-title">{study.name}</h1>
+        <p class="case-tagline">{study.tagline}</p>
+      </div>
+    </header>
+
+    <div class="case-split">
+      <div class="case-media">
+        <DeviceFrame
+          client:visible
+          video={study.video}
+          image={study.shots?.[0]}
+          label={`${study.name} preview`}
+          appName={study.name}
+        />
+      </div>
+
+      <div class="case-content">
+        <p class="case-summary">{study.summary}</p>
+
+        <ul class="feature-list">
+          {study.features.map((f) => (
+            <li>
+              <strong>{f.title}</strong>
+              <span>{f.body}</span>
+            </li>
+          ))}
+        </ul>
+
+        <div class="badges" aria-label="Built with">
+          {study.badges.map((b) => <span class="badge">{b}</span>)}
+          <span class="badge">{study.platform}</span>
+        </div>
+
+        <div class="case-cta">
+          {
+            study.appStoreUrl ? (
+              <a class="btn primary" href={study.appStoreUrl} target="_blank" rel="noopener">
+                View on the App Store ↗
+              </a>
+            ) : (
+              <span class="badge badge--status">In development · not yet released</span>
+            )
+          }
+        </div>
+      </div>
+    </div>
+
+    {
+      gallery.length > 0 && (
+        <section class="case-gallery" aria-label={`${study.name} screenshots`}>
+          <h2 class="case-gallery__title">Inside the app</h2>
+          <ul class="shot-grid">
+            {gallery.map((shot) => (
+              <li class="shot">
+                <img src={shot.src} alt={shot.alt} loading="lazy" decoding="async" width="720" height="1565" />
+                <p class="shot__caption">{shot.caption}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+  </div>
+</article>

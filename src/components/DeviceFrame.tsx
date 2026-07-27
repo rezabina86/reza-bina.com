@@ -14,13 +14,23 @@ import { useEffect, useRef, useState } from 'react';
 
 export interface DeviceFrameProps {
   video?: { src: string; poster?: string };
+  /** Static screenshot, used when there is no video. */
+  image?: { src: string; alt: string };
   /** Whether the frame is in an active context (modal open / on screen). */
   active?: boolean;
   /** Accessible label for the media. */
   label?: string;
+  /** Name shown on the placeholder when neither video nor image is available. */
+  appName?: string;
 }
 
-export default function DeviceFrame({ video, active = true, label = 'ZumNum preview' }: DeviceFrameProps) {
+export default function DeviceFrame({
+  video,
+  image,
+  active = true,
+  label = 'App preview',
+  appName = 'Preview',
+}: DeviceFrameProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
   const [inView, setInView] = useState(true);
@@ -90,10 +100,16 @@ export default function DeviceFrame({ video, active = true, label = 'ZumNum prev
                 </button>
               )}
             </>
+          ) : image ? (
+            <img className="device__shot" src={image.src} alt={image.alt} loading="lazy" decoding="async" />
           ) : (
-            <div className="device__placeholder" role="img" aria-label="ZumNum preview — screen recording coming soon">
+            <div
+              className="device__placeholder"
+              role="img"
+              aria-label={`${appName} preview — screen recording coming soon`}
+            >
               <div className="device__ph-num">42</div>
-              <div className="device__ph-name">ZumNum</div>
+              <div className="device__ph-name">{appName}</div>
               <div className="device__ph-note">Screen recording coming soon</div>
             </div>
           )}

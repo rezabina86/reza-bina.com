@@ -1,39 +1,20 @@
+import type { CaseStudy } from './caseStudy';
+
 /**
- * ZumNum case study — single source of truth shared by the static
- * /work/zumnum route and the React case-study modal, so both stay in sync.
+ * ZumNum — learn German numbers by ear.
  *
  * Content is honest per HANDOFF §6 — no invented metrics. Confirm the details
  * (badges, feature wording, video) with Reza before treating as final.
+ *
+ * TODO(reza): provide the screen recording (~6–12s portrait). Until then the
+ * DeviceFrame shows an honest branded placeholder rather than fake UI.
  */
-
-export interface CaseStudyFeature {
-  title: string;
-  body: string;
-}
-
-export interface CaseStudy {
-  name: string;
-  tagline: string;
-  summary: string;
-  features: CaseStudyFeature[];
-  /** "Built with" — accurate tech only (HANDOFF §6). */
-  badges: string[];
-  platform: string;
-  appStoreUrl: string;
-  /**
-   * Real screen recording (HANDOFF §7.2, §10). Portrait, muted, looping.
-   * TODO(reza): provide the .mp4 (+ optional poster). Until then the
-   * DeviceFrame shows an honest branded placeholder rather than fake UI.
-   */
-  video?: {
-    src: string;
-    poster?: string;
-  };
-}
-
 export const zumnum: CaseStudy = {
+  slug: 'zumnum',
   name: 'ZumNum',
   tagline: 'Learn German numbers by ear.',
+  icon: '/icons/zumnum.png',
+  status: 'live',
   summary:
     'ZumNum plays a German number aloud; you type what you heard and get instant feedback — then it adapts to the numbers you find hardest. Everything runs on your iPhone: the voice is synthesized on-device, so it works fully offline, with no ads and no accounts.',
   features: [

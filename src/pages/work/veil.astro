@@ -1,0 +1,12 @@
+---
+import Base from '../../layouts/Base.astro';
+import CaseStudyPage from '../../components/CaseStudyPage.astro';
+import { veil } from '../../data/veil';
+
+const title = `${veil.name} — ${veil.tagline} · Reza Bina`;
+const description = veil.summary;
+---
+
+<Base title={title} description={description}>
+  <CaseStudyPage study={veil} />
+</Base>
