@@ -79,8 +79,10 @@ export default function DeviceFrame({
   return (
     <div className="device" ref={frameRef}>
       <div className="device__frame">
-        <div className="device__island" aria-hidden="true" />
         <div className="device__screen">
+          {/* Inside the screen so it is positioned against it and clipped by
+              its corner radius — the screenshots leave this area empty. */}
+          <div className="device__island" aria-hidden="true" />
           {video ? (
             <>
               <video

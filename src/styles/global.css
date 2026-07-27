@@ -448,26 +448,56 @@ a.card:focus-visible, button.card:focus-visible { outline-offset: 4px; }
    Phase 3 — Case study: DeviceFrame, modal, feature list, page.
    ============================================================ */
 
-/* ---------- Device frame (HANDOFF §7.2) ---------- */
-.device { width: min(270px, 68vw); margin-inline: auto; }
+/* ---------- Device frame — iPhone 17 Pro geometry (HANDOFF §7.2) ----------
+   The screenshots are captured at 1206 × 2622 px @3x, i.e. a 402 × 874 pt
+   display. Every dimension below is derived from the frame width so the
+   proportions survive at any size (the frame is ~190px on mobile):
+
+     · display aspect      402 : 874        → 201 / 437
+     · corner radius       62 pt            → 15.42% of screen width
+     · Dynamic Island      125 × 36.67 pt   → 31.09% × 9.12% of screen width
+     · island top inset    11 pt            → 2.74% of screen width
+
+   The aspect ratio belongs to the SCREEN, never the padded frame: with
+   border-box sizing, putting it on the frame makes the inner box a different
+   shape than the image, and object-fit then crops the screenshot. */
+.device {
+  --dev-w:    min(270px, 68vw);           /* outer width, incl. bezel */
+  --bezel:    calc(var(--dev-w) * 0.032);
+  --screen-w: calc(var(--dev-w) - 2 * var(--bezel));
+  --screen-r: calc(var(--screen-w) * 0.1542);
+  width: var(--dev-w);
+  margin-inline: auto;
+}
 .device__frame {
   position: relative;
-  aspect-ratio: 9 / 19.5;
-  border-radius: 56px;
-  padding: 9px;
-  background: linear-gradient(150deg, #2b2d33, #0e0f12 62%);
+  padding: var(--bezel);
+  border-radius: calc(var(--screen-r) + var(--bezel));
+  /* Titanium band: a bright top edge falling into shadow round the sides. */
+  background: linear-gradient(155deg, #3c3f47 0%, #101114 55%, #2a2c33 100%);
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 0 1px rgba(255, 255, 255, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
     0 40px 80px -30px rgba(0, 0, 0, 0.85);
 }
 .device__screen {
-  position: relative; width: 100%; height: 100%;
-  border-radius: 47px; overflow: hidden; background: #000;
+  position: relative;
+  aspect-ratio: 201 / 437;
+  border-radius: var(--screen-r);
+  overflow: hidden;
+  background: #000;
 }
+/* Sits inside the screen, so it is clipped by it and positioned against it. */
 .device__island {
-  position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
-  width: 34%; height: 26px; background: #000; border-radius: 999px; z-index: 3;
+  position: absolute;
+  top: calc(var(--screen-w) * 0.0274);
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(var(--screen-w) * 0.3109);
+  height: calc(var(--screen-w) * 0.0912);
+  background: #000;
+  border-radius: 999px;
+  z-index: 3;
 }
 .device__video { width: 100%; height: 100%; object-fit: cover; display: block; }
 .device__placeholder {
@@ -542,11 +572,11 @@ a.card:focus-visible, button.card:focus-visible { outline-offset: 4px; }
   .modal-scrim { padding: 14px; }
   .modal-panel { grid-template-columns: 1fr; gap: 20px; padding: 24px 20px; max-height: 90vh; }
   /* Keep the frame a preview, not the whole screen — content must stay visible. */
-  .modal-media .device { width: min(190px, 46vw); }
+  .modal-media .device { --dev-w: min(190px, 46vw); }
   .modal-title { font-size: 23px; }
   .case-split { grid-template-columns: 1fr; gap: 30px; }
   .case-media { position: static; }
-  .case-media .device { width: min(240px, 62vw); }
+  .case-media .device { --dev-w: min(240px, 62vw); }
   .case-head { gap: 14px; }
   .case-icon { width: 56px; height: 56px; border-radius: 14px; }
 }
