@@ -1,0 +1,55 @@
+---
+import Base from '../../layouts/Base.astro';
+import DeviceFrame from '../../components/DeviceFrame.tsx';
+import { zumnum } from '../../data/zumnum';
+
+const title = `${zumnum.name} — ${zumnum.tagline} · Reza Bina`;
+const description = zumnum.summary;
+---
+
+<Base title={title} description={description}>
+  <article class="case">
+    <div class="wrap">
+      <a class="back" href="/#apps">← Back</a>
+
+      <header class="case-head">
+        <img class="icon-img case-icon" src="/icons/zumnum.png" width="72" height="72" alt="ZumNum app icon" />
+        <div>
+          <p class="eyebrow-sm">Case study</p>
+          <h1 class="case-title">{zumnum.name}</h1>
+          <p class="case-tagline">{zumnum.tagline}</p>
+        </div>
+      </header>
+
+      <div class="case-split">
+        <div class="case-media">
+          <DeviceFrame client:visible video={zumnum.video} label={`${zumnum.name} preview`} />
+        </div>
+
+        <div class="case-content">
+          <p class="case-summary">{zumnum.summary}</p>
+
+          <ul class="feature-list">
+            {zumnum.features.map((f) => (
+              <li>
+                <strong>{f.title}</strong>
+                <span>{f.body}</span>
+              </li>
+            ))}
+          </ul>
+
+          <div class="badges" aria-label="Built with">
+            {zumnum.badges.map((b) => <span class="badge">{b}</span>)}
+            <span class="badge">{zumnum.platform}</span>
+          </div>
+
+          <div class="case-cta">
+            <a class="btn primary" href={zumnum.appStoreUrl} target="_blank" rel="noopener">
+              View on the App Store ↗
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </article>
+</Base>
