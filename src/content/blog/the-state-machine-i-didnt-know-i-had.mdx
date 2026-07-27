@@ -1,0 +1,183 @@
+---
+title: "The state machine I didn't know I had"
+description: "Deleting Combine from a small iOS app — a data race hidden in a five-hop .sink cascade, why completion and cancellation had become the same event, and why a mechanical port to async sequences would have kept the bug."
+pubDate: 2026-07-27
+draft: true
+tags: ["Swift Concurrency", "Architecture"]
+---
+
+The bug report was one sentence, from me, to me: *tap play twice and the round jumps forward.*
+
+ZumNum speaks a German number aloud and you type what you heard. Tap play, hear a number, answer it. Tap play *again* while the first utterance is still starting, and the app would skip ahead — new question, before you'd answered the old one.
+
+It took an afternoon to fix and it deleted about 1,700 lines. The interesting part is what the bug turned out to be, which was not what it looked like.
+
+## The shape of the old code
+
+The round's logic lived in a chain of Combine subscriptions across five types:
+
+```
+SpeechSynthesizer → VoiceManager → GameStepManager → GameEngine → GameViewModel
+```
+
+Each hop was a `.sink`. The chain started from an `AVSpeechSynthesizerDelegate` callback — the system telling us an utterance had finished — and ran synchronously through all five, with no `receive(on:)` until the final hop into the view model.
+
+At the end of it, the view model published its state the way a lot of Combine code does:
+
+```swift
+protocol GameViewModelType {
+    var viewState: AnyPublisher<GameViewState, Never> { get }
+    var progressBarState: AnyPublisher<[GameProgressViewState], Never> { get }
+    var isTextFieldFocused: AnyPublisher<Bool, Never> { get }
+}
+```
+
+```swift
+gameEngine
+    .currentStepState
+    .combineLatest(textFieldTextSubject)
+    .receive(on: schedulerFactory.makeMainScheduler())
+    .map { [weak self] state, userAnswer in
+        ...
+    }
+    .assign(to: \.value, on: viewStateSubject)
+    .store(in: &cancellables)
+```
+
+I want to be fair to this code. It is not incompetent. It is the shape you get from following every reasonable piece of Combine advice: small types, one responsibility each, no shared mutable state, everything wired declaratively. It reads well. Each individual file, on its own, is obviously correct.
+
+## The race
+
+Here is the part that isn't.
+
+`AVSpeechSynthesizerDelegate` callbacks are not guaranteed to arrive on the main thread. So the whole cascade — four hops of it — ran on whatever queue the speech synthesizer felt like using. And at the end of one of those hops, `GameEngine` did this:
+
+```swift
+var updatingSteps = self.stepsSubject.value
+// …mutate…
+// …write back…
+```
+
+A read, a modify, a write. On the synthesizer's queue. While `check(answer:)` touched the same subject from the main actor.
+
+The sentence I ended up writing in the audit is the one I'd want back if I could only keep a line:
+
+> `CurrentValueSubject` makes each `send` atomic; it does not make read-then-write atomic.
+
+That's the whole trap. Combine gave me thread-safe *delivery* and I heard thread-safe *state*. Every `send` was fine. Every `.sink` was fine. The composition of a read and a later write across an unannounced thread boundary was not, and nothing in the type system had an opinion about it.
+
+## Why I couldn't see it
+
+I've thought about this more than the fix itself, because the fix was mechanical once I understood it and the blindness was not.
+
+The thread boundary was **invisible at every individual call site**. There was no line of code that said "this runs on the synthesizer's queue." There was a `.sink` in `GameEngine` that subscribed to something in `GameStepManager`, which subscribed to something in `VoiceManager`. To know which thread `handleStepFinished` ran on, you had to trace four subscriptions backwards, across four files, to a delegate callback in a fifth — and then know a fact about AVFoundation that isn't written anywhere near the code.
+
+Reading any one file, the concurrency is not merely hard to see. It is *absent*. It's a property of the whole graph, and the graph only exists at runtime.
+
+There's a second thing, and it's the one that actually produced the double-tap:
+
+**Completion and cancellation were the same event.** The synthesizer's `didFinish` fires when an utterance ends. It also fires when you stop one early. Both arrived as `.stopped`, which `GameStepManager` mapped to `.waitingForAnswer`, which advanced the round. So a second tap — which cancels the first utterance to start a new one — was indistinguishable from the first utterance finishing normally. The round moved on. Working as written.
+
+That's not a Combine defect. It's a modelling defect. But the reactive chain is what let me get away with never modelling it, because a stream of `.stopped` events doesn't ask you what a `.stopped` *means*.
+
+## The actual fix
+
+Two changes, and neither is "replace publishers with async sequences."
+
+### 1. Completion became a return value
+
+The whole speech subsystem now sits behind one seam:
+
+```swift
+protocol NumberSpeakerType: Sendable {
+    /// Speaks `number` at `rate`, returning only once playback has genuinely finished.
+    ///
+    /// - Throws: `CancellationError` if playback was interrupted before it
+    ///   finished — either by cancelling the calling task, or by a later
+    ///   `speak` superseding this one.
+    func speak(_ number: Int, rate: SpeechRate) async throws
+    func prepare(_ number: Int) async
+    func deactivate() async
+}
+```
+
+`speak` is `async` and returns **on completion**. That one property does the work:
+
+> It turns completion from an event pushed out of an unknown thread into a value returned to a caller on a known actor.
+
+Cancellation is no longer a lookalike event on the same channel — it's a thrown `CancellationError`, on a different path, impossible to confuse with success. And because the caller is a task on a known actor, the delegate-thread race isn't fixed so much as made *unrepresentable*. There is no longer a place to put it.
+
+### 2. I wrote the state machine down
+
+The cascade was a state machine. It had states, and events, and transitions. It just wasn't written anywhere — it was an emergent property of which type was subscribed to which.
+
+Now it's a pure function. Events are an enum, and the distinctions that got collapsed are explicit:
+
+```swift
+enum GameFlowEvent: Equatable {
+    case playTapped
+    case answerSubmitted
+    case nextTapped
+
+    /// Playback finished on its own.
+    case speechFinished
+
+    /// Playback was cancelled before it finished — its task was cancelled, or
+    /// a later `speak` superseded it. **Distinct from `speechFinished`**, and
+    /// that distinction is the double-tap fix.
+    case speechCancelled
+
+    /// Cut short by an audio interruption — a call, Siri, an alarm.
+    /// Recoverable, so the round keeps the player's progress.
+    case speechInterrupted
+
+    /// The speaker failed to produce the utterance. Not recoverable by
+    /// replaying, so it ends the round.
+    case speechFailed
+}
+```
+
+Four outcomes where there had been one. The reducer is pure — it returns effects rather than performing them — so every `(state, event)` pair is a table entry I can test directly.
+
+Two properties fall out of that, and both were previously bugs:
+
+- **An invalid `(state, event)` pair is a no-op.** The old `GameEngine.next()` called `fatalError` when no unplayed step remained. That crash now has nowhere to live: there's no arm for the transition, so nothing happens.
+- **Stale async results drop themselves.** A speech completion arriving after cancellation hits a state that doesn't handle it, and is ignored — rather than advancing a round that has moved on.
+
+## What the new design got wrong
+
+I'd be selling you something if I stopped there, because the replacement introduced a failure mode of its own — and it's one Combine wouldn't have had in the same shape.
+
+When `speak` suspends its caller, something has to resume it. Playback finishing resumes it. Cancellation resumes it by throwing. That covers everything the app does.
+
+It does not cover what the *system* does. A phone call, Siri, an alarm, or unplugging headphones takes the audio session away and stops the engine mid-buffer. The completion callback for that buffer never fires. So the continuation is never resumed, and the round sits in `.speaking` forever. Not a crash, not a race — a soft-lock. The player takes a call and comes back to a dead screen.
+
+That is the flip side of turning an event into a suspension: an event that never arrives is a missed notification, but a suspension that never resumes is a hang. Combine's failure mode there would have been the round quietly not advancing; mine was the round quietly never advancing *and* holding a continuation.
+
+The fix needs one more distinction on top of the one I'd just added. An interruption resumes the caller by throwing — but it must throw something that is *not* `CancellationError`, because the reducer treats cancellation as "stay put, the user asked for this." Resuming a stranded utterance with a cancellation would soft-lock exactly the same way. So interruption is its own error, mapping to its own event, and the round drops back to the number with the typed answer intact so the player can re-tap play.
+
+Which is how one distinction became three: cancelled, interrupted, failed. I did not see that coming when I drew the first table.
+
+## The part I'd underline
+
+If you take one thing from this: **swapping Combine for `AsyncSequence` would not have fixed my bug.**
+
+A mechanical port — every publisher becomes a stream, every `.sink` becomes a `for await` — preserves the architecture exactly. Same five hops, same implicit state machine, same conflation of completion with cancellation. It would have compiled, passed, and skipped the round on a double-tap, and I'd have concluded that Swift concurrency was overrated.
+
+What fixed it was making two things explicit that the reactive style had let me leave implicit: **where the thread boundary is**, and **what the states are**. Swift concurrency helps enormously with the first, because actor isolation is checked and `async` functions return to a known context. It does nothing at all for the second. That part is just sitting down and writing the table.
+
+I don't think Combine is bad. I think a chain of operators is a state machine you haven't written down, and a compiler cannot check a state machine you haven't written down.
+
+The one place a stream genuinely was the right shape, I kept the shape and dropped the framework. The app still needs a one-to-many "this changed, re-derive" signal for state that isn't observable — a persisted settings store, say. That's now a small `@Observable` bus with one token per topic, so a screen watching one topic doesn't re-render when a different one fires. Same broadcast idea, no subscriptions to leak, no threading question to get wrong.
+
+## The receipts
+
+The migration was two commits on one afternoon: the speech seam, then the flow. Ninety-four files, +4,485 / −1,721. Seven types deleted outright — `GameEngine`, `GameStepManager`, `GameStateStorage`, `Scheduler`, `SchedulerFactory`, and the view-model/view pair that fed them. Combine had been in the codebase for almost exactly a year.
+
+The commit message lists four defects that became unrepresentable: the data race, a crash that shipped, a locale bug in answer parsing, and the double-tap. Only two of those were Combine's doing — the crash was a `debugFatalError` that called `fatalError` in release too, and the locale bug was `NumberFormatter` guesswork. They rode along because the rewrite touched the same files, not because reactive programming caused them. It would be easy to bundle all four into an argument against Combine, and it wouldn't be true.
+
+And one thing I didn't expect: the migration *surfaced* a bug rather than fixing one. Making `NumberSpeakerType` `Sendable` meant its methods could run off the main actor, so the coordinator began warming the next number while one was still playing — and two threads started appending to an unsynchronized array in a test double. The note I left in the commit was blunter than I'd normally be:
+
+> Its `@unchecked Sendable` invariant was a lie.
+
+It had been a lie the whole time. Nothing had ever called it from two threads before, so nothing had ever asked.
