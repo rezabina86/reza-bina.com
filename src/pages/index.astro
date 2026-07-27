@@ -15,23 +15,27 @@ const latest = posts[0];
 const fmt = (d: Date) =>
   d.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
 
-// Representative of ZumNum's on-device speech engine (Swift 6 concurrency).
-// TODO(reza): confirm or swap for a snippet you'd rather feature.
-const snippet = `/// On-device speech: audio is synthesized locally
-/// and never leaves the phone.
-actor NumberSpeaker {
-    private let synthesizer: Synthesizer
-    private let player: AudioPlayer
+// Real code from ZumNum (ZumNum/Mastery/MasteryMath.swift) — the one place the
+// app decides how practice adapts to the player. Only the comment line breaks
+// and the signature wrapping differ from the file, to fit the tile's width.
+const snippet = `/// The one memory model: an EMA in [0, 1].
+/// Do not replace with all-time accuracy (stops
+/// adapting) or a sliding window (weight jumps
+/// at the window edge).
+enum MasteryMath {
 
-    func speak(
-        _ number: Int,
-        at rate: SpeechRate = .normal
-    ) async throws {
-        let phonemes = PhonemeTable.shared[number]
-        let audio = try await synthesizer.render(
-            phonemes, rate: rate
-        )
-        try await player.play(audio)
+    // MARK: - Publics
+
+    /// \`nil\` current means "no data yet" and
+    /// reads as neutral — absence is the signal.
+    static func updatedScore(
+        _ current: Double?,
+        correct: Bool
+    ) -> Double {
+        let old = current ?? MasteryTuning.neutralScore
+        let observation = correct ? 1.0 : 0.0
+        return (1 - MasteryTuning.alpha) * old
+             + MasteryTuning.alpha * observation
     }
 }`;
 ---
@@ -63,8 +67,8 @@ actor NumberSpeaker {
           </ul>
         </header>
 
-        <!-- Featured app — ZumNum. Stretched primary link → case study route
-             (/work/zumnum + modal land in Phase 3); App Store link sits above it. -->
+        <!-- Featured app — ZumNum. The stretched link opens the case study
+             (modal, or the real route without JS); App Store link sits above it. -->
         <article id="apps" class="card glass featured col-5 reveal card--interactive">
           <span class="card__spot" aria-hidden="true"></span>
           <div class="app-head">
@@ -72,14 +76,15 @@ actor NumberSpeaker {
             <h2>ZumNum <span class="tag tag--live">On the App Store</span></h2>
           </div>
           <p>
-            Learn German numbers by ear. Hear a number, type what you heard, get
-            instant feedback — fully offline, no ads. iOS 17+.
+            Learn German numbers by ear — where the units are said before the
+            tens. Hear a number, type what you heard, get instant feedback.
+            Fully offline, no ads.
           </p>
+          <!-- Badges come from the case-study data so the card, the page and the
+               modal can never disagree about what the app is built with. -->
           <div class="badges" aria-label="Built with">
-            <span class="badge">SwiftUI</span>
-            <span class="badge">Swift 6 Concurrency</span>
-            <span class="badge">On-device speech</span>
-            <span class="badge">Fully offline</span>
+            {zumnum.badges.map((b) => <span class="badge">{b}</span>)}
+            <span class="badge">{zumnum.platform}</span>
           </div>
           <div class="spacer"></div>
           <div class="cta-row">
@@ -112,10 +117,11 @@ actor NumberSpeaker {
         <div class="card card--soft snippet-card col-5 reveal">
           <div class="snippet-head">
             <span class="dots" aria-hidden="true"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
-            <span class="file">NumberSpeaker.swift</span>
+            <span class="file">MasteryMath.swift</span>
           </div>
-          <Code code={snippet} lang="swift" theme="github-dark-default" />
-          <p class="snippet-note">Actor-isolated speech synthesis — audio never leaves the device.</p>
+          <!-- wrap: the tile is narrow, and truncated code reads as sloppy. -->
+          <Code code={snippet} lang="swift" theme="github-dark-default" wrap />
+          <p class="snippet-note">From ZumNum — how a round learns which numbers you keep missing.</p>
         </div>
 
         <!-- About -->
