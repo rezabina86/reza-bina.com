@@ -5,8 +5,21 @@ import { veil } from '../../data/veil';
 
 const title = `${veil.name} — ${veil.tagline} · Reza Bina`;
 const description = veil.summary;
+
+const canonical = new URL('/work/veil/', Astro.site).href;
+const app = {
+  '@type': 'SoftwareApplication',
+  '@id': `${canonical}#app`,
+  name: veil.name,
+  description: veil.summary,
+  applicationCategory: 'MobileApplication',
+  operatingSystem: veil.platform,
+  author: { '@id': new URL('/#person', Astro.site).href },
+  image: new URL('/og/work-veil.png', Astro.site).href,
+  ...(veil.appStoreUrl ? { installUrl: veil.appStoreUrl } : {}),
+};
 ---
 
-<Base title={title} description={description}>
+<Base title={title} description={description} ogSlug="work-veil" schema={app}>
   <CaseStudyPage study={veil} />
 </Base>

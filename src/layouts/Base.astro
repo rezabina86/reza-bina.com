@@ -6,14 +6,60 @@ import LiquidGlassFilter from '../components/LiquidGlassFilter.astro';
 interface Props {
   title?: string;
   description?: string;
+  /** Slug of the generated OG card, e.g. "home" or "writing-my-post". */
+  ogSlug?: string;
+  /** Set on blog posts so the page is marked up as an article, not a website. */
+  article?: { publishedTime: string; tags?: string[] };
+  /** Extra JSON-LD injected by the page (BlogPosting, SoftwareApplication, …). */
+  schema?: Record<string, unknown>;
 }
 
 const {
   title = 'Reza Bina — Private, on-device apps for iPhone',
   description = 'iOS engineer in Berlin building private, on-device apps that run entirely on your device. Maker of ZumNum and Veil.',
+  ogSlug = 'home',
+  article,
+  schema,
 } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const ogImage = new URL(`/og/${ogSlug}.png`, Astro.site).href;
+
+// Identity graph: one Person, referenced by @id from every page-level entity so
+// engines resolve the author to a single entity rather than a repeated string.
+const PERSON_ID = new URL('/#person', Astro.site).href;
+const person = {
+  '@type': 'Person',
+  '@id': PERSON_ID,
+  name: 'Reza Bina',
+  url: Astro.site?.href,
+  jobTitle: 'Senior iOS Engineer',
+  description:
+    'iOS engineer building privacy-first apps that run entirely on the device.',
+  address: { '@type': 'PostalAddress', addressLocality: 'Berlin', addressCountry: 'DE' },
+  sameAs: [
+    'https://github.com/rezabina86',
+    'https://www.linkedin.com/in/reza-bina/',
+  ],
+  knowsAbout: ['iOS development', 'Swift', 'SwiftUI', 'On-device machine learning', 'Privacy engineering'],
+};
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    person,
+    {
+      '@type': 'WebSite',
+      '@id': new URL('/#website', Astro.site).href,
+      url: Astro.site?.href,
+      name: 'Reza Bina',
+      description,
+      publisher: { '@id': PERSON_ID },
+      inLanguage: 'en',
+    },
+    ...(schema ? [schema] : []),
+  ],
+};
 ---
 
 <!doctype html>
@@ -28,11 +74,36 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
     <link rel="canonical" href={canonical} />
     <meta name="generator" content={Astro.generator} />
 
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={article ? 'article' : 'website'} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:site_name" content="Reza Bina" />
+    <meta property="og:locale" content="en_GB" />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={title} />
+    {
+      article && (
+        <>
+          <meta property="article:published_time" content={article.publishedTime} />
+          <meta property="article:author" content="Reza Bina" />
+          {article.tags?.map((tag) => <meta property="article:tag" content={tag} />)}
+        </>
+      )
+    }
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <link rel="alternate" type="application/rss+xml" title="Reza Bina — Writing" href="/rss.xml" />
+
+    <!-- is:inline so Astro emits this verbatim instead of treating it as a
+         module script to bundle. -->
+    <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
 
     <!-- Scroll-reveal starts at opacity:0 and is revealed by JS. Without this
          override a JS-disabled visitor would get a blank page — the content is

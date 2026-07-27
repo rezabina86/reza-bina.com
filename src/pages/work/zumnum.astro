@@ -5,8 +5,21 @@ import { zumnum } from '../../data/zumnum';
 
 const title = `${zumnum.name} — ${zumnum.tagline} · Reza Bina`;
 const description = zumnum.summary;
+
+const canonical = new URL('/work/zumnum/', Astro.site).href;
+const app = {
+  '@type': 'SoftwareApplication',
+  '@id': `${canonical}#app`,
+  name: zumnum.name,
+  description: zumnum.summary,
+  applicationCategory: 'MobileApplication',
+  operatingSystem: zumnum.platform,
+  author: { '@id': new URL('/#person', Astro.site).href },
+  image: new URL('/og/work-zumnum.png', Astro.site).href,
+  ...(zumnum.appStoreUrl ? { installUrl: zumnum.appStoreUrl } : {}),
+};
 ---
 
-<Base title={title} description={description}>
+<Base title={title} description={description} ogSlug="work-zumnum" schema={app}>
   <CaseStudyPage study={zumnum} />
 </Base>

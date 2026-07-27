@@ -22,9 +22,31 @@ const fmt = (d: Date) =>
   d.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
 
 const minutes = readingMinutes(post.body);
+
+const canonical = new URL(`/writing/${post.id}/`, Astro.site).href;
+const blogPosting = {
+  '@type': 'BlogPosting',
+  '@id': `${canonical}#article`,
+  headline: post.data.title,
+  description: post.data.description,
+  datePublished: post.data.pubDate.toISOString(),
+  author: { '@id': new URL('/#person', Astro.site).href },
+  publisher: { '@id': new URL('/#person', Astro.site).href },
+  mainEntityOfPage: canonical,
+  image: new URL(`/og/writing-${post.id}.png`, Astro.site).href,
+  keywords: post.data.tags.join(', '),
+  wordCount: post.body?.trim().split(/\s+/).filter(Boolean).length ?? 0,
+  inLanguage: 'en',
+};
 ---
 
-<Base title={`${post.data.title} — Reza Bina`} description={post.data.description}>
+<Base
+  title={`${post.data.title} — Reza Bina`}
+  description={post.data.description}
+  ogSlug={`writing-${post.id}`}
+  article={{ publishedTime: post.data.pubDate.toISOString(), tags: post.data.tags }}
+  schema={blogPosting}
+>
   <article class="article">
     <div class="wrap">
       <a class="back" href="/writing">← Writing</a>
