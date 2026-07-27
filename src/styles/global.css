@@ -645,6 +645,7 @@ a.card:focus-visible, button.card:focus-visible { outline-offset: 4px; }
 
 /* About prose keeps a readable measure even in a wide tile. */
 #about p:not(.eyebrow-sm) { max-width: 62ch; }
+#about p + p { margin-top: 0.9em; }
 
 /* col-8 / col-4 need the same collapse treatment as the other spans. */
 @container (max-width: 880px) {
