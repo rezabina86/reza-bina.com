@@ -10,7 +10,7 @@ const posts = (await getCollection('blog'))
   .filter((p) => !p.data.draft)
   .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
 
-// Two most recent, so the tile shows there is a body of writing rather than a
+// Two most recent, so the section shows there is a body of writing rather than a
 // single post — and still reads well once there are more.
 const recent = posts.slice(0, 2).map((post) => ({
   id: post.id,
@@ -23,78 +23,110 @@ const recent = posts.slice(0, 2).map((post) => ({
 
 const fmt = (d: Date) =>
   d.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' });
-
 ---
 
 <Base>
-  <section class="home">
+  <div class="home">
     <div class="wrap">
-      <div class="bento">
-        <!-- Hero -->
-        <header class="card glass glass--refract hero-card col-7 reveal">
-          <span class="eyebrow"><span class="pip" aria-hidden="true"></span> Senior iOS Engineer</span>
-          <h1>
-            I build native iOS apps that run entirely <span class="accent">on your device</span>.
-          </h1>
-          <p class="lede">
-            Small, fast, and native — and quietly ambitious under the hood: an
-            on-device neural voice instead of a speech API, a local language
-            model instead of a server. No accounts, no tracking, nothing leaves
-            your phone.
-          </p>
-          <div class="hero-cta">
-            <a class="btn primary magnetic" href="#apps">See the work</a>
-            <a class="btn ghost magnetic" href="/writing">Read the writing</a>
-          </div>
-          <!-- Real claims, not decoration — kept in the a11y tree as a list. -->
-          <ul class="hero-stats">
-            <li class="stat-pill">100% on-device</li>
-            <li class="stat-pill">Zero trackers</li>
-            <li class="stat-pill">Works offline</li>
-          </ul>
-        </header>
 
-        <!-- Featured app — ZumNum. The stretched link opens the case study
-             (modal, or the real route without JS); App Store link sits above it. -->
-        <article id="apps" class="card glass featured col-5 reveal card--interactive">
-          <span class="card__spot" aria-hidden="true"></span>
-          <div class="app-head">
-            <img class="icon-img" src="/icons/zumnum.png" width="60" height="60" alt="ZumNum app icon" />
-            <h2>ZumNum <span class="tag tag--live">On the App Store</span></h2>
-          </div>
-          <p>
-            Learn German numbers by ear — where the units are said before the
-            tens. Hear a number, type what you heard, get instant feedback.
-            Fully offline, no ads.
-          </p>
-          <!-- Badges come from the case-study data so the card, the page and the
-               modal can never disagree about what the app is built with. -->
-          <div class="badges" aria-label="Built with">
-            {zumnum.badges.map((b) => <span class="badge">{b}</span>)}
-            <span class="badge">{zumnum.platform}</span>
-          </div>
-          <div class="spacer"></div>
-          <div class="cta-row">
-            <!-- Accessible name must CONTAIN the visible text (WCAG 2.5.3 Label in
-                 Name) so voice control can activate it by what's on screen. -->
-            <a id="zumnum-trigger" class="link-arrow stretched-link" href="/work/zumnum" aria-label="View case study: ZumNum">View case study →</a>
-            <a
-              class="link-quiet"
-              href="https://apps.apple.com/de/app/zumnum/id6748617262?l=en-GB"
-              target="_blank"
-              rel="noopener"
-            >App Store ↗</a>
-          </div>
-        </article>
+      <!-- 1. Hero band — stands alone, full content width. The entry point. -->
+      <header class="card glass glass--refract hero-card reveal">
+        <span class="eyebrow"><span class="pip" aria-hidden="true"></span> Senior iOS Engineer</span>
+        <h1>
+          I build native iOS apps that run entirely <span class="accent">on your device</span>.
+        </h1>
+        <p class="lede">
+          Small, fast, and native — and quietly ambitious under the hood: an
+          on-device neural voice instead of a speech API, a local language
+          model instead of a server. No accounts, no tracking, nothing leaves
+          your phone.
+        </p>
+        <div class="hero-cta">
+          <a class="btn primary magnetic" href="#apps">See the work</a>
+          <a class="btn ghost magnetic" href="/writing">Read the writing</a>
+        </div>
+        <!-- Real claims, not decoration — kept in the a11y tree as a list. -->
+        <ul class="hero-stats">
+          <li class="stat-pill">100% on-device</li>
+          <li class="stat-pill">Zero trackers</li>
+          <li class="stat-pill">Works offline</li>
+        </ul>
+      </header>
 
-        <!-- Writing — the two most recent posts, each with enough metadata to
-             decide whether to read it. Not a single hero post: an index that
-             surfaces one entry hides the fact that there are others. -->
-        <section class="card card--soft writing-card col-7 reveal" aria-labelledby="writing-heading">
-          <div class="writing-head">
-            <h2 class="eyebrow-sm" id="writing-heading">Writing</h2>
-            <a class="link-quiet" href="/writing">All writing →</a>
-          </div>
+      <!-- 2. Apps — the most important content, so it leads. Both apps grouped;
+           size carries the hierarchy: ZumNum (shipped) leads, wider and first;
+           Veil (in development) is secondary, kept in its amber + dashed state. -->
+      <section id="apps" class="home-section reveal" aria-labelledby="apps-heading">
+        <div class="section-head">
+          <h2 class="section-label" id="apps-heading">Apps</h2>
+        </div>
+        <div class="apps-grid">
+          <!-- ZumNum. The stretched link opens the case study (modal, or the real
+               route without JS); the App Store link sits above it via z-index. -->
+          <article class="card glass featured card--interactive">
+            <span class="card__spot" aria-hidden="true"></span>
+            <div class="app-head">
+              <img class="icon-img" src="/icons/zumnum.png" width="60" height="60" alt="ZumNum app icon" />
+              <h3>ZumNum <span class="tag tag--live">On the App Store</span></h3>
+            </div>
+            <p>
+              Learn German numbers by ear — where the units are said before the
+              tens. Hear a number, type what you heard, get instant feedback.
+              Fully offline, no ads.
+            </p>
+            <!-- Badges come from the case-study data so the card, the page and the
+                 modal can never disagree about what the app is built with. -->
+            <div class="badges" aria-label="Built with">
+              {zumnum.badges.map((b) => <span class="badge">{b}</span>)}
+              <span class="badge">{zumnum.platform}</span>
+            </div>
+            <div class="spacer"></div>
+            <div class="cta-row">
+              <!-- Accessible name must CONTAIN the visible text (WCAG 2.5.3 Label in
+                   Name) so voice control can activate it by what's on screen. -->
+              <a id="zumnum-trigger" class="link-arrow stretched-link" href="/work/zumnum" aria-label="View case study: ZumNum">View case study →</a>
+              <a
+                class="link-quiet"
+                href="https://apps.apple.com/de/app/zumnum/id6748617262?l=en-GB"
+                target="_blank"
+                rel="noopener"
+              >App Store ↗</a>
+            </div>
+          </article>
+
+          <!-- Veil — in development. Not on the App Store yet, so the card links
+               to its case study rather than a store page. -->
+          <article class="card glass featured card--interactive card--wip">
+            <span class="card__spot" aria-hidden="true"></span>
+            <div class="app-head">
+              <!-- 192px source for a 60px slot is deliberate: correct at @3x Retina. -->
+              <img class="icon-img" src="/icons/veil.png" width="60" height="60" alt="Veil app icon" loading="lazy" decoding="async" />
+              <h3>Veil <span class="tag tag--soon">Coming soon</span></h3>
+            </div>
+            <p>
+              Find and remove the personal details in a document before you share
+              it — detected, redacted and stored entirely on your iPhone.
+            </p>
+            <div class="badges" aria-label="Built with">
+              {veil.badges.map((b) => <span class="badge">{b}</span>)}
+              <span class="badge">{veil.platform}</span>
+            </div>
+            <div class="spacer"></div>
+            <div class="cta-row">
+              <a id="veil-trigger" class="link-arrow stretched-link" href="/work/veil" aria-label="View case study: Veil">View case study →</a>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- 3. Writing — its own section: the two most recent posts, each with
+           enough metadata to decide whether to read it. -->
+      <section id="writing" class="home-section reveal" aria-labelledby="writing-heading">
+        <div class="section-head">
+          <h2 class="section-label" id="writing-heading">Writing</h2>
+          <a class="link-quiet" href="/writing">All writing →</a>
+        </div>
+        <div class="card card--soft writing-card">
           <ul class="post-list">
             {recent.map((post) => (
               <li class="post-item">
@@ -111,70 +143,52 @@ const fmt = (d: Date) =>
               </li>
             ))}
           </ul>
-        </section>
+        </div>
+      </section>
 
-        <!-- Veil — in development. Not on the App Store yet, so the card links
-             to its case study rather than a store page. -->
-        <article class="card glass featured col-5 reveal card--interactive card--wip">
-          <span class="card__spot" aria-hidden="true"></span>
-          <div class="app-head">
-            <!-- 192px source for a 60px slot is deliberate: correct at @3x Retina. -->
-            <img class="icon-img" src="/icons/veil.png" width="60" height="60" alt="Veil app icon" loading="lazy" decoding="async" />
-            <h2>Veil <span class="tag tag--soon">Coming soon</span></h2>
+      <!-- 4. About — the bio, with the "Elsewhere" contact links beside it. -->
+      <section id="about" class="home-section reveal" aria-labelledby="about-heading">
+        <div class="section-head">
+          <h2 class="section-label" id="about-heading">About</h2>
+        </div>
+        <div class="about-grid">
+          <div class="card card--soft about-bio">
+            <!-- Employer named contextually, in one clause, at Reza's direction —
+                 this supersedes HANDOFF §6's "don't foreground the employer".
+                 No years or titles here: the case studies and the writing carry
+                 seniority, and the hero already states the role. -->
+            <p>
+              By day I'm an iOS engineer at Goodnotes. I've been building for iPhone
+              since 2015 — ride-hailing, e-commerce, language learning, now
+              note-taking — and on evenings and weekends I build privacy-first apps
+              of my own, running entirely on the device.
+            </p>
+            <p>
+              An app that never sends your data anywhere cannot misuse it: "we don't
+              look at your data" stops being a policy you have to trust and becomes an
+              architecture you can check. It also makes the engineering harder in ways
+              I enjoy — an on-device neural voice instead of a speech API, a local
+              language model and a stack of checksums instead of a server.
+            </p>
+            <p>
+              I came to software from a physics degree, which may explain the taste
+              for problems a checksum can settle. I design, build and ship these apps
+              myself, including this site.
+            </p>
           </div>
-          <p>
-            Find and remove the personal details in a document before you share
-            it — detected, redacted and stored entirely on your iPhone.
-          </p>
-          <div class="badges" aria-label="Built with">
-            {veil.badges.map((b) => <span class="badge">{b}</span>)}
-            <span class="badge">{veil.platform}</span>
+          <div class="card card--soft about-contact">
+            <h3 class="eyebrow-sm">Elsewhere</h3>
+            <div class="contact">
+              <a href="mailto:rezabina.dev@gmail.com">Email</a>
+              <a href="https://github.com/rezabina86" target="_blank" rel="noopener">GitHub</a>
+              <a href="https://www.linkedin.com/in/reza-bina/" target="_blank" rel="noopener">LinkedIn</a>
+            </div>
           </div>
-          <div class="spacer"></div>
-          <div class="cta-row">
-            <a id="veil-trigger" class="link-arrow stretched-link" href="/work/veil" aria-label="View case study: Veil">View case study →</a>
-          </div>
-        </article>
+        </div>
+      </section>
 
-        <!-- About -->
-        <section id="about" class="card card--soft col-8 reveal">
-          <p class="eyebrow-sm">About</p>
-          <!-- Employer named contextually, in one clause, at Reza's direction —
-               this supersedes HANDOFF §6's "don't foreground the employer".
-               No years or titles here: the case studies and the writing carry
-               seniority, and the hero already states the role. -->
-          <p>
-            By day I'm an iOS engineer at Goodnotes. I've been building for iPhone
-            since 2015 — ride-hailing, e-commerce, language learning, now
-            note-taking — and on evenings and weekends I build privacy-first apps
-            of my own, running entirely on the device.
-          </p>
-          <p>
-            An app that never sends your data anywhere cannot misuse it: "we don't
-            look at your data" stops being a policy you have to trust and becomes an
-            architecture you can check. It also makes the engineering harder in ways
-            I enjoy — an on-device neural voice instead of a speech API, a local
-            language model and a stack of checksums instead of a server.
-          </p>
-          <p>
-            I came to software from a physics degree, which may explain the taste
-            for problems a checksum can settle. I design, build and ship these apps
-            myself, including this site.
-          </p>
-        </section>
-
-        <!-- Contact -->
-        <section class="card card--soft col-4 reveal">
-          <p class="eyebrow-sm">Elsewhere</p>
-          <div class="contact">
-            <a href="mailto:rezabina.dev@gmail.com">Email</a>
-            <a href="https://github.com/rezabina86" target="_blank" rel="noopener">GitHub</a>
-            <a href="https://www.linkedin.com/in/reza-bina/" target="_blank" rel="noopener">LinkedIn</a>
-          </div>
-        </section>
-      </div>
     </div>
-  </section>
+  </div>
 
   <!-- Case-study modal islands (the one React/Framer Motion component; both
        instances share its chunk). Each intercepts its trigger link and
