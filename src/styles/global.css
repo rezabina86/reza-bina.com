@@ -649,7 +649,7 @@ a.card:focus-visible, button.card:focus-visible { outline-offset: 4px; }
    scrolls); on mobile it's the first child of the scrolling body instead. */
 .modal-media { display: flex; justify-content: center; }
 .modal-panel > .modal-media {
-  flex: none; align-self: start; padding: 34px 0 0 34px;
+  flex: none; align-self: center; padding: 34px 0 34px 34px;
 }
 /* Bound the device by viewport height so it never exceeds the panel on short
    laptop screens (where it would otherwise be clipped by the frame). */

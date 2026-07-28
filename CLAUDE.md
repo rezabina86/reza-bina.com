@@ -240,7 +240,7 @@ overflow-y:auto; overscroll-behavior:contain`). Don't reintroduce `position:stic
 rounded corners + backdrop blur) or a single `.modal-scroll`. The device can't be both a fixed desktop
 column and scroll inside the body on mobile via CSS (an element can't cross the overflow boundary), so
 it's placed by breakpoint with a `useMediaQuery('(min-width:720px)')` hook: on desktop it's a direct
-panel child (left column, `align-self:start`, bounded by `36vh` so it isn't clipped on short laptops);
+panel child (left column, `align-self:center` so it's balanced against the full panel height, bounded by `36vh` so it isn't clipped on short laptops);
 on mobile it's the first child of `.modal-body`. Load-bearing a11y: `.modal-body` has `tabindex="0"` +
 `aria-label` so keyboard users can arrow-scroll it; the focus trap includes it; `aria-labelledby` still
 points at the title id (now in the header). Keep the thin inset scrollbar and the Framer-Motion spring.
