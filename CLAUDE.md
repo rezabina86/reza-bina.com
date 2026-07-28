@@ -252,3 +252,21 @@ darkening, layered as a **background** so it sits behind the copy, not over it) 
 white 15.8:1, accent 4.7:1, lede 6.6:1 — all AA. Chromium renders the displacement backdrop;
 Safari/Firefox fall back to base `.glass` (calmer still). Keep the specular top-edge `.glass::before`
 highlight.
+
+### SEO / discoverability conventions
+The site's structured data is a JSON-LD `@graph` (`Base.astro`): always Person + WebSite, plus
+per-page schema passed via the `schema` prop, which takes **one object or an array**. Posts pass
+`[BlogPosting, BreadcrumbList]`; work pages pass `[SoftwareApplication, BreadcrumbList]`. The Apps
+breadcrumb points at the home `#apps` section, not a `/work/` index (there isn't one). Freshness rides
+on an optional `updated` date in the blog schema: it drives `dateModified` (falls back to `pubDate`),
+an `article:modified_time` meta, and an "Updated" segment in the meta line. Locale is **en-GB**
+everywhere (`<html lang>`, `og:locale`, date formatting) — keep them aligned.
+
+**`llms.txt` decision (reversed, on purpose).** `/llms.txt` and `/llms-full.txt` exist as build-time
+endpoints (`src/pages/llms*.txt.ts`), generated from the blog collection + case-study data, kept out
+of the sitemap. This **overturns an earlier call to skip llms.txt**. The nuance that reconciles both:
+Google confirmed it ignores `llms.txt` for *search ranking* (so it does nothing for Google SEO), but
+the convention targets *LLM-ingestion tools*, where it's cheap and harmless. It's kept as low-cost
+insurance, not a ranking lever — don't re-add it expecting Google traffic, and don't rip it out
+expecting to lose any. Everything else (canonical, OG, generated OG images, sitemap with `/og/` +
+`llms` excluded, RSS, robots with named AI-crawler allows) is already correct; don't rebuild it.
