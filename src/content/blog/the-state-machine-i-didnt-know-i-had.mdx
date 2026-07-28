@@ -10,7 +10,7 @@ ZumNum is a small app I built for learning German numbers. It says a number out 
 
 It had a bug. Tap the play button twice quickly, and the app would jump to the next question before you'd answered the current one.
 
-Small, silly bug. Fixing it took an afternoon and deleted about 1,700 lines of code — including every last trace of a framework I'd built the whole app around.
+It was a small, silly bug. Fixing it took an afternoon and deleted about 1,700 lines of code, including every last trace of a framework I'd built the whole app around.
 
 Here's what was actually going on.
 
@@ -28,7 +28,7 @@ speech synthesizer → voice manager → step manager → game engine → view m
 
 Read that as a row of dominoes. iOS tells the speech synthesizer "the number finished playing." That knocks over the first domino, which knocks over the next, and so on down the line until the screen updates.
 
-Each link was a few lines. Each file was small and did one job. Honestly, it looked like good code — it's the shape you get from following all the usual advice.
+Each link was a few lines. Each file was small and did one job. Honestly, it looked like good code: it's the shape you get from following all the usual advice.
 
 ## The bug I couldn't see
 
@@ -50,11 +50,11 @@ Two threads. Same data. Nothing coordinating them. That's a data race, and it ca
 
 ### The thing that fooled me
 
-Combine does make a promise about safety here. The container I was using guarantees that each individual update is atomic — two updates can't tangle up with each other halfway through.
+Combine does make a promise about safety here. The container I was using guarantees that each individual update is atomic: two updates can't tangle up with each other halfway through.
 
 I think that promise is exactly what fooled me. It *sounds* like "this is thread-safe, stop worrying."
 
-But my code wasn't doing one update. It was doing three things in a row — read, change, write — and the other thread could slip in between them. Here's the note I ended up writing when I finally worked it out:
+But my code wasn't doing one update. It was doing three things in a row (read, change, write), and the other thread could slip in between them. Here's the note I ended up writing when I finally worked it out:
 
 > `CurrentValueSubject` makes each `send` atomic; it does not make read-then-write atomic.
 
@@ -64,7 +64,7 @@ Combine gave me safe *delivery*. I heard safe *state*. Those aren't the same thi
 
 I've thought about this more than the fix itself, because the fix was easy once I understood it and the blindness was not.
 
-**No single file showed the problem.** Open any one of those five files and the threading is not just hard to spot — it isn't there. There's no line saying "this runs on a background thread."
+No single file showed the problem. Open any one of those five files and the threading is not just hard to spot: it isn't there. There's no line saying "this runs on a background thread."
 
 To know which thread the fourth link ran on, you had to trace four relationships backwards through four files to a callback in a fifth, and then already know a fact about how iOS delivers speech callbacks.
 
@@ -76,13 +76,13 @@ There was another thing wrong, and it's the one that actually caused the skippin
 
 When speech stops, iOS calls the same method whether it **finished naturally** or was **cut off early**. One message for two completely different situations.
 
-My code treated that message as "the number finished playing — move on to the answer."
+My code treated that message as "the number finished playing, move on to the answer."
 
 So: you tap play a second time. The app cancels the first utterance to start the new one. Cancelling produces the same message as finishing. The app moves on to the next question.
 
-Working exactly as written. Just not as intended.
+It was working exactly as written, just not as intended.
 
-That one isn't Combine's fault. That's a modelling mistake — I never asked what the message *meant*. But the chain is what let me get away with never asking, because a stream of events doesn't force you to define them.
+That one isn't Combine's fault. That's a modelling mistake: I never asked what the message *meant*. But the chain is what let me get away with never asking, because a stream of events doesn't force you to define them.
 
 ## Fix one: just wait for it
 
@@ -139,13 +139,12 @@ enum GameFlowEvent: Equatable {
 
 Look at what happened to that single "speech stopped" message. It became **four** separate events, because those are four genuinely different situations that deserve four different responses.
 
-Then there's one plain function that takes the current state and an event, and returns the new state. No side effects, no surprises — just a table you can read and test.
+Then there's one plain function that takes the current state and an event, and returns the new state. No side effects, no surprises, just a table you can read and test.
 
 Two nice things fell out of it for free:
 
-**Nonsense can't happen.** If an event doesn't make sense in the current state, nothing happens. The old code had a crash for "move to the next question when there isn't one." There's now no rule for that combination, so it quietly does nothing instead of crashing.
-
-**Late messages sort themselves out.** If a speech-finished event arrives after the round has already moved on, it lands in a state that has no rule for it, and gets ignored. That used to be the skipping bug.
+- **Nonsense can't happen.** If an event doesn't make sense in the current state, nothing happens. The old code had a crash for "move to the next question when there isn't one." There's now no rule for that combination, so it quietly does nothing instead of crashing.
+- **Late messages sort themselves out.** If a speech-finished event arrives after the round has already moved on, it lands in a state that has no rule for it, and gets ignored. That used to be the skipping bug.
 
 ## The fix had a bug of its own
 
@@ -159,13 +158,13 @@ If a call comes in — or Siri, or an alarm, or you unplug your headphones — i
 
 The app just sits there. Waiting. Forever.
 
-Not a crash, not a race — the screen simply freezes on "playing" and never moves again. You take a call, come back, and the app is dead.
+Not a crash, not a race: the screen simply freezes on "playing" and never moves again. You take a call, come back, and the app is dead.
 
 That's the trade I made without noticing. A message that never arrives is a missed update. A function that never returns is a hang.
 
 The fix needed one more distinction.
 
-An interruption does have to make the function return. But it can't pretend to be a cancellation. The app treats cancellation as "the user asked for this, stay put" — so a phone call disguised as a cancellation would freeze the screen in exactly the same way.
+An interruption does have to make the function return. But it can't pretend to be a cancellation. The app treats cancellation as "the user asked for this, stay put", so a phone call disguised as a cancellation would freeze the screen in exactly the same way.
 
 So an interruption became its own kind of error, with its own event. The round drops back to the number. Your typed answer is still there. You tap play and carry on.
 
@@ -186,15 +185,15 @@ What actually fixed the bug was writing down two things I'd been leaving implici
 
 A chain of reactive operators *is* a state machine. You just haven't written it down. And a compiler can't check something you never wrote.
 
-Combine still had one job I genuinely needed: telling several screens at once that something changed. I kept the idea and dropped the framework — that's now a few lines using Apple's `@Observable`, with no subscriptions to leak and no threading question to get wrong.
+Combine still had one job I genuinely needed: telling several screens at once that something changed. I kept the idea and dropped the framework. That's now a few lines using Apple's `@Observable`, with no subscriptions to leak and no threading question to get wrong.
 
 ## The receipts
 
 Two commits, one afternoon. Ninety-four files, roughly 4,500 lines added and 1,700 deleted. Seven types deleted entirely. Combine had been in the app for almost exactly a year.
 
-The commit message lists four bugs that became impossible: the data race, a crash, a locale bug in number parsing, and the double-tap. To be straight with you, only two of those were Combine's doing — the crash was a `fatalError` I'd left in release builds, and the locale bug was me misusing `NumberFormatter`. They got fixed because the rewrite touched the same files, not because reactive programming caused them. It'd be easy to blame all four on the framework, and it wouldn't be honest.
+The commit message lists four bugs that became impossible: the data race, a crash, a locale bug in number parsing, and the double-tap. To be straight with you, only two of those were Combine's doing: the crash was a `fatalError` I'd left in release builds, and the locale bug was me misusing `NumberFormatter`. They got fixed because the rewrite touched the same files, not because reactive programming caused them. It'd be easy to blame all four on the framework, and it wouldn't be honest.
 
-One last thing I didn't expect: the rewrite *revealed* a bug rather than fixing one. Once the speech function could safely run off the main thread, the app started preparing the next number while the current one was still playing. Two threads then began writing to an unprotected list inside one of my test helpers — something I'd marked as safe long ago and never checked.
+One last thing I didn't expect: the rewrite *revealed* a bug rather than fixing one. Once the speech function could safely run off the main thread, the app started preparing the next number while the current one was still playing. Two threads then began writing to an unprotected list inside one of my test helpers, something I'd marked as safe long ago and never checked.
 
 The note I left in the commit was blunter than I usually am:
 
