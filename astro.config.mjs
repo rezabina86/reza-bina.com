@@ -13,8 +13,14 @@ export default defineConfig({
     // Blog: MDX with Shiki syntax highlighting.
     mdx(),
     // Generates sitemap-index.xml at build; robots.txt points crawlers at it.
-    // The generated OG images are pages too, so exclude them from the sitemap.
-    sitemap({ filter: (page) => !page.includes('/og/') }),
+    // Exclude the OG images and the llms.txt endpoints — neither is an
+    // indexable HTML page, they're just build-time assets served at a URL.
+    sitemap({
+      filter: (page) =>
+        !page.includes('/og/') &&
+        !page.endsWith('/llms.txt') &&
+        !page.endsWith('/llms-full.txt'),
+    }),
   ],
   markdown: {
     // Apple-dark code blocks. Shiki is built in; theme applies to .md and .mdx.

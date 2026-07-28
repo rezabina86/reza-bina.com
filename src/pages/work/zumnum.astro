@@ -18,8 +18,18 @@ const app = {
   image: new URL('/og/work-zumnum.png', Astro.site).href,
   ...(zumnum.appStoreUrl ? { installUrl: zumnum.appStoreUrl } : {}),
 };
+
+const site = Astro.site!.href;
+const breadcrumb = {
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: site },
+    { '@type': 'ListItem', position: 2, name: 'Apps', item: `${site}#apps` },
+    { '@type': 'ListItem', position: 3, name: zumnum.name },
+  ],
+};
 ---
 
-<Base title={title} description={description} ogSlug="work-zumnum" schema={app}>
+<Base title={title} description={description} ogSlug="work-zumnum" schema={[app, breadcrumb]}>
   <CaseStudyPage study={zumnum} />
 </Base>

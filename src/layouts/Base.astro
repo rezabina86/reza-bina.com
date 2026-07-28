@@ -9,9 +9,10 @@ interface Props {
   /** Slug of the generated OG card, e.g. "home" or "writing-my-post". */
   ogSlug?: string;
   /** Set on blog posts so the page is marked up as an article, not a website. */
-  article?: { publishedTime: string; tags?: string[] };
-  /** Extra JSON-LD injected by the page (BlogPosting, SoftwareApplication, …). */
-  schema?: Record<string, unknown>;
+  article?: { publishedTime: string; modifiedTime?: string; tags?: string[] };
+  /** Extra JSON-LD injected by the page (BlogPosting, SoftwareApplication,
+   *  BreadcrumbList, …). One object, or several to add to the @graph. */
+  schema?: Record<string, unknown> | Record<string, unknown>[];
 }
 
 const {
@@ -57,13 +58,13 @@ const jsonLd = {
       publisher: { '@id': PERSON_ID },
       inLanguage: 'en',
     },
-    ...(schema ? [schema] : []),
+    ...(schema ? (Array.isArray(schema) ? schema : [schema]) : []),
   ],
 };
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en-GB">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -88,6 +89,9 @@ const jsonLd = {
       article && (
         <>
           <meta property="article:published_time" content={article.publishedTime} />
+          {article.modifiedTime && (
+            <meta property="article:modified_time" content={article.modifiedTime} />
+          )}
           <meta property="article:author" content="Reza Bina" />
           {article.tags?.map((tag) => <meta property="article:tag" content={tag} />)}
         </>
