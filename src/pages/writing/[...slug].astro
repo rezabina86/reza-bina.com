@@ -30,6 +30,7 @@ const blogPosting = {
   headline: post.data.title,
   description: post.data.description,
   datePublished: post.data.pubDate.toISOString(),
+  dateModified: (post.data.updated ?? post.data.pubDate).toISOString(),
   author: { '@id': new URL('/#person', Astro.site).href },
   publisher: { '@id': new URL('/#person', Astro.site).href },
   mainEntityOfPage: canonical,
@@ -44,7 +45,11 @@ const blogPosting = {
   title={`${post.data.title} — Reza Bina`}
   description={post.data.description}
   ogSlug={`writing-${post.id}`}
-  article={{ publishedTime: post.data.pubDate.toISOString(), tags: post.data.tags }}
+  article={{
+    publishedTime: post.data.pubDate.toISOString(),
+    modifiedTime: post.data.updated?.toISOString(),
+    tags: post.data.tags,
+  }}
   schema={blogPosting}
 >
   <article class="article">
@@ -55,6 +60,12 @@ const blogPosting = {
         <time datetime={post.data.pubDate.toISOString()}>{fmt(post.data.pubDate)}</time>
         <span class="meta__dot" aria-hidden="true">·</span>
         <span>{minutes} min read</span>
+        {post.data.updated && (
+          <>
+            <span class="meta__dot" aria-hidden="true">·</span>
+            <span>Updated <time datetime={post.data.updated.toISOString()}>{fmt(post.data.updated)}</time></span>
+          </>
+        )}
       </p>
 
       <div class="article__layout">
