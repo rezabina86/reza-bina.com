@@ -1,0 +1,43 @@
+---
+import Base from '../layouts/Base.astro';
+
+// GitHub Pages serves this as the 404.html for any unknown path (with a real
+// 404 status), so it needs no noindex machinery.
+---
+
+<Base
+  title="Page not found — Reza Bina"
+  description="That page doesn't exist. Head back to the home page or browse the writing."
+>
+  <section class="notfound">
+    <div class="wrap">
+      <p class="notfound__code">404</p>
+      <h1 class="notfound__title">This page slipped off the device.</h1>
+      <p class="notfound__lede">
+        The link is broken or the page has moved. Nothing left your phone, but
+        this page isn't here.
+      </p>
+      <div class="notfound__cta">
+        <a class="btn primary" href="/">Back home</a>
+        <a class="btn ghost" href="/writing">Read the writing</a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .notfound { padding: clamp(72px, 16vh, 160px) 0; }
+  .notfound__code {
+    font-size: 15px; font-weight: 600; letter-spacing: 0.14em;
+    color: var(--accent); margin-bottom: 18px;
+  }
+  .notfound__title {
+    font-size: clamp(30px, 5vw, 52px); line-height: 1.05; letter-spacing: -0.03em;
+    font-weight: 600; max-width: 18ch; text-wrap: balance;
+  }
+  .notfound__lede {
+    margin-top: 18px; font-size: clamp(16px, 2vw, 19px);
+    color: var(--label-2); max-width: 48ch;
+  }
+  .notfound__cta { margin-top: 32px; display: flex; gap: 12px; flex-wrap: wrap; }
+</style>
