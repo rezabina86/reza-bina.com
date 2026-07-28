@@ -487,11 +487,19 @@ a.card:focus-visible, button.card:focus-visible { outline-offset: 4px; }
 /* ---------- Table of contents ---------- */
 .toc__title { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--label-3); margin-bottom: 12px; }
 .toc__list { list-style: none; display: grid; gap: 2px; border-left: 1px solid var(--separator); }
-.toc__item--sub .toc__link { padding-left: 26px; font-size: 13px; }
+/* Sub-items are distinguished by indentation only. Don't shrink the font: with
+   a unitless line-height it made sub rows 1px shorter than top-level rows and
+   the vertical rhythm hiccupped every time a sub-item appeared. */
+.toc__item--sub .toc__link { padding-left: 26px; }
 .toc__link {
   display: block; padding: 6px 0 6px 14px; margin-left: -1px;
   border-left: 2px solid transparent;
-  color: var(--label-2); text-decoration: none; font-size: 13.5px; line-height: 1.4;
+  color: var(--label-2); text-decoration: none; font-size: 13.5px;
+  /* Absolute (integer) line-height, not unitless 1.4: 13.5 × 1.4 = 18.9px made
+     each row 30.9px tall, so the pitch was fractional and adjacent gaps rounded
+     to different device-pixel heights — the leftover uneven leading. 19px makes
+     the row exactly 31px (pitch 33px), so every gap paints identically. */
+  line-height: 19px;
   transition: color .2s var(--ease-ios), border-color .2s var(--ease-ios);
 }
 .toc__link:hover { color: var(--label); }
