@@ -499,7 +499,11 @@ a.card:focus-visible, button.card:focus-visible { outline-offset: 4px; }
 
 @media (max-width: 900px) {
   .article .wrap { max-width: 720px; }
-  .article__layout { grid-template-columns: 1fr; gap: 28px; }
+  /* minmax(0, 1fr), not 1fr: a plain `1fr` is `minmax(auto, 1fr)`, whose `auto`
+     floor is forced wide by the prose's min-content (a code line/long token),
+     blowing the single column past the viewport so text clipped off the right
+     edge under `body { overflow-x: hidden }`. The 0 floor lets it shrink. */
+  .article__layout { grid-template-columns: minmax(0, 1fr); gap: 28px; }
   .article__aside { position: static; justify-self: stretch; max-width: none; }
   .toc { border: 1px solid var(--separator); border-radius: var(--r-control); padding: 16px 18px; background: var(--bg-elev); }
   .toc__list { border-left: none; }
