@@ -60,6 +60,13 @@
   --warm:      #28c17e;
   --warm-rgb:  40, 193, 126;
 
+  /* --- Status amber (Apple systemOrange, dark) ---
+     For "in development" states. Deliberately NOT green: green is reserved for
+     shipped ("On the App Store"), so shipped vs. forthcoming is legible at a
+     glance rather than two near-identical green chips. */
+  --amber:     #ff9f0a;
+  --amber-rgb: 255, 159, 10;
+
   /* --- Layout --- */
   --maxw:      1080px;
 }
@@ -338,10 +345,22 @@ a.card:focus-visible, button.card:focus-visible { outline-offset: 4px; }
 .card p { color: var(--label-2); font-size: 15.5px; }
 .tag { font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
 .tag--live { background: rgba(48, 209, 88, 0.18); color: #4fd07a; }
-.tag--soon { background: rgba(var(--warm-rgb), 0.16); color: var(--warm); }
+/* Amber, muted, on a translucent field — reads as "forthcoming", never as
+   shipped. Text #ffb84d over the composited chip is ~9:1 (AA). */
+.tag--soon {
+  background: rgba(var(--amber-rgb), 0.14); color: #ffb84d;
+  border: 1px solid rgba(var(--amber-rgb), 0.30);
+}
 
 /* --- Featured (ZumNum) — full glass, taller --- */
 .featured { min-height: 340px; }
+
+/* "Work in progress" de-emphasis — the one signal that separates a forthcoming
+   app from a shipped one. A dashed, lower-contrast edge reads as "outlined, not
+   finished" at a glance (the amber tag reinforces it) while the surface itself
+   stays full glass, so the card is still attractive. Comes after `.glass` so it
+   overrides its solid border; hover still lifts and brightens via border-color. */
+.card--wip { border-style: dashed; border-color: var(--separator-hi); }
 .featured .spacer { flex: 1 1 auto; min-height: 8px; }
 .badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
 .badge {
