@@ -152,6 +152,18 @@ pattern. The site is mid-redesign; assume older files may predate the current ru
 
 ## Content & Blog
 
+- **`ARTICLE-STYLE.md` is the binding style standard for every blog post — read it before drafting or
+  editing one, and follow it.** It exists because the posts read as machine-made. The load-bearing
+  rules: em-dashes ≤ ~3 per post (they were the default connector — use commas, colons, periods, or
+  parentheses instead); sentence-fragment emphasis ≤ 1 ("Right. Not probably right. Right."); don't
+  end every section on a punchline (reserve the one crafted line that earns it); **no bolded
+  sentence-openers as pseudo-headers** — promote them to real `###` headings or fold into prose, or
+  make a genuine list; introduce every code block with a plain lead-in and explain it after; ground
+  the argument in real ZumNum/Veil specifics. Voice: a tired senior engineer talking plainly, honest
+  about what didn't work — never performing. `FIX-02-articles.md` was the one-off pass that applied
+  this to the first three posts; `ARTICLE-STYLE.md` is the ongoing rule.
+- **Never trim a real number, table, caveat, or failure for style, and never invent facts** — that
+  honesty is the brand. A good cadence edit is usually *shorter*, never less true.
 - Blog uses Astro **Content Collections** (`src/content.config.ts` schema is the contract — update it
   when a post needs a new field). Posts upgrade to **MDX** with **Shiki** highlighting and an
   auto-generated TOC from `h2/h3`.
