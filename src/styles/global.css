@@ -275,7 +275,7 @@ h1 {
    between them so the grouping reads at a glance; bento is still allowed
    *inside* a section (the Apps pair), just never mixing content types across a
    row. scroll-margin clears the sticky nav when the nav anchors jump here. */
-.home-section { margin-top: clamp(56px, 9vw, 104px); scroll-margin-top: 88px; }
+.home-section { margin-top: clamp(48px, 7vw, 80px); scroll-margin-top: 88px; }
 .section-head {
   display: flex; align-items: baseline; justify-content: space-between;
   gap: 16px; margin-bottom: 22px;
@@ -722,6 +722,13 @@ a.card:focus-visible, button.card:focus-visible { outline-offset: 4px; }
   /* Keep the frame a preview, not the whole screen — content must stay visible. */
   .modal-media .device { --dev-w: min(190px, 46vw); }
   .modal-title { font-size: 22px; }
+  /* Footer CTAs stack and centre: full-width primary (App Store button OR the
+     "In development" chip — same treatment so the layout doesn't jump), with the
+     secondary "Open full page" link centred beneath it. */
+  .modal-cta { flex-direction: column; align-items: stretch; gap: 14px; }
+  .modal-cta .btn.primary,
+  .modal-cta .badge--status { width: 100%; justify-content: center; text-align: center; }
+  .modal-cta .link-quiet { text-align: center; }
 }
 
 @media (max-width: 760px) {
