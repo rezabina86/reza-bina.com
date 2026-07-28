@@ -218,3 +218,25 @@ npm run check    # astro check (types/diagnostics)
 For anything non-obvious — a tricky glass fallback, the modal's progressive-enhancement wiring, a
 performance trade-off — record the decision and its *why* here (and in memory), so the next session
 doesn't re-litigate it. A decision you had to think hard about is worth one paragraph.
+
+### Status colour convention — shipped vs. in-development
+`--amber` (systemOrange) means **in development**; **green is reserved for shipped** ("On the App
+Store"). Never render a forthcoming app's status chip green — two near-identical green chips hid the
+fact that only ZumNum has shipped. Veil's home chip uses `.tag--soon` (muted amber on a translucent
+field) and the card carries `.card--wip` (a dashed, lower-contrast border) as its single, honest
+de-emphasis. **No fabricated progress bars or metrics** to signal "in progress" — the amber chip +
+dashed edge are the whole signal. The `/work/veil` page keeps its own `.badge--status` ("In
+development · not yet released").
+
+### Hero legibility over Liquid Glass
+The ambient `.aurora` sits directly behind the hero tile, so at full strength it bled through the
+refraction filter as a coloured smear behind the `<h1>`. Three coordinated levers keep the headline
+reading as *clarity*: the `#liquid` displacement `scale` is **18, not 42** (lenses the edge instead
+of tearing the backdrop — note `scale` is an SVG attribute, not a CSS custom property, so it can't be
+tokenised); `.glass--refract` blurs at `--glass-blur` like every other glass surface (it used to
+under-blur at 14px, which is *why* the aurora showed through); and `--hero-scrim` (an inset radial
+darkening, layered as a **background** so it sits behind the copy, not over it) plus a lower
+`--aurora-opacity` calm the field. Measured worst-case backdrop behind the headline ≈ `[27,27,27]`:
+white 15.8:1, accent 4.7:1, lede 6.6:1 — all AA. Chromium renders the displacement backdrop;
+Safari/Firefox fall back to base `.glass` (calmer still). Keep the specular top-edge `.glass::before`
+highlight.

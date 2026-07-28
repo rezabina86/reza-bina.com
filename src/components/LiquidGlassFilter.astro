@@ -24,10 +24,14 @@
       result="noise"
     />
     <feGaussianBlur in="noise" stdDeviation="2" result="soft" />
+    <!-- Displacement amplitude. At the original 42 this tore the ambient
+         aurora into a mottled smear behind the hero headline; 18 still lenses
+         the surface but no longer competes with the text. Chromium honours
+         this on a backdrop, Safari/Firefox fall back to the base glass. -->
     <feDisplacementMap
       in="SourceGraphic"
       in2="soft"
-      scale="42"
+      scale="18"
       xChannelSelector="R"
       yChannelSelector="G"
     />
