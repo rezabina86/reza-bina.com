@@ -253,6 +253,20 @@ white 15.8:1, accent 4.7:1, lede 6.6:1 — all AA. Chromium renders the displace
 Safari/Firefox fall back to base `.glass` (calmer still). Keep the specular top-edge `.glass::before`
 highlight.
 
+### Home IA — labeled sections, not an interleaved grid
+The home page is **stacked, labeled `<section>`s in a fixed order: Hero → Apps → Writing → About**
+(the researched portfolio sequence, projects first). It is **not** one bento grid mixing content types
+across rows — testers found that confusing, because a hero sat beside an app, then a writing tile, then
+the second app. Bento is still allowed *inside* a section (Apps is a two-card grid: ZumNum wider + first
+= primary, Veil `card--wip` second), just never across content types. Each section carries a visible
+`.section-label` heading wired with `aria-labelledby`, generous `.home-section` rhythm between them, and
+`scroll-margin-top` so the nav anchors (`#apps`, `#writing`, `#about` — **preserve these**, the nav
+scrolls to them) clear the sticky nav. Heading order is `h1` (hero) → `h2` (section) → `h3` (app names,
+post titles, "Elsewhere"). The two `CaseStudyModal` trigger ids (`#zumnum-trigger`, `#veil-trigger`) and
+the stretched-link + App Store z-index behaviour are load-bearing — keep them on the app cards. Don't
+re-merge the sections back into a single `.bento`/`.col-*` grid; those classes were removed with this
+change.
+
 ### SEO / discoverability conventions
 The site's structured data is a JSON-LD `@graph` (`Base.astro`): always Person + WebSite, plus
 per-page schema passed via the `schema` prop, which takes **one object or an array**. Posts pass

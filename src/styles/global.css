@@ -270,7 +270,22 @@ h1 {
    ============================================================ */
 .home { padding: 44px 0 24px; }
 .home .wrap { container-type: inline-size; }
-.bento { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+
+/* Stacked, labeled sections (Hero → Apps → Writing → About). Generous rhythm
+   between them so the grouping reads at a glance; bento is still allowed
+   *inside* a section (the Apps pair), just never mixing content types across a
+   row. scroll-margin clears the sticky nav when the nav anchors jump here. */
+.home-section { margin-top: clamp(56px, 9vw, 104px); scroll-margin-top: 88px; }
+.section-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 16px; margin-bottom: 22px;
+}
+.section-head .section-label { margin-bottom: 0; }
+
+/* Apps: two cards, ZumNum wider + first = primary weight. About: bio wide,
+   contact beside. Both collapse to one column on narrow viewports. */
+.apps-grid  { display: grid; grid-template-columns: 7fr 5fr; gap: 16px; }
+.about-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; align-items: start; }
 
 .card {
   position: relative; overflow: hidden;
@@ -278,7 +293,6 @@ h1 {
   padding: 28px;
   text-decoration: none; color: inherit;
   display: flex; flex-direction: column;
-  grid-column: span 12;
   transition: transform .3s var(--ease-ios), border-color .3s var(--ease-ios), box-shadow .3s;
 }
 /* Secondary (lighter) surface — the default tile look. */
@@ -303,12 +317,6 @@ a.card:focus-visible, button.card:focus-visible { outline-offset: 4px; }
    while a second real link (App Store) sits above it. Avoids nested anchors. */
 .stretched-link::after { content: ""; position: absolute; inset: 0; z-index: 1; }
 .cta-row .link-quiet { position: relative; z-index: 2; }
-
-/* Column spans (desktop) */
-.col-7 { grid-column: span 7; }
-.col-5 { grid-column: span 5; }
-.col-4 { grid-column: span 4; }
-.col-8 { grid-column: span 8; }
 
 /* --- Hero tile ---
    The scrim is a BACKGROUND layer, not an ::after overlay: an absolutely
@@ -392,11 +400,11 @@ a.card:focus-visible, button.card:focus-visible { outline-offset: 4px; }
 }
 .post-item__link:hover .post-item__title { color: var(--accent); }
 
-/* Clamp keeps every entry the same height however long the description is. */
+/* Full description, no clamp. The writing section is a single-column stack now,
+   so entries don't need to match heights — and a 2-line clamp truncated the
+   blurb mid-sentence on narrow screens. */
 .post-item__desc {
   margin-top: 7px; color: var(--label-2); font-size: 14.5px; line-height: 1.55;
-  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
-  overflow: hidden;
 }
 .post-item__meta {
   margin-top: 11px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
@@ -417,12 +425,8 @@ a.card:focus-visible, button.card:focus-visible { outline-offset: 4px; }
 .contact a:hover { border-color: var(--accent); background: var(--glass-bg); }
 
 /* --- Responsive collapse (container queries on .home .wrap) --- */
-@container (max-width: 880px) {
-  .col-7, .col-5 { grid-column: span 12; }
-  .col-4 { grid-column: span 6; }
-}
-@container (max-width: 540px) {
-  .col-4 { grid-column: span 12; }
+@container (max-width: 720px) {
+  .apps-grid, .about-grid { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -693,10 +697,5 @@ a.card:focus-visible, button.card:focus-visible { outline-offset: 4px; }
 .shot__caption { margin-top: 12px; font-size: 13.5px; color: var(--label-2); line-height: 1.5; }
 
 /* About prose keeps a readable measure even in a wide tile. */
-#about p:not(.eyebrow-sm) { max-width: 62ch; }
-#about p + p { margin-top: 0.9em; }
-
-/* col-8 / col-4 need the same collapse treatment as the other spans. */
-@container (max-width: 880px) {
-  .col-8 { grid-column: span 12; }
-}
+#about .about-bio p { max-width: 62ch; }
+#about .about-bio p + p { margin-top: 0.9em; }
