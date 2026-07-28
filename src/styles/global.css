@@ -282,10 +282,12 @@ h1 {
 }
 .section-head .section-label { margin-bottom: 0; }
 
-/* Apps: two cards, ZumNum wider + first = primary weight. About: bio wide,
-   contact beside. Both collapse to one column on narrow viewports. */
-.apps-grid  { display: grid; grid-template-columns: 7fr 5fr; gap: 16px; }
-.about-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; align-items: start; }
+/* Apps: two cards, ZumNum wider + first = primary weight (collapses to one
+   column on narrow viewports). About: full-width bio, then a compact contact
+   strip stacked beneath — single column, so no short card strands next to the
+   tall bio. */
+.apps-grid   { display: grid; grid-template-columns: 7fr 5fr; gap: 16px; }
+.about-stack { display: grid; gap: 16px; }
 
 .card {
   position: relative; overflow: hidden;
@@ -324,7 +326,11 @@ a.card:focus-visible, button.card:focus-visible { outline-offset: 4px; }
    headline along with the aurora. Layering it over --glass-surface keeps the
    @supports fallbacks (and the specular ::before highlight) intact. */
 .hero-card {
-  justify-content: center; min-height: 340px; gap: 18px;
+  justify-content: center; min-height: 300px; gap: 18px;
+  /* Hug the content: the stat pills felt bottom-heavy with the card's default
+     28px sitting below them, larger than the 18px internal rhythm. (The wide
+     right void is deliberate — reserved for a future device/motif.) */
+  padding-bottom: 20px;
   background: var(--hero-scrim), var(--glass-surface);
 }
 .hero-card .eyebrow { align-self: flex-start; }
@@ -415,18 +421,32 @@ a.card:focus-visible, button.card:focus-visible { outline-offset: 4px; }
   padding: 3px 9px; font-size: 11.5px; letter-spacing: 0.01em;
 }
 
-/* --- Contact tile --- */
-.contact { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+/* --- Contact strip --- label left, icon links right, on one row (overrides
+   .card's column flex); wraps to two lines on mobile. */
+.about-contact {
+  display: flex; flex-direction: row; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px 22px;
+}
+/* Reset the generic `.card :is(h2,h3)` sizing/flex so the label reads as a small
+   eyebrow, not a 20px flex-grow heading that strands the links. */
+.about-contact .eyebrow-sm {
+  margin-bottom: 0; flex: none; display: block;
+  font-size: 12px; font-weight: 400; letter-spacing: 0.08em;
+}
+
+.contact { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 0; }
 .contact a {
+  display: inline-flex; align-items: center; gap: 8px;
   font-size: 14px; text-decoration: none; color: var(--label);
   border: 1px solid var(--separator); border-radius: 999px; padding: 9px 16px;
-  transition: border-color .2s, background .2s;
+  transition: border-color .2s, background .2s, color .2s;
 }
+.contact a svg { width: 16px; height: 16px; flex: none; display: block; }
 .contact a:hover { border-color: var(--accent); background: var(--glass-bg); }
 
 /* --- Responsive collapse (container queries on .home .wrap) --- */
 @container (max-width: 720px) {
-  .apps-grid, .about-grid { grid-template-columns: 1fr; }
+  .apps-grid { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {
