@@ -623,32 +623,17 @@ a.card:focus-visible, button.card:focus-visible { outline-offset: 4px; }
 @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .modal-scrim { -webkit-backdrop-filter: blur(25px); backdrop-filter: blur(25px); }
 }
-/* The panel is the rounded, clipping frame only — it does NOT scroll, so its
-   border-radius always contains everything and the close button stays fixed. */
+/* The panel is the rounded, clipping frame: bounded height, no scroll of its
+   own, so its border-radius always contains everything and the close button
+   stays fixed. Inside sits a flex dialog — a device column plus a
+   header/body/footer stack where ONLY the body scrolls (ARIA APG dialog). */
 .modal-panel {
   position: relative;
   width: min(940px, 100%);
+  max-height: min(88vh, 780px);
   overflow: hidden;
   border-radius: var(--r-modal);
-}
-/* The inner scroller. Its scrollbar is clipped to the panel's rounded frame
-   instead of poking past the corners (the reported bug). Styled thin + inset so
-   it reads as part of the glass rather than a system chrome bar. */
-.modal-scroll {
-  max-height: min(88vh, 780px);
-  overflow-y: auto;
-  padding: 34px;
-  display: grid; grid-template-columns: minmax(0, 300px) 1fr; gap: 36px; align-items: center;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
-}
-.modal-scroll::-webkit-scrollbar { width: 10px; }
-.modal-scroll::-webkit-scrollbar-track { background: transparent; }
-.modal-scroll::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.22);
-  border-radius: 999px;
-  border: 3px solid transparent;      /* inset the thumb so it floats inside the padding */
-  background-clip: padding-box;
+  display: flex;
 }
 .modal-close {
   position: absolute; top: 16px; right: 16px; z-index: 5;
@@ -658,11 +643,57 @@ a.card:focus-visible, button.card:focus-visible { outline-offset: 4px; }
   transition: border-color .2s;
 }
 .modal-close:hover { border-color: var(--separator-hi); }
+
+/* Device. Centred in whatever holds it. On desktop it's a direct panel child
+   (a non-scrolling left column, top-aligned, so it stays put while the body
+   scrolls); on mobile it's the first child of the scrolling body instead. */
 .modal-media { display: flex; justify-content: center; }
-.modal-title { font-size: clamp(24px, 3vw, 32px); letter-spacing: -0.02em; font-weight: 600; margin-bottom: 12px; }
+.modal-panel > .modal-media {
+  flex: none; align-self: start; padding: 34px 0 0 34px;
+}
+/* Bound the device by viewport height so it never exceeds the panel on short
+   laptop screens (where it would otherwise be clipped by the frame). */
+.modal-panel > .modal-media .device { --dev-w: min(260px, 36vh); }
+
+/* Header / body / footer stack. */
+.modal-main {
+  flex: 1; min-width: 0; min-height: 0;
+  display: flex; flex-direction: column;
+}
+.modal-header {
+  flex: none;
+  padding: 34px 52px 18px 34px;   /* right padding clears the close button */
+  border-bottom: 1px solid var(--separator);
+}
+/* The ONLY scroller — bounded between the fixed header and footer. Keeps the
+   thin, inset, rounded-frame scrollbar from the earlier fix. Focusable
+   (tabindex=0 in the markup) so keyboard users can arrow-scroll it. */
+.modal-body {
+  flex: 1; min-height: 0;
+  overflow-y: auto; overscroll-behavior: contain;
+  padding: 20px 34px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+}
+.modal-body::-webkit-scrollbar { width: 10px; }
+.modal-body::-webkit-scrollbar-track { background: transparent; }
+.modal-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  border: 3px solid transparent;      /* inset the thumb so it floats inside the padding */
+  background-clip: padding-box;
+}
+.modal-body:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 6px; }
+.modal-footer {
+  flex: none;
+  padding: 18px 34px 34px;
+  border-top: 1px solid var(--separator);
+}
+
+.modal-title { font-size: clamp(24px, 3vw, 32px); letter-spacing: -0.02em; font-weight: 600; }
 .modal-tagline { color: var(--label-2); font-weight: 500; }
 .modal-summary { color: var(--label-2); font-size: 15.5px; margin-bottom: 18px; }
-.modal-cta { margin-top: 22px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.modal-cta { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
 
 /* ---------- Case-study page (/work/zumnum) ---------- */
 .case { padding: 40px 0 56px; }
@@ -677,12 +708,23 @@ a.card:focus-visible, button.card:focus-visible { outline-offset: 4px; }
 .case-summary { font-size: 17px; color: var(--label-2); margin-bottom: 22px; line-height: 1.7; }
 .case-cta { margin-top: 26px; }
 
-@media (max-width: 760px) {
+/* Modal, mobile: single flex column. The device moves into the scrolling body
+   (rendered there by the island < 720px), so header/footer stay fixed and the
+   device scrolls with the content — a ~410px frame pinned to the top would
+   leave no room to read. */
+@media (max-width: 719px) {
   .modal-scrim { padding: 14px; }
-  .modal-scroll { grid-template-columns: 1fr; gap: 20px; padding: 24px 20px; max-height: 90vh; }
+  .modal-panel { max-height: 90vh; }
+  .modal-header { padding: 22px 48px 14px 22px; }
+  .modal-body { padding: 16px 22px; }
+  .modal-footer { padding: 14px 22px 22px; }
+  .modal-media { padding: 2px 0 18px; }
   /* Keep the frame a preview, not the whole screen — content must stay visible. */
   .modal-media .device { --dev-w: min(190px, 46vw); }
-  .modal-title { font-size: 23px; }
+  .modal-title { font-size: 22px; }
+}
+
+@media (max-width: 760px) {
   .case-split { grid-template-columns: 1fr; gap: 30px; }
   .case-media { position: static; }
   .case-media .device { --dev-w: min(240px, 62vw); }

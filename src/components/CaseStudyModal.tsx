@@ -23,10 +23,35 @@ export interface CaseStudyModalProps {
   study: CaseStudy;
 }
 
+/** Live viewport match. Lazy-inits from matchMedia (this island only renders on
+ *  the client), so there's no mobile→desktop flash on first open. */
+function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia(query).matches
+  );
+  useEffect(() => {
+    const mql = window.matchMedia(query);
+    const onChange = () => setMatches(mql.matches);
+    onChange();
+    mql.addEventListener('change', onChange);
+    // `resize` is a redundant fallback: matchMedia change is reliable in real
+    // browsers, but this also covers environments that resize without firing it.
+    window.addEventListener('resize', onChange);
+    return () => {
+      mql.removeEventListener('change', onChange);
+      window.removeEventListener('resize', onChange);
+    };
+  }, [query]);
+  return matches;
+}
+
 export default function CaseStudyModal({ triggerSelector, study }: CaseStudyModalProps) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const reduced = useReducedMotion();
+  // Desktop pins the device as a side column; mobile puts it inside the
+  // scrolling body. An element can't be both, so we place it by breakpoint.
+  const isDesktop = useMediaQuery('(min-width: 720px)');
 
   const panelRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -108,6 +133,20 @@ export default function CaseStudyModal({ triggerSelector, study }: CaseStudyModa
     ? { duration: 0 }
     : { type: 'spring' as const, stiffness: 300, damping: 30 };
 
+  // One device instance, placed by breakpoint: a fixed left column on desktop,
+  // the first (scrolling) child of the body on mobile.
+  const device = (
+    <div className="modal-media">
+      <DeviceFrame
+        video={study.video}
+        image={study.shots?.[0]}
+        active={open}
+        label={`${study.name} preview`}
+        appName={study.name}
+      />
+    </div>
+  );
+
   return createPortal(
     <AnimatePresence>
       {open && (
@@ -135,26 +174,23 @@ export default function CaseStudyModal({ triggerSelector, study }: CaseStudyModa
               <span aria-hidden="true">✕</span>
             </button>
 
-            {/* Scroll lives on an inner wrapper, not the rounded panel, so the
-                scrollbar is clipped to the rounded frame instead of poking past
-                the corners — and the close button (a direct child of the panel)
-                stays fixed while this scrolls. */}
-            <div className="modal-scroll">
-              <div className="modal-media">
-                <DeviceFrame
-                  video={study.video}
-                  image={study.shots?.[0]}
-                  active={open}
-                  label={`${study.name} preview`}
-                  appName={study.name}
-                />
-              </div>
+            {/* Desktop: the device is a fixed left column (stays put while the
+                body scrolls). Mobile: it moves into the scrolling body below. */}
+            {isDesktop && device}
 
-              <div className="modal-body">
+            <div className="modal-main">
+              <header className="modal-header">
                 <p className="eyebrow-sm">Case study</p>
                 <h2 id={titleId} className="modal-title">
                   {study.name} <span className="modal-tagline">— {study.tagline}</span>
                 </h2>
+              </header>
+
+              {/* The one scroll region. Focusable + labelled so keyboard-only
+                  users can arrow-scroll it (APG scrollable-region guidance). */}
+              <div className="modal-body" tabIndex={0} aria-label="Case study details">
+                {!isDesktop && device}
+
                 <p className="modal-summary">{study.summary}</p>
 
                 <ul className="feature-list">
@@ -174,7 +210,9 @@ export default function CaseStudyModal({ triggerSelector, study }: CaseStudyModa
                   ))}
                   <span className="badge">{study.platform}</span>
                 </div>
+              </div>
 
+              <footer className="modal-footer">
                 <div className="modal-cta">
                   {study.appStoreUrl ? (
                     <a className="btn primary" href={study.appStoreUrl} target="_blank" rel="noopener">
@@ -188,7 +226,7 @@ export default function CaseStudyModal({ triggerSelector, study }: CaseStudyModa
                     Open full page →
                   </a>
                 </div>
-              </div>
+              </footer>
             </div>
           </motion.div>
         </motion.div>

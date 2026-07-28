@@ -231,6 +231,20 @@ For anything non-obvious — a tricky glass fallback, the modal's progressive-en
 performance trade-off — record the decision and its *why* here (and in memory), so the next session
 doesn't re-litigate it. A decision you had to think hard about is worth one paragraph.
 
+### Case-study modal — flex dialog, only the body scrolls
+`CaseStudyModal.tsx` is a bounded flex/grid dialog (ARIA APG pattern), **not** one scroller. The
+`.modal-panel` is the rounded, `overflow:hidden`, `max-height` frame; inside, a `.modal-header`
+(eyebrow + title, hairline `border-bottom`) and a `.modal-footer` (CTAs, hairline `border-top`) are
+`flex:none` and stay fixed, while **`.modal-body` is the only scroller** (`flex:1; min-height:0;
+overflow-y:auto; overscroll-behavior:contain`). Don't reintroduce `position:sticky` (fragile with the
+rounded corners + backdrop blur) or a single `.modal-scroll`. The device can't be both a fixed desktop
+column and scroll inside the body on mobile via CSS (an element can't cross the overflow boundary), so
+it's placed by breakpoint with a `useMediaQuery('(min-width:720px)')` hook: on desktop it's a direct
+panel child (left column, `align-self:start`, bounded by `36vh` so it isn't clipped on short laptops);
+on mobile it's the first child of `.modal-body`. Load-bearing a11y: `.modal-body` has `tabindex="0"` +
+`aria-label` so keyboard users can arrow-scroll it; the focus trap includes it; `aria-labelledby` still
+points at the title id (now in the header). Keep the thin inset scrollbar and the Framer-Motion spring.
+
 ### Status colour convention — shipped vs. in-development
 `--amber` (systemOrange) means **in development**; **green is reserved for shipped** ("On the App
 Store"). Never render a forthcoming app's status chip green — two near-identical green chips hid the
