@@ -10,8 +10,9 @@ interface Props {
   ogSlug?: string;
   /** Set on blog posts so the page is marked up as an article, not a website. */
   article?: { publishedTime: string; modifiedTime?: string; tags?: string[] };
-  /** Extra JSON-LD injected by the page (BlogPosting, SoftwareApplication, …). */
-  schema?: Record<string, unknown>;
+  /** Extra JSON-LD injected by the page (BlogPosting, SoftwareApplication,
+   *  BreadcrumbList, …). One object, or several to add to the @graph. */
+  schema?: Record<string, unknown> | Record<string, unknown>[];
 }
 
 const {
@@ -57,7 +58,7 @@ const jsonLd = {
       publisher: { '@id': PERSON_ID },
       inLanguage: 'en',
     },
-    ...(schema ? [schema] : []),
+    ...(schema ? (Array.isArray(schema) ? schema : [schema]) : []),
   ],
 };
 ---
