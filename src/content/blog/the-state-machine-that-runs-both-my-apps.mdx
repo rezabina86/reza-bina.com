@@ -1,0 +1,241 @@
+---
+title: "The state machine that runs both my apps"
+description: "How the same pure reducer runs a German-numbers game and an on-device redaction tool — choosing the pattern, building it, wiring async work into it, and extending it without the machine fighting back."
+pubDate: 2026-07-28
+draft: false
+tags: ["Architecture", "Swift Concurrency"]
+---
+
+A while ago I wrote about [deleting Combine from ZumNum](/writing/the-state-machine-i-didnt-know-i-had), my German-numbers app, after a double-tap bug turned out to be a data race hiding in a chain of subscriptions. The fix was a small state machine: a pure function from the current state and an event to the next state.
+
+What I left out of that post is what happened next. I'm also building Veil, a privacy app that finds and removes the personal details in a document, entirely on your phone. It has nothing in common with a numbers game. But when I built its import-and-redact flow, I reached for the same shape, down to the three-line function that runs it.
+
+This post is about that shape: how I decide a screen flow wants to be a state machine, how the pieces fit, how two very different apps use it, and how I add to it without the machine fighting back.
+
+Let me start with the part that surprised me, which is how little the two machines differ.
+
+## The same core, twice
+
+Both apps split the work in half. One half is a pure reducer: a plain function that takes the current state and an event, and returns the next state plus a list of side effects to run. It touches no speech engine, no PDF, no disk. In ZumNum it looks like this:
+
+```swift
+static func reduce(_ state: GameFlowState, _ event: GameFlowEvent) -> GameFlowOutcome {
+    switch (state, event) {
+    // ...one arm per meaningful (state, event) pair...
+    }
+}
+```
+
+The `GameFlowOutcome` it returns is just the next state and the work to do:
+
+```swift
+struct GameFlowOutcome: Equatable {
+    let state: GameFlowState
+    let effects: [GameFlowEffect]
+}
+```
+
+Veil's reducer has a different name and a longer state type, but it is the same function: `reduce(state, event)` returning a next state and a list of effects. The interesting part is the other half, the piece that actually owns the state and runs the machine. Here is the whole engine in ZumNum:
+
+```swift
+private func send(_ event: GameFlowEvent) {
+    let outcome = GameFlowReducer.reduce(state, event)
+    state = outcome.state
+    outcome.effects.forEach(perform)
+}
+```
+
+And here it is in Veil:
+
+```swift
+private func send(_ event: DocumentImportEvent) {
+    let outcome = DocumentImportFlowReducer.reduce(state, event)
+    state = outcome.state
+    outcome.effects.forEach(perform)
+}
+```
+
+Three lines, different type names. Run the event through the reducer, store the new state, perform whatever effects the reducer asked for. Every button tap, every finished download, every cancelled scan goes through this one door. That is the whole architecture, and the rest of this post is really just consequences of it.
+
+## When a flow wants to be a machine
+
+I don't reach for this on every screen. A settings toggle doesn't need a reducer, and wrapping a straight line of code in one buys nothing but ceremony.
+
+The signal that a flow wants to be a machine is a combination of three things:
+
+- An event only makes sense in some states. In ZumNum, "the number finished playing" means something after you tapped play and nothing at all before. In Veil, "the scan succeeded" is meaningful while scanning and meaningless once you've already cancelled.
+- Async work comes back later, and might come back too late. Speech finishes on a callback; a scan finishes on a background task. By the time either lands, the world may have moved on.
+- Things get cancelled or interrupted. You tap play twice. A phone call cuts off the audio. You back out of the flow mid-scan.
+
+When a flow has all three, the interesting logic isn't the happy path, it's the question of which events are valid right now and what happens when a slow result lands in the wrong moment. A state machine is just a place to write that answer down once, in a function you can test, instead of scattering it across callbacks and boolean flags. When a flow has none of the three, I leave it as ordinary code.
+
+## Effects, not side effects
+
+The rule that makes the reducer worth having is that it never does anything. It only describes what should be done. Those descriptions are a plain enum:
+
+```swift
+enum GameFlowEffect: Equatable {
+    case prepare(number: Int)
+    case speak(number: Int, rate: SpeechRate)
+    case recordAnswer(number: Int, answer: String, result: GameStepResult)
+}
+```
+
+So an arm of the reducer that wants a number spoken doesn't call the speech engine. It returns a value saying "speak this":
+
+```swift
+case let (.ready(step), .playTapped):
+    // The first listen is always at normal speed — a ready step has never been replayed.
+    return GameFlowOutcome(state: .speaking(step, isReplay: false),
+                           effects: [.speak(number: step.number, rate: .normal)])
+```
+
+Two things fall out of that discipline, and both are the reason to do it. The reducer is a pure function over `Equatable` values, so a test is a single `==` over the whole result: given this state and this event, expect exactly this next state and this list of effects. And because the reducer only reacts to events, an arm can decide to do nothing. The last arm in the switch is the one that earns its keep:
+
+```swift
+default:
+    // Every invalid (state, event) pair is a no-op — including a stale speech
+    // completion that arrives after the round has moved on.
+    return GameFlowOutcome(state: state)
+```
+
+That single line is the double-tap fix, generalized. Any event that doesn't have an explicit arm for the current state returns the state unchanged. A stale "finished playing" that lands after you've already moved on has no matching arm, so it does nothing instead of skipping you ahead.
+
+Veil scales the same idea up to a larger flow. Its state is one closed set of every stage a document passes through:
+
+```swift
+enum DocumentImportFlowState: Equatable {
+    case idle
+    case selectingSource
+    case preparing(DocumentSource)
+    case acquiring(DocumentSource)
+    case handingOff(needsModelSelection: Bool)
+    case selectingModel
+    case scanning
+    case reviewing
+    case choosingRedactionMode
+    case redacting(cameFromMode: Bool)
+    case previewingRedacted(cameFromMode: Bool)
+    case savingRedacted(cameFromMode: Bool)
+    case failed(DocumentImportFailure)
+}
+```
+
+Thirteen stages instead of six, but the machine reading them is the same three-line `send`. The heavy artifacts, the document and the scan result, never live in this state. They ride through effects and are stashed on the coordinator, so the state itself stays small and comparable, which is what keeps the reducer trivially testable.
+
+## The async seam
+
+Here is where the pattern pays for itself. Async work runs in a detached task, and its result comes back into the machine as another event. This is ZumNum's speech effect:
+
+```swift
+case let .speak(number, rate):
+    speakTask?.cancel()
+    speakTask = Task { [weak self, numberSpeaker] in
+        do {
+            try await numberSpeaker.speak(number, rate: rate)
+            self?.send(.speechFinished)
+        } catch is CancellationError {
+            self?.send(.speechCancelled)
+        } catch AudioPlayerError.interrupted {
+            self?.send(.speechInterrupted)
+        } catch {
+            self?.send(.speechFailed)
+        }
+    }
+```
+
+The `speak` function returns when playback genuinely finishes and throws if it was cut off, so each outcome becomes a distinct event fed back through `send`. Finished, cancelled, interrupted and failed are four different events because they deserve four different responses, and the reducer decides which is which.
+
+Veil's scan does exactly the same thing with a heavier payload:
+
+```swift
+scanTask = Task.detached(priority: .userInitiated) { [weak self, scanUseCase] in
+    do {
+        let result = try await scanUseCase.scan(scanDocument)
+        await self?.send(.scanSucceeded(result))
+    } catch is CancellationError {
+        // Dropped: a .cancelled already advanced the flow; the reducer would no-op anyway.
+    } catch {
+        await self?.send(.scanFailed)
+    }
+}
+```
+
+Two properties come out of routing every async result back through `send`. Because `send` runs on the main actor, the reducer only ever runs on the main actor, so the state machine is single-threaded by construction. There's no lock to forget, because two events can't be reducing at once. And a result that lands late is matched against whatever state the flow is actually in now, not the state it was launched from. In ZumNum a superseded utterance comes back as `.speechCancelled` and no state acts on it. In Veil a cancelled scan either throws `CancellationError`, which is dropped, or arrives as a success that no longer matches `.scanning` and falls through to the no-op. The data race I started with can't reassemble here, because nothing writes shared state off the main actor.
+
+## The view is a function of the state
+
+Nothing imperatively tells the screen what to show. The view observes the state and renders whatever it currently is. Veil builds each stage's view by switching on the state:
+
+```swift
+func scanFlowStep(for state: DocumentImportFlowState) -> AnyView {
+    switch state {
+    case .selectingModel:      AnyView(OnDeviceModelSetupView(...))
+    case .scanning:            AnyView(ScanningStepView(...))
+    case .reviewing:           AnyView(ReviewStepView(...))
+    case .choosingRedactionMode: AnyView(RedactionModeStepView(...))
+    case .redacting:           AnyView(RedactingStepView(...))
+    case .previewingRedacted, .savingRedacted: AnyView(RedactionPreviewStepView(...))
+    case let .failed(failure): AnyView(ScanFailedStepView(...))
+    case .idle, .selectingSource, .preparing, .acquiring, .handingOff:
+        AnyView(EmptyView())
+    }
+}
+```
+
+Both coordinators are marked `@Observable`, so reading the state inside a view registers a dependency and every transition re-renders on its own. The loop is the whole mental model: an event goes in, the reducer produces a new state, SwiftUI redraws. I never write "now hide the spinner and show the review screen." I change the state, and the view is a pure function of it.
+
+Notice that switch has no `default`. That's not an accident, and it's the key to extending the thing safely, which is the next section.
+
+## Extending it: what the compiler catches, and what it doesn't
+
+After living with this in two apps, the honest summary is that adding a **state** is safe and adding an **event** needs discipline. They fail differently, and it's worth knowing which is which before you go adding cases.
+
+Adding a state is the pleasant case. The switches that render the UI are exhaustive over the state enum, with no `default`, like the `scanFlowStep` above. Add a `case` to the state and the build breaks in every place that has to show something, and the compiler walks you through the render layer one error at a time. You physically cannot add a stage and forget to give it a screen.
+
+Adding an event is the case to be careful with. The reducer's switch is over the `(state, event)` pair and it *does* have a `default`, because that no-op is exactly what drops stale results and ignores invalid transitions. The cost of that convenience is that a brand-new event compiles the moment you add it, quietly falling through to the no-op in every state until you write its arms. The compiler won't remind you. So a new event is always two edits and a test: the arms in the reducer, and a test asserting they do what you think. In practice I add the failing test first.
+
+Effects sit back on the safe side. The coordinator's `perform` switch over the effect enum has no `default` either, so a new effect doesn't compile until you've said how to run it.
+
+## Where I deliberately don't use it
+
+It would be easy to over-apply this, so here's the counterexample from inside Veil itself. The detection pipeline, the part that reads the page with Vision, runs the on-device model, then reconciles the model's guesses against deterministic validators, is *not* a state machine. It's a plain linear function:
+
+```swift
+let ocrResults = try await ocrEngine.recognizeText(in: pdf, configuration: ...)
+for pageResult in ocrResults {
+    let detections = try await piiEngine.detect(text: block.text, configuration: ...)
+    tokens += tokenizer.tokens(in: block, detections: detections)
+}
+```
+
+To the flow machine, this entire pipeline is a single state, `.scanning`. It either produces a result and moves to `.reviewing`, or throws and moves to `.failed`. Inside that one state, the stages are just functions calling functions, because they're a straight line: no event only makes sense partway through, nothing lands late, there's nothing to cancel between OCR and tokenizing beyond cancelling the whole scan. A state machine there would be pure ceremony. Coarse machine at the flow level, ordinary pipeline inside a state, and the boundary between them is exactly the three-part test from earlier.
+
+## A smaller cousin: state as a concurrency guard
+
+The same "make the states explicit and the illegal ones impossible" idea shows up in Veil far from any screen. The on-device model is about 834 MB, and loading it twice at once will run the phone out of memory. The cache that holds it is a tiny three-state machine:
+
+```swift
+private enum State {
+    case unloaded
+    case loading(Task<Value, Error>)
+    case loaded(Value)
+}
+```
+
+The `.loading` case carries the in-flight task, so a second caller arriving mid-load doesn't start its own load. It awaits the one already running:
+
+```swift
+case .unloaded:
+    let task = Task { try await load() }
+    // Set .loading synchronously (no await first), so the actor admits at most one loader.
+    state = .loading(task)
+```
+
+This isn't a UI flow and it has no events, but it's the same instinct. The double-load out-of-memory crash has nowhere to live once "a load is already happening" is a state the code can see and refuse to start a second one from.
+
+## What it comes down to
+
+The reason a numbers game and a redaction tool run the same machine is that their hard parts are the same hard part. Neither is really about speech or PDFs. Both are about which events are valid right now, and what happens when a slow result lands a moment too late. That question has the same answer everywhere, and a reducer is just where I write it down: a pure function I can read top to bottom and test with `==`, wrapped in a three-line loop that keeps every transition on one thread.
+
+ZumNum is on the App Store and Veil is next. When it ships, this loop is running underneath it, doing the unglamorous job of never skipping you ahead.
