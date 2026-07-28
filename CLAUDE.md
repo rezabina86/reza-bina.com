@@ -262,10 +262,14 @@ the second app. Bento is still allowed *inside* a section (Apps is a two-card gr
 `.section-label` heading wired with `aria-labelledby`, generous `.home-section` rhythm between them, and
 `scroll-margin-top` so the nav anchors (`#apps`, `#writing`, `#about` — **preserve these**, the nav
 scrolls to them) clear the sticky nav. Heading order is `h1` (hero) → `h2` (section) → `h3` (app names,
-post titles, "Elsewhere"). The two `CaseStudyModal` trigger ids (`#zumnum-trigger`, `#veil-trigger`) and
+post titles, "Contact"). The two `CaseStudyModal` trigger ids (`#zumnum-trigger`, `#veil-trigger`) and
 the stretched-link + App Store z-index behaviour are load-bearing — keep them on the app cards. Don't
 re-merge the sections back into a single `.bento`/`.col-*` grid; those classes were removed with this
-change.
+change. **About is single-column**: a full-width `.about-bio` card, then a compact `.about-contact`
+strip (label left, icon links right — inline SVG, `aria-hidden`, so the visible text stays the
+accessible name) — *not* the old two-column `.about-grid`, which stranded a short card beside the tall
+bio. The hero card hugs its content (reduced `padding-bottom`); its wide right void is deliberate,
+reserved for a future device/motif.
 
 ### SEO / discoverability conventions
 The site's structured data is a JSON-LD `@graph` (`Base.astro`): always Person + WebSite, plus
