@@ -24,8 +24,8 @@ export async function getStaticPaths() {
       params: { slug: 'home' },
       props: {
         eyebrow: 'Senior iOS Engineer',
-        title: 'Software that keeps your data private.',
-        subtitle: 'Privacy-first apps for the Apple ecosystem, running entirely on the device.',
+        title: 'I build native iOS apps that run entirely on your device.',
+        subtitle: 'Small, fast, and native — and quietly ambitious under the hood. Nothing leaves your phone.',
       },
     },
     {
