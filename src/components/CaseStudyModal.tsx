@@ -135,53 +135,59 @@ export default function CaseStudyModal({ triggerSelector, study }: CaseStudyModa
               <span aria-hidden="true">✕</span>
             </button>
 
-            <div className="modal-media">
-              <DeviceFrame
-                video={study.video}
-                image={study.shots?.[0]}
-                active={open}
-                label={`${study.name} preview`}
-                appName={study.name}
-              />
-            </div>
-
-            <div className="modal-body">
-              <p className="eyebrow-sm">Case study</p>
-              <h2 id={titleId} className="modal-title">
-                {study.name} <span className="modal-tagline">— {study.tagline}</span>
-              </h2>
-              <p className="modal-summary">{study.summary}</p>
-
-              <ul className="feature-list">
-                {study.features.map((f) => (
-                  <li key={f.title}>
-                    <strong>{f.title}</strong>
-                    <span>{f.body}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <div className="badges" aria-label="Built with">
-                {study.badges.map((b) => (
-                  <span className="badge" key={b}>
-                    {b}
-                  </span>
-                ))}
-                <span className="badge">{study.platform}</span>
+            {/* Scroll lives on an inner wrapper, not the rounded panel, so the
+                scrollbar is clipped to the rounded frame instead of poking past
+                the corners — and the close button (a direct child of the panel)
+                stays fixed while this scrolls. */}
+            <div className="modal-scroll">
+              <div className="modal-media">
+                <DeviceFrame
+                  video={study.video}
+                  image={study.shots?.[0]}
+                  active={open}
+                  label={`${study.name} preview`}
+                  appName={study.name}
+                />
               </div>
 
-              <div className="modal-cta">
-                {study.appStoreUrl ? (
-                  <a className="btn primary" href={study.appStoreUrl} target="_blank" rel="noopener">
-                    View on the App Store ↗
+              <div className="modal-body">
+                <p className="eyebrow-sm">Case study</p>
+                <h2 id={titleId} className="modal-title">
+                  {study.name} <span className="modal-tagline">— {study.tagline}</span>
+                </h2>
+                <p className="modal-summary">{study.summary}</p>
+
+                <ul className="feature-list">
+                  {study.features.map((f) => (
+                    <li key={f.title}>
+                      <strong>{f.title}</strong>
+                      <span>{f.body}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="badges" aria-label="Built with">
+                  {study.badges.map((b) => (
+                    <span className="badge" key={b}>
+                      {b}
+                    </span>
+                  ))}
+                  <span className="badge">{study.platform}</span>
+                </div>
+
+                <div className="modal-cta">
+                  {study.appStoreUrl ? (
+                    <a className="btn primary" href={study.appStoreUrl} target="_blank" rel="noopener">
+                      View on the App Store ↗
+                    </a>
+                  ) : (
+                    /* Unreleased: state it plainly rather than linking nowhere. */
+                    <span className="badge badge--status">In development · not yet released</span>
+                  )}
+                  <a className="link-quiet" href={`/work/${study.slug}`}>
+                    Open full page →
                   </a>
-                ) : (
-                  /* Unreleased: state it plainly rather than linking nowhere. */
-                  <span className="badge badge--status">In development · not yet released</span>
-                )}
-                <a className="link-quiet" href={`/work/${study.slug}`}>
-                  Open full page →
-                </a>
+                </div>
               </div>
             </div>
           </motion.div>
