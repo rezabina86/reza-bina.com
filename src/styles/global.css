@@ -283,9 +283,9 @@ h1 {
 .section-head .section-label { margin-bottom: 0; }
 
 /* Apps: two cards, ZumNum wider + first = primary weight (collapses to one
-   column on narrow viewports). About: full-width bio, then a compact contact
-   strip stacked beneath — single column, so no short card strands next to the
-   tall bio. */
+   column on narrow viewports). About: full-width bio card (matches the app/
+   writing cards), then a compact contact strip stacked beneath — single column,
+   so no short card strands next to the tall bio. */
 .apps-grid   { display: grid; grid-template-columns: 7fr 5fr; gap: 16px; }
 .about-stack { display: grid; gap: 16px; }
 
@@ -797,6 +797,8 @@ a.card:focus-visible, button.card:focus-visible { outline-offset: 4px; }
 }
 .shot__caption { margin-top: 12px; font-size: 13.5px; color: var(--label-2); line-height: 1.5; }
 
-/* About prose keeps a readable measure even in a wide tile. */
-#about .about-bio p { max-width: 62ch; }
+/* The About card is full width (matching the app/writing cards); the bio is a
+   single column whose text fills that full width — no reading-measure cap, so
+   there's no void beside it. */
+#about .about-bio p { max-width: none; }
 #about .about-bio p + p { margin-top: 0.9em; }
