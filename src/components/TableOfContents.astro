@@ -3,9 +3,17 @@ import type { MarkdownHeading } from 'astro';
 
 /**
  * TableOfContents (HANDOFF §7.5) — auto-generated from a post's h2/h3.
- * Rendered statically from Astro's `render()` headings; the only client JS is
- * a small scroll-spy that marks the section currently in view (progressive
- * enhancement — the list is complete and usable without it).
+ *
+ * Flat, aligned design: every row shares one left edge (no indentation). The
+ * h2/h3 hierarchy is carried typographically — h2 links read brighter and a
+ * touch heavier, h3 links quieter — so the list scans as a structure without
+ * any indent that could look misaligned. The active row is a filled pill.
+ * Each link carries a `--top`/`--sub` modifier so the level styling stays a
+ * single flat class (no descendant-selector specificity fights with the
+ * hover/active states).
+ *
+ * The only client JS is a small scroll-spy that marks the section in view
+ * (progressive enhancement — the list is complete and usable without it).
  */
 
 interface Props {
@@ -22,8 +30,12 @@ const items = headings.filter((h) => h.depth === 2 || h.depth === 3);
       <p class="toc__title" id="toc-heading">On this page</p>
       <ul class="toc__list">
         {items.map((h) => (
-          <li class:list={['toc__item', { 'toc__item--sub': h.depth === 3 }]}>
-            <a class="toc__link" href={`#${h.slug}`} data-toc-link={h.slug}>
+          <li class="toc__item">
+            <a
+              class:list={['toc__link', h.depth === 3 ? 'toc__link--sub' : 'toc__link--top']}
+              href={`#${h.slug}`}
+              data-toc-link={h.slug}
+            >
               {h.text}
             </a>
           </li>
