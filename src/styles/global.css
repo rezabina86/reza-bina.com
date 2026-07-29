@@ -283,9 +283,9 @@ h1 {
 .section-head .section-label { margin-bottom: 0; }
 
 /* Apps: two cards, ZumNum wider + first = primary weight (collapses to one
-   column on narrow viewports). About: full-width bio, then a compact contact
-   strip stacked beneath — single column, so no short card strands next to the
-   tall bio. */
+   column on narrow viewports). About: full-width bio card (matches the app/
+   writing cards), then a compact contact strip stacked beneath — single column,
+   so no short card strands next to the tall bio. */
 .apps-grid   { display: grid; grid-template-columns: 7fr 5fr; gap: 16px; }
 .about-stack { display: grid; gap: 16px; }
 
@@ -484,26 +484,30 @@ a.card:focus-visible, button.card:focus-visible { outline-offset: 4px; }
 .article__layout { display: grid; grid-template-columns: 1fr minmax(0, 68ch); gap: 48px; align-items: start; }
 .article__aside { position: sticky; top: 96px; justify-self: end; width: 100%; max-width: 230px; }
 
-/* ---------- Table of contents ---------- */
-.toc__title { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--label-3); margin-bottom: 12px; }
-.toc__list { list-style: none; display: grid; gap: 2px; border-left: 1px solid var(--separator); }
-/* Sub-items are distinguished by indentation only. Don't shrink the font: with
-   a unitless line-height it made sub rows 1px shorter than top-level rows and
-   the vertical rhythm hiccupped every time a sub-item appeared. */
-.toc__item--sub .toc__link { padding-left: 26px; }
+/* ---------- Table of contents ----------
+   Flat, aligned: every row shares one left edge — no indentation to look
+   misaligned. The h2/h3 hierarchy is typographic instead: h2 links read
+   brighter and a touch heavier, h3 links quieter. The active row is a
+   full-width rounded highlight (iOS/macOS sidebar-selection pattern). Level and
+   state styling are single-class selectors on the link so nothing fights over
+   specificity. Same design on desktop and mobile. */
+.toc__title { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--label-3); margin: 0 0 10px 12px; }
+.toc__list { list-style: none; display: grid; gap: 2px; }
 .toc__link {
-  display: block; padding: 6px 0 6px 14px; margin-left: -1px;
-  border-left: 2px solid transparent;
+  display: block; padding: 7px 12px; border-radius: 8px;
   color: var(--label-2); text-decoration: none; font-size: 13.5px;
-  /* Absolute (integer) line-height, not unitless 1.4: 13.5 × 1.4 = 18.9px made
-     each row 30.9px tall, so the pitch was fractional and adjacent gaps rounded
-     to different device-pixel heights — the leftover uneven leading. 19px makes
-     the row exactly 31px (pitch 33px), so every gap paints identically. */
+  /* Integer line-height (not unitless 1.4 → 18.9px): keeps every row exactly
+     33px tall so the vertical rhythm never rounds unevenly between rows. */
   line-height: 19px;
-  transition: color .2s var(--ease-ios), border-color .2s var(--ease-ios);
+  transition: color .2s var(--ease-ios), background-color .2s var(--ease-ios);
 }
-.toc__link:hover { color: var(--label); }
-.toc__link.is-active { color: var(--label); border-left-color: var(--accent); }
+/* Hierarchy by weight + colour, not indent — all rows still start at the same x. */
+.toc__link--top { color: var(--label); font-weight: 500; }
+.toc__link--sub { color: var(--label-3); }
+/* Hover (0,2,0) and active (0,2,0) both out-specify the level modifiers (0,1,0);
+   active is declared last so it wins when a row is both active and hovered. */
+.toc__link:hover { color: var(--label); background-color: var(--glass-bg); }
+.toc__link.is-active { color: var(--accent); background-color: rgba(var(--accent-rgb), 0.12); }
 
 @media (max-width: 900px) {
   .article .wrap { max-width: 720px; }
@@ -513,11 +517,9 @@ a.card:focus-visible, button.card:focus-visible { outline-offset: 4px; }
      edge under `body { overflow-x: hidden }`. The 0 floor lets it shrink. */
   .article__layout { grid-template-columns: minmax(0, 1fr); gap: 28px; }
   .article__aside { position: static; justify-self: stretch; max-width: none; }
-  .toc { border: 1px solid var(--separator); border-radius: var(--r-control); padding: 16px 18px; background: var(--bg-elev); }
-  .toc__list { border-left: none; }
-  .toc__link { padding-left: 0; border-left: none; }
-  .toc__link.is-active { color: var(--accent); border-left: none; }
-  .toc__item--sub .toc__link { padding-left: 14px; }
+  /* Mobile: the TOC becomes a bordered card. The row highlights (base rules) sit
+     inside its padding, so they're inset from the card edge — no rail needed. */
+  .toc { border: 1px solid var(--separator); border-radius: var(--r-control); padding: 10px; background: var(--bg-elev); }
 }
 
 .prose { font-size: 18px; line-height: 1.78; color: #d9dae1; max-width: 68ch; }
@@ -795,6 +797,8 @@ a.card:focus-visible, button.card:focus-visible { outline-offset: 4px; }
 }
 .shot__caption { margin-top: 12px; font-size: 13.5px; color: var(--label-2); line-height: 1.5; }
 
-/* About prose keeps a readable measure even in a wide tile. */
-#about .about-bio p { max-width: 62ch; }
+/* The About card is full width (matching the app/writing cards); the bio is a
+   single column whose text fills that full width — no reading-measure cap, so
+   there's no void beside it. */
+#about .about-bio p { max-width: none; }
 #about .about-bio p + p { margin-top: 0.9em; }

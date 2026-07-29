@@ -282,8 +282,12 @@ re-merge the sections back into a single `.bento`/`.col-*` grid; those classes w
 change. **About is single-column**: a full-width `.about-bio` card, then a compact `.about-contact`
 strip (label left, icon links right — inline SVG, `aria-hidden`, so the visible text stays the
 accessible name) — *not* the old two-column `.about-grid`, which stranded a short card beside the tall
-bio. The hero card hugs its content (reduced `padding-bottom`); its wide right void is deliberate,
-reserved for a future device/motif.
+bio. **The `.about-bio` card is full width (same as the app/writing cards) and the bio is a single
+column whose text fills that full width** — `#about .about-bio p { max-width: none }`, no reading-measure
+cap, so no void beside the text. Per Reza (2026-07-29): keep it one column filling the width — don't cap
+it to a narrow reading measure (which strands it visually next to the full-width cards) and don't split
+it into multiple columns. (The *hero* card is different: it hugs its content vertically but keeps its
+wide right void on purpose, reserved for a future device/motif.)
 
 ### SEO / discoverability conventions
 The site's structured data is a JSON-LD `@graph` (`Base.astro`): always Person + WebSite, plus
