@@ -289,6 +289,24 @@ it to a narrow reading measure (which strands it visually next to the full-width
 it into multiple columns. (The *hero* card is different: it hugs its content vertically but keeps its
 wide right void on purpose, reserved for a future device/motif.)
 
+### Home positioning — founder-forward, by implication (FIX-11)
+The home is written to read as a **founder's** site — someone who owns products end-to-end and has
+momentum — **not an engineer-for-hire's**. The signal is always *indirect*: nothing on the page may say
+"available", "hire", "freelance", or "seeking co-founder". Four load-bearing pieces carry it (per Reza,
+2026-07-29): (1) the hero **`.hero-now`** status line ("Now — building Veil, and looking for the next
+thing worth building.") with a small **`--warm`** (systemGreen) `.hero-now__dot` — a current-momentum
+cue; (2) the About **`.about-thesis`** lead — a prominent point-of-view statement, capped ~40ch, that the
+body paragraphs must **not** re-echo; (3) the About third paragraph's end-to-end **ownership** claim
+(empty Xcode project → App Store, myself); (4) the **`.contact-invite`** — a peer-framed line above the
+contact row ("If you're building something ambitious on Apple platforms…"). Keep the tone this side of a
+pitch; if you edit this copy, preserve the "never says for-hire" rule.
+**CSS gotcha:** `.card p` (specificity 0,1,1) beats a bare `.hero-now`/`.contact-invite` (0,1,0) and was
+silently forcing both to the 15.5px body size/`--label-2`. They're intentionally scoped
+(`.hero-card .hero-now`, `.about-contact .contact-invite`) to win, keeping the quieter 14px/`--label-3`
+"now" line and the 15px invite. Contact layout is now: `.about-contact` is a **column** (its `.card`
+default — the old row-flex override was removed); the invite sits full-width on its own line, and
+**`.contact-row`** carries the label-left / links-right flex row beneath it (wraps on mobile).
+
 ### SEO / discoverability conventions
 The site's structured data is a JSON-LD `@graph` (`Base.astro`): always Person + WebSite, plus
 per-page schema passed via the `schema` prop, which takes **one object or an array**. Posts pass
