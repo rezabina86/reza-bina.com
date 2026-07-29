@@ -17,7 +17,7 @@ interface Props {
 
 const {
   title = 'Reza Bina — Private, on-device apps for iPhone',
-  description = 'iOS engineer in Berlin building private, on-device apps that run entirely on your device. Maker of ZumNum and Veil.',
+  description = 'iOS engineer in Berlin who designs, builds, and ships private, on-device apps end to end — maker of ZumNum and Veil.',
   ogSlug = 'home',
   article,
   schema,
@@ -36,13 +36,17 @@ const person = {
   url: Astro.site?.href,
   jobTitle: 'Senior iOS Engineer',
   description:
-    'iOS engineer building privacy-first apps that run entirely on the device.',
+    'iOS engineer who designs, builds, and ships privacy-first, on-device apps end to end.',
   address: { '@type': 'PostalAddress', addressLocality: 'Berlin', addressCountry: 'DE' },
   sameAs: [
     'https://github.com/rezabina86',
     'https://www.linkedin.com/in/reza-bina/',
   ],
-  knowsAbout: ['iOS development', 'Swift', 'SwiftUI', 'On-device machine learning', 'Privacy engineering'],
+  knowsAbout: [
+    'iOS development', 'Swift', 'SwiftUI', 'Swift Concurrency',
+    'On-device machine learning', 'Privacy engineering',
+    'Indie app development', 'Product design',
+  ],
 };
 
 const jsonLd = {
