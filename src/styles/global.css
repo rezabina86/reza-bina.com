@@ -487,6 +487,8 @@ a.card:focus-visible, button.card:focus-visible { outline-offset: 4px; }
 /* ---------- Footer ---------- */
 .footer { padding: 60px 0 48px; margin-top: 44px; border-top: 1px solid var(--separator); color: var(--label-3); font-size: 14px; }
 .footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.footer a { color: inherit; text-decoration: underline; text-underline-offset: 2px; text-decoration-color: var(--separator-hi); transition: color .2s var(--ease-ios), text-decoration-color .2s var(--ease-ios); }
+.footer a:hover { color: var(--label); text-decoration-color: var(--label-2); }
 
 /* ---------- Article (blog post) ---------- */
 .article { padding: 52px 0 20px; }

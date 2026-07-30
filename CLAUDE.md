@@ -324,3 +324,19 @@ the convention targets *LLM-ingestion tools*, where it's cheap and harmless. It'
 insurance, not a ranking lever — don't re-add it expecting Google traffic, and don't rip it out
 expecting to lose any. Everything else (canonical, OG, generated OG images, sitemap with `/og/` +
 `llms` excluded, RSS, robots with named AI-crawler allows) is already correct; don't rebuild it.
+
+### Analytics — cookieless only, and the footer claim must match (FIX-14)
+The site runs **GoatCounter** (`Base.astro`, injected before `</body>`, gated on `import.meta.env.PROD`
+so `npm run dev` stays out of the stats, `is:inline` so Astro doesn't bundle the third-party script,
+`async`). Chosen because it sets **no cookies, collects no personal data, and needs no consent banner** —
+the only analytics consistent with this site. **Never** add Google Analytics, a tag manager, cookies, a
+consent banner, or any fingerprinting/cross-site tracking; that list is closed. The endpoint is
+`https://rezabina.goatcounter.com/count` (Reza owns the `rezabina` GoatCounter account).
+**The honesty rule (load-bearing):** the footer once read "No trackers". Any analytics makes that
+arguable, and on a site whose whole credibility is not overclaiming, a beacon under a "No trackers"
+footer is a real hit. So the footer now reads **"Cookieless analytics, no personal data"** (the phrase
+links to `/privacy`), and **the footer copy must change in the same commit as any analytics change** —
+they are never allowed to drift. `/privacy` (`src/pages/privacy.astro`, in Reza's voice) states plainly
+what is counted (aggregate page views, referrer, rough country/browser), what is not (no cookies, no
+personal data, no cross-site tracking, no ads, no fingerprinting), and who/why (GoatCounter, to see which
+posts land). It's indexed on purpose — on a privacy-first site the page is an asset, not boilerplate.
