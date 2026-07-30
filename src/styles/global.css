@@ -154,7 +154,7 @@ a { color: inherit; }
 
 /* Refraction / edge-lensing — hero surfaces only. Gated: Chromium honours the
    SVG-filter backdrop; Safari/Firefox fall back to the base glass above.
-   Requires <LiquidGlassFilter /> (the #liquid <filter>) present in the DOM. */
+   Requires <LiquidGlassFilter /> (the #liquid <filter>) present in the DOM.
    The blur matches --glass-blur rather than undercutting it: the hero used to
    blur less than every other glass surface, which is exactly why the aurora
    read through it as a coloured smear. */
