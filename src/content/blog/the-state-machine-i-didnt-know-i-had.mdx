@@ -4,14 +4,14 @@ description: "I spent a year building my German-numbers app on Combine, then del
 pubDate: 2026-07-27T18:00:00Z
 updated: 2026-07-30T12:00:00Z
 draft: false
-tags: ["Swift Concurrency", "Combine"]
+tags: ["Swift Concurrency", "Combine", "Architecture"]
 ---
 
 I built ZumNum on Combine and ran it that way for almost exactly a year. ZumNum is a small app for learning German numbers: it says a number out loud, you type what you heard, it tells you whether you got it right.
 
 Then a bug sent me looking. Tap the play button twice quickly and the app would jump to the next question before you'd answered the current one. Small, silly, and easy to reproduce.
 
-Fixing it took an afternoon, deleted about 1,700 lines, and removed every last trace of Combine from the app. This is the story of that migration: what moved, what broke on the way, and the uncomfortable part I keep coming back to, which is that the migration itself is not what fixed the bug.
+The fix took an afternoon, deleted about 1,700 lines, and removed every last trace of Combine. This is the story of that migration: what moved, what broke on the way, and the uncomfortable part I keep coming back to, which is that the migration itself is not what fixed the bug.
 
 ## Why the app was built on Combine
 
@@ -27,7 +27,7 @@ Read that as a row of dominoes. iOS tells the speech synthesizer that a number f
 
 Each link was a few lines. Each file was small and did one job. It looked like good code, because it is the shape you get from following all the usual advice. That is worth sitting with before touching any of it: nothing about the code looked wrong.
 
-## The bug the migration had to fix
+## The first thing that was broken
 
 Before deciding what to migrate *to*, I had to understand what was actually broken. Two things were.
 
@@ -138,7 +138,7 @@ The interruptions above are the ones I reasoned my way to. There was one more th
 
 Start a round, leave the app for half an hour, come back, and the play button did nothing. Not slow, not wrong. Dead. You had to force-quit and relaunch.
 
-My first guess was that iOS had freed the audio player out from under the suspended app, so I was tapping play into nothing. I never managed to prove that, and I don't really believe it now. What I could see was the shape of it. The round was stuck in its speaking state, waiting on a spoken number to finish, and that finish never arrived. Tapping play there did nothing, because a round that is already speaking has no rule for another play. It was the same dead end as the phone-call hang, reached by a slower road: leaving a foreground app is one more way for iOS to take the audio out from under a `speak` that is still waiting on it.
+My first guess was that iOS had freed the audio player out from under the suspended app, so I was tapping play into nothing. I never managed to prove that, and I don't really believe it now. What I could see was the shape of it. The round was stuck in its speaking state, waiting on a spoken number to finish, and that finish never arrived. Tapping play there did nothing, because a round that is already speaking has no rule for another play. It was the same dead end as the phone-call hang, reached by a slower road: backgrounding the app for long enough is one more way for iOS to take the audio out from under a `speak` that is still waiting on it.
 
 Here is the honest part. After the migration it stopped happening, and I can't fully tell you why. The likely reason is the one this whole post is about: an utterance that gets cut short is now a named, recoverable event instead of silence on a subscription, so a round that would once have stranded itself has somewhere to go. But I never instrumented what iOS actually does to the audio session at the thirty-minute mark, and I won't pretend I did. A bug that quietly disappears when you rebuild the thing around it is a good outcome and an unsatisfying one, and this was both.
 
@@ -166,4 +166,4 @@ If you are about to move an app off Combine, the migration is worth doing. Async
 
 The two things that actually fixed my bug were things I'd left implicit: which thread the work ran on, and what states the app could be in. Swift concurrency made me write down the first. Nothing but a piece of paper made me write down the second. A chain of reactive operators is a state machine you haven't written down yet, and a compiler can't check something that was never written.
 
-ZumNum is on the App Store if you want to see where it landed. It says a number in German, you type what you heard. No chains behind it anymore.
+[ZumNum is on the App Store](https://apps.apple.com/de/app/zumnum/id6748617262?l=en-GB) if you want to see where it landed. It says a number in German, you type what you heard. No chains behind it anymore.
