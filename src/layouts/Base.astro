@@ -147,7 +147,7 @@ const jsonLd = {
     <footer class="footer">
       <div class="wrap">
         <span>© {new Date().getFullYear()} Reza Bina · Berlin</span>
-        <span>Built &amp; hosted independently. No trackers.</span>
+        <span>Built &amp; hosted independently. <a href="/privacy">Cookieless analytics</a>, no personal data.</span>
       </div>
     </footer>
 
@@ -203,5 +203,21 @@ const jsonLd = {
         window.addEventListener('scroll', onScroll, { passive: true });
       }
     </script>
+
+    {
+      /* Cookieless, GDPR-consent-free analytics (GoatCounter): no cookies, no
+         personal data, no cross-site tracking — see /privacy. `is:inline` so
+         Astro serves the third-party script verbatim instead of bundling it;
+         `async` so it never blocks render; gated on PROD so `npm run dev` stays
+         out of the stats. Endpoint is the `rezabina` GoatCounter site. */
+      import.meta.env.PROD && (
+        <script
+          is:inline
+          data-goatcounter="https://rezabina.goatcounter.com/count"
+          async
+          src="//gc.zgo.at/count.js"
+        />
+      )
+    }
   </body>
 </html>

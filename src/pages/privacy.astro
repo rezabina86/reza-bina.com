@@ -1,0 +1,50 @@
+---
+import Base from '../layouts/Base.astro';
+
+const title = 'Privacy — Reza Bina';
+const description =
+  'How this site handles analytics: cookieless, aggregate, no personal data. What is counted, what is not, and who processes it.';
+---
+
+<Base title={title} description={description}>
+  <article class="article">
+    <div class="wrap">
+      <a class="back" href="/">← Home</a>
+      <h1>Privacy</h1>
+
+      <div class="prose">
+        <p>
+          I like to know which posts people actually read, and roughly where they came from, so I can
+          write more of what turns out to be useful. That is the entire reason this site has analytics.
+          This page says exactly what that means, because a privacy-first site owes you the specifics
+          rather than a reassuring word.
+        </p>
+
+        <p>
+          What gets counted is aggregate and shallow: a page view, the site that referred you (a search
+          engine, a link, a post somewhere), and a rough country and browser. That is it. Numbers in a
+          dashboard, not a profile of you.
+        </p>
+
+        <p>
+          What does not happen: no cookies, so there is no banner to click through. No personal data.
+          No cross-site tracking, no advertising, no fingerprinting, no attempt to work out who you are
+          or to follow you anywhere else. Nothing is stored that could single you out.
+        </p>
+
+        <p>
+          The counting is done by <a href="https://www.goatcounter.com" rel="noopener">GoatCounter</a>,
+          an open-source, privacy-first analytics service that is built to collect the aggregate numbers
+          above and nothing more. I chose it precisely because it is the only kind of analytics that is
+          consistent with how I build everything else here, and with the apps: no accounts, no tracking,
+          nothing that needs to leave your device to be trusted.
+        </p>
+
+        <p>
+          If that ever stops being true, this page changes in the same breath. Questions are welcome at
+          <a href="mailto:rezabina.dev@gmail.com">rezabina.dev@gmail.com</a>.
+        </p>
+      </div>
+    </div>
+  </article>
+</Base>
