@@ -9,7 +9,7 @@ tags: ["Swift Concurrency", "Combine"]
 
 I built ZumNum on Combine and ran it that way for almost exactly a year. ZumNum is a small app for learning German numbers: it says a number out loud, you type what you heard, it tells you whether you got it right.
 
-Then a bug sent me looking. Tap the play button twice quickly and the app would jump to the next question before you'd answered the current one. Small, silly, easy to reproduce.
+Then a bug sent me looking. Tap the play button twice quickly and the app would jump to the next question before you'd answered the current one. Small, silly, and easy to reproduce.
 
 Fixing it took an afternoon, deleted about 1,700 lines, and removed every last trace of Combine from the app. This is the story of that migration: what moved, what broke on the way, and the uncomfortable part I keep coming back to, which is that the migration itself is not what fixed the bug.
 
@@ -131,6 +131,16 @@ If a call comes in, or Siri, or an alarm, iOS takes the audio away and stops pla
 That was the trade I made without noticing. Under Combine, a message that never arrives is a missed update. Under async/await, a function that never returns is a hang. Same underlying gap, different failure.
 
 The fix needed one more distinction. An interruption does have to make `speak` return, but it can't pretend to be a cancellation, because the app treats cancellation as "the user asked for this, stay put." A phone call disguised as a cancellation would freeze the screen just the same. So an interruption became its own error and its own event: the round drops back to the number, your typed answer is still there, you tap play and carry on. That is how one message ended up as four events, and I didn't see it coming when I drew the first version.
+
+## The freeze I never fully explained
+
+The interruptions above are the ones I reasoned my way to. There was one more that a user actually reported, and I'm including it precisely because I never got fully to the bottom of it.
+
+Start a round, leave the app for half an hour, come back, and the play button did nothing. Not slow, not wrong. Dead. You had to force-quit and relaunch.
+
+My first guess was that iOS had freed the audio player out from under the suspended app, so I was tapping play into nothing. I never managed to prove that, and I don't really believe it now. What I could see was the shape of it. The round was stuck in its speaking state, waiting on a spoken number to finish, and that finish never arrived. Tapping play there did nothing, because a round that is already speaking has no rule for another play. It was the same dead end as the phone-call hang, reached by a slower road: leaving a foreground app is one more way for iOS to take the audio out from under a `speak` that is still waiting on it.
+
+Here is the honest part. After the migration it stopped happening, and I can't fully tell you why. The likely reason is the one this whole post is about: an utterance that gets cut short is now a named, recoverable event instead of silence on a subscription, so a round that would once have stranded itself has somewhere to go. But I never instrumented what iOS actually does to the audio session at the thirty-minute mark, and I won't pretend I did. A bug that quietly disappears when you rebuild the thing around it is a good outcome and an unsatisfying one, and this was both.
 
 ## What Combine was actually doing
 
