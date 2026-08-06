@@ -1,0 +1,124 @@
+---
+title: "How an iPhone app redacts a document without a server"
+description: "Camera scan to encrypted vault: the on-device pipeline of an iPhone app that finds and removes the personal details in documents before you share them."
+# TODO(reza): set pubDate to Veil's App Store launch day before publishing.
+pubDate: 2026-08-05
+draft: true
+tags: ["On-device ML", "Privacy", "Architecture"]
+---
+
+You get a letter from the German tax office. You want to paste it into ChatGPT and ask what it means and how to reply. The letter also contains your full name, your home address, your tax ID, and a case number that identifies you to a government agency. Pasting it means handing all of that to someone else's server.
+
+[Veil](/work/veil/) is the step in between: an iPhone app that finds the personal details in a document, lets you decide what goes, and produces a redacted copy you can share. The constraint that shapes everything is that no document, and nothing detected in one, ever leaves the phone. This post walks a document through the whole app, stage by stage, with the frameworks doing the work at each step. By the end you should be able to describe the entire pipeline.
+
+## First launch: nothing to set up
+
+There is no account and no sign-in. On first launch you get a splash animation and a six-step intro that shows what the app does, ends on the two controls worth knowing about (always-redact terms and detection categories), and writes nothing but a "completed" flag. It is educational only, and you can replay it from Settings.
+
+The app's own networking amounts to one optional thing: downloading the on-device detection model, later, if you choose it. Veil ships two detection engines, a large downloaded model and a built-in instant one, and asks you to pick the first time you scan, not at launch. That decision and its costs are a story of their own, so I'll leave it at that here.
+
+{/* TODO(reza): when the two-engines post publishes, link it from the paragraph above. */}
+
+One more thing is set up before any document arrives: whenever the app is not active, an opaque cover with the wordmark is placed over the UI, so a document never appears in the app switcher's screenshot.
+
+## Getting a document in
+
+There are three ways in from the app itself, each a system picker: the camera (VisionKit's `VNDocumentCameraViewController`), the photo library (`PHPickerViewController`), and the Files browser (`UIDocumentPickerViewController`). The camera scanner always allows multiple pages, so its output is converted with a small rule: one captured page stays an image, and several become a PDF with one page per capture, built with PDFKit.
+
+The fourth way in is from other apps. Veil registers as a handler for PDFs and images (`CFBundleDocumentTypes`, with in-place opening disabled), so it shows up in the share sheet's app row. Tapping it makes iOS copy the file into the app's sandbox and launch Veil; the app reads the bytes and then deletes its copy. The original in the source app is never touched.
+
+The obvious design here would have been a share extension, and it doesn't work. Veil's on-device model occupies roughly 834 MB when loaded; iOS kills app extensions at around 120 MB. An extension could only be a thin pass-through to the main app, and there is no official API for an extension to open its host. Document-type registration opens the app for free, with no second target and no shared container.
+
+Two honest edge cases are handled at the door. A PDF with an owner password (the kind that permits viewing but locks editing) is normalized to a clean, mutable copy at import, for reasons that matter at export and are explained below. A PDF with a user password, one the app cannot open at all, is rejected with an error that says so.
+
+## Where the document lives, and where it doesn't
+
+Nothing is saved automatically. A document you import exists in memory for the length of the scan; saving the redacted result to the app's vault is a separate choice at the end, and sharing without saving stores nothing at all.
+
+If you do save, the vault applies four independent layers. Every blob is sealed with AES-GCM via CryptoKit before it touches disk, and the stored form carries its own integrity check, so a tampered file fails to decrypt rather than producing garbage. The 256-bit master key lives in the Keychain marked `WhenUnlockedThisDeviceOnly`: it never syncs to another device and is unreadable while the phone is locked. The encrypted blobs are additionally written with iOS `.completeFileProtection`. And the files on disk are named by UUID, with names, dates, and sizes living only in a catalog that is itself encrypted with the same pipeline.
+
+The vault directory is excluded from iCloud and local backups. That is privacy over durability, chosen deliberately: saved documents do not survive deleting the app or restoring a phone, because the alternative is copies of sensitive documents living in backups the app doesn't control. Deletion is ordered so failures land on the safe side: the catalog entry goes first, then the blob, and an orphaned blob is unreadable ciphertext rather than a visible ghost document.
+
+## Reading the page
+
+Text recognition is Apple's Vision framework, with one split. A PDF page that already contains text is not OCR'd at all: the text and its exact geometry are read straight out of the PDF via PDFKit selections, with confidence 1.0. A scanned page, or any image, is rasterized (at 2× scale for PDF pages) and handed to Vision, which returns lines of text, a confidence per line, and bounding boxes normalized to the page with a bottom-left origin.
+
+Boxes matter more than usual here, because a box is what eventually gets redacted. Vision can also report per-character boxes, and Veil keeps them: when a detected item is only part of a line, its redaction box is the union of the real glyph boxes rather than an interpolation across the line. A name at the end of a long line gets a box around the name, not a guess.
+
+OCR on real documents is messier than the API suggests. Dense forms produce tokens that fuse a label and a value into one string, split a label from its value across lines (a date of birth whose `Geburtsdatum` caption landed on the previous OCR line), and scatter fragments of letterhead into the text stream. A lot of Veil's detection work is really compensation for what OCR does to bureaucratic layouts, and several of its cleanup passes exist because of specific documents that broke it.
+
+## Finding the personal data
+
+Detection runs one of two engines, both entirely on the phone. The on-device model is GLiNER2, running via MLX, and its raw output is validated and then reconciled with a set of deterministic recognizers: `NSDataDetector`, Apple's NaturalLanguage NER for names and organizations, and checksum or format validators for IBANs (mod-97), card numbers (Luhn), tax IDs, and IP addresses. The reconciliation has a simple authority rule: a checksum outranks the model, because a checksum is a fact and a model output is a guess. The instant engine is that same deterministic pipeline running alone, without the model.
+
+I wrote up the reasoning, the false positives, and the measured numbers separately in [A model is probabilistic. A checksum is a fact.](/writing/a-model-is-probabilistic-a-checksum-is-a-fact), so I won't repeat it here. What matters for the pipeline is the output shape: thirteen categories of personal data (names, emails, phones, addresses, card numbers, tax IDs, IBANs, and so on), each detection tied to the OCR tokens it came from, grouped into four sensitivity tiers that drive how the next screen presents them. Categories you've disabled in Settings are filtered at scan time and never detected at all.
+
+## The review screen: the user decides
+
+The scan ends at a review screen: the page, zoomable, with every detection highlighted, a page rail for multi-page documents, and a collapsible sheet listing what was found in two tabs. One tab is the recognized detections, grouped by sensitivity tier; the other is the entire remaining OCR text, searchable, so you can redact something the engines didn't flag.
+
+The selection model is the part I'd defend hardest. Every detection starts selected, and the user's role is to uncheck what should stay. The code models the selection as a diff from that default:
+
+```swift
+/// The set of tokens the user wants redacted, modelled as a **diff from the default** rather than an
+/// absolute set. The default selection is "every PII token" (detection proposes; the user disposes):
+///
+/// - `deselectedPII` — PII tokens the user un-checked (they would otherwise be selected).
+/// - `selectedExtra` — non-PII tokens the user checked (they would otherwise be off).
+struct ReviewSelection: Equatable {
+    private(set) var deselectedPII: Set<EntityID<RecognizedToken>> = []
+    private(set) var selectedExtra: Set<EntityID<RecognizedToken>> = []
+}
+```
+
+Storing only the divergences keeps a fresh document from needing any seeding, and it encodes the app's stance in a type: detection proposes, the user disposes. Nothing is ever redacted that the user didn't leave selected on this screen.
+
+There is one layer on top of the engines. You can define always-redact terms, strings like your own name that should be flagged in every document even when a model wouldn't catch them. They are stored in a file encrypted with the same AES-GCM pipeline as the vault (they are personal data too, so they never sit in plaintext preferences), matched entirely on-device as whole words or substrings, and their matches arrive at the review screen pre-selected at confidence 1.0. They are still deselectable, because "always redact" is a default, not an override of the person holding the phone.
+
+## Redaction: why a black box is not enough
+
+Drawing a black rectangle over text in a PDF is not redaction. The text is still there, in the page's content stream, underneath the rectangle; select-all, copy, paste recovers it. Any tool that "redacts" by overlaying shapes on a vector PDF ships the secret along with the box.
+
+So Veil has two modes, and the difference between them is stated to the user rather than papered over. Preserve-formatting mode draws black boxes over the original vector page: fonts, lines, and quality survive, and because the covered text may technically remain extractable, the exported file carries a disclaimer footer saying exactly that. Secure mode, the default, rasterizes each affected page and burns the boxes into the pixels. No text operators survive on those pages; the covered content is gone, not hidden. Images are always handled the raster way, since a photo has no text layer to preserve.
+
+The mode choice is a PDF-only step after review, and choosing is deliberate: the trade is real (quality versus irreversibility) and it belongs to the user.
+
+## Export: the file that leaves
+
+The exported file gets scrubbed beyond the boxes. PDF document attributes (Author, Title, Subject, Keywords, Creator) are always stripped, in both modes, because an official letter's info dictionary very often names its recipient, and no preview screen ever shows it. Nothing is stamped in their place; a "made with" producer string would itself be metadata. An export also never returns the source bytes verbatim: even a document where nothing was selected is re-serialized from the stripped working copy.
+
+This is where the import-time normalization pays off. PDFKit silently refuses page mutations and attribute writes on an owner-password PDF; before the fix, exporting one re-emitted the original bytes, unredacted, metadata intact, while the UI showed success. The exporter now assumes an unencrypted source because import guarantees it. A limitation worth stating plainly: page-level annotations on pages you didn't redact survive, because untouched pages are left untouched.
+
+One rule is absolute: if any page fails to render its redactions, the whole export fails. A multi-page export never quietly ships nine redacted pages and one original.
+
+Sharing is staged lazily. The share sheet needs a file on disk, but that file is written only at the moment you commit the share, never merely because a preview appeared, and any stagings left behind by a crash are swept at the next launch. Saving to the vault is the other path, with a name prompt, and it goes through the encryption described above.
+
+## The machine holding it together
+
+The flow from "user taps add" to "redacted file" is run by a state machine: a pure reducer taking the current state and an event, returning the next state and a list of effects, with the coordinator around it doing the impure work. States move through `selectingSource`, `acquiring`, `scanning`, `reviewing`, `choosingRedactionMode`, `redacting`, and `previewingRedacted` (plus a few transient hand-off stages), invalid pairs are no-ops, and a scan result that arrives after the user cancelled is dropped because it only matches the state the flow is no longer in. I've written about this pattern and why both my apps use it in [The state machine that runs both my apps](/writing/the-state-machine-that-runs-both-my-apps), so here I'll just note that it is what keeps a nine-stage flow with three pickers and async work debuggable.
+
+## The frameworks, in one list
+
+For the iOS engineers keeping score, the pipeline above is built from:
+
+- SwiftUI for the whole UI, with Swift 6 and strict concurrency
+- VisionKit for the document camera
+- PhotosUI and UIKit for the photo and file pickers
+- Vision for OCR on images and scanned pages
+- PDFKit for reading, rendering, building, and exporting PDFs
+- CryptoKit for the AES-GCM vault and always-redact term encryption, with the key in the Keychain
+- NaturalLanguage and `NSDataDetector` inside the deterministic recognizers
+- GLiNER2 on MLX for the optional on-device model
+- StoreKit 2 for the one non-consumable purchase
+
+## What the constraint cost
+
+"Nothing leaves the phone" reads like a feature. In the codebase it reads like a bill.
+
+It meant writing a download manager, because an 834 MB model has to reach the device somehow, and a download that size needs resume, real progress, and a cellular guard before it is something you can ship. It meant evicting the model's memory on backgrounding and reloading it lazily, because 834 MB of resident weights and iOS's opinion of background apps do not coexist. It ruled out the share extension entirely, which is why "Open in Veil" launches the app instead of doing the work in the sheet. And it means there is no telemetry: when detection misreads a document, I cannot see it happen. Every failure in this post was found by reproducing it with a document of my own, not by observing a user's, because observing a user's document is precisely what the app promises not to do.
+
+Some things it makes impossible rather than hard. There is no recovering a vault after a deleted app or a restored phone, because the backups that would enable it are the exposure the design refuses. And the detection can never silently improve by learning from what users scan, because the documents it would learn from never arrive.
+
+Those are real costs, and I'd pay them again. A redaction tool you have to trust with your documents is a contradiction; one you can check is not.
+
+Veil is on the App Store if you want to see the pipeline from the outside. {/* TODO(reza): App Store URL */}
