@@ -247,12 +247,14 @@ points at the title id (now in the header). Keep the thin inset scrollbar and th
 
 ### Status colour convention — shipped vs. in-development
 `--amber` (systemOrange) means **in development**; **green is reserved for shipped** ("On the App
-Store"). Never render a forthcoming app's status chip green — two near-identical green chips hid the
-fact that only ZumNum has shipped. Veil's home chip uses `.tag--soon` (muted amber on a translucent
-field) and the card carries `.card--wip` (a dashed, lower-contrast border) as its single, honest
-de-emphasis. **No fabricated progress bars or metrics** to signal "in progress" — the amber chip +
-dashed edge are the whole signal. The `/work/veil` page keeps its own `.badge--status` ("In
-development · not yet released").
+Store"). Never render a forthcoming app's status chip green. For an unshipped app the honest
+de-emphasis is `.tag--soon` (muted amber on a translucent field) + `.card--wip` (a dashed,
+lower-contrast border) on its home card, and a `.badge--status` ("In development · not yet released")
+on its work page — **no fabricated progress bars or metrics** to signal "in progress". Veil wore
+exactly that treatment until it shipped (2026-08-07); both apps are now green `.tag--live`. The
+work-page/modal badges branch on `appStoreUrl` presence in the case-study data, so flipping
+`status` + adding `appStoreUrl` in `src/data/<app>.ts` is what "shipping" an app means there; the
+home card chip + store link are edited by hand in `index.astro`.
 
 ### Hero legibility over Liquid Glass
 The ambient `.aurora` sits directly behind the hero tile, so at full strength it bled through the
@@ -272,7 +274,7 @@ The home page is **stacked, labeled `<section>`s in a fixed order: Hero → Apps
 (the researched portfolio sequence, projects first). It is **not** one bento grid mixing content types
 across rows — testers found that confusing, because a hero sat beside an app, then a writing tile, then
 the second app. Bento is still allowed *inside* a section (Apps is a two-card grid: ZumNum wider + first
-= primary, Veil `card--wip` second), just never across content types. Each section carries a visible
+= primary, Veil second), just never across content types. Each section carries a visible
 `.section-label` heading wired with `aria-labelledby`, generous `.home-section` rhythm between them, and
 `scroll-margin-top` so the nav anchors (`#apps`, `#writing`, `#about` — **preserve these**, the nav
 scrolls to them) clear the sticky nav. Heading order is `h1` (hero) → `h2` (section) → `h3` (app names,
