@@ -95,14 +95,14 @@ const fmt = (d: Date) =>
             </div>
           </article>
 
-          <!-- Veil — in development. Not on the App Store yet, so the card links
-               to its case study rather than a store page. -->
-          <article class="card glass featured card--interactive card--wip">
+          <!-- Veil — shipped 2026-08-07. Same anatomy as the ZumNum card:
+               stretched case-study link + App Store link above it via z-index. -->
+          <article class="card glass featured card--interactive">
             <span class="card__spot" aria-hidden="true"></span>
             <div class="app-head">
               <!-- 192px source for a 60px slot is deliberate: correct at @3x Retina. -->
               <img class="icon-img" src="/icons/veil.png" width="60" height="60" alt="Veil app icon" loading="lazy" decoding="async" />
-              <h3>Veil <span class="tag tag--soon">Coming soon</span></h3>
+              <h3>Veil <span class="tag tag--live">On the App Store</span></h3>
             </div>
             <p>
               Find and remove the personal details in a document before you share
@@ -115,6 +115,12 @@ const fmt = (d: Date) =>
             <div class="spacer"></div>
             <div class="cta-row">
               <a id="veil-trigger" class="link-arrow stretched-link" href="/work/veil" aria-label="View case study: Veil">View case study →</a>
+              <a
+                class="link-quiet"
+                href="https://apps.apple.com/us/app/veil-redact-hide-info/id6780531974"
+                target="_blank"
+                rel="noopener"
+              >App Store ↗</a>
             </div>
           </article>
         </div>
