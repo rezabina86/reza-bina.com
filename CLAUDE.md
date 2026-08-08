@@ -256,18 +256,21 @@ work-page/modal badges branch on `appStoreUrl` presence in the case-study data, 
 `status` + adding `appStoreUrl` in `src/data/<app>.ts` is what "shipping" an app means there; the
 home card chip + store link are edited by hand in `index.astro`.
 
-### Hero legibility over Liquid Glass
-The ambient `.aurora` sits directly behind the hero tile, so at full strength it bled through the
-refraction filter as a coloured smear behind the `<h1>`. Three coordinated levers keep the headline
-reading as *clarity*: the `#liquid` displacement `scale` is **18, not 42** (lenses the edge instead
-of tearing the backdrop — note `scale` is an SVG attribute, not a CSS custom property, so it can't be
-tokenised); `.glass--refract` blurs at `--glass-blur` like every other glass surface (it used to
-under-blur at 14px, which is *why* the aurora showed through); and `--hero-scrim` (an inset radial
-darkening, layered as a **background** so it sits behind the copy, not over it) plus a lower
-`--aurora-opacity` calm the field. Measured worst-case backdrop behind the headline ≈ `[27,27,27]`:
-white 15.8:1, accent 4.7:1, lede 6.6:1 — all AA. Chromium renders the displacement backdrop;
-Safari/Firefox fall back to base `.glass` (calmer still). Keep the specular top-edge `.glass::before`
-highlight.
+### Hero legibility over Liquid Glass — SVG refraction removed (2026-08-08)
+The hero tile uses **plain base `.glass`** (`blur + saturate`, the `--hero-scrim`, and the specular
+`.glass::before` top edge) — the same clean surface on every browser. The earlier `.glass--refract`
+variant applied an SVG displacement filter (`url(#liquid)`: `feTurbulence` → `feDisplacementMap`) as a
+`backdrop-filter`. **Chromium is the only engine that renders an SVG filter on a backdrop, and it does
+so at low resolution / tiled** — so the displacement chewed the ambient `.aurora`'s soft green blob
+(which sits directly behind the tile) into a **blocky, mottled smear** behind the `<h1>`. Safari and
+Firefox don't support `url(#…)` as a backdrop-filter, hit the `@supports` fallback (plain blur), and
+looked correct — which is exactly why the bug was Chrome-only. Tuning the displacement `scale` (42 → 18
+in an earlier pass) reduced but never fixed it: the blockiness is Chromium's low-res backdrop
+rasterization, not the amplitude. So the whole refraction was retired: the `.glass--refract` rule, the
+`@supports (backdrop-filter: url(#liquid))` block, the `LiquidGlassFilter.astro` component, and its
+`<LiquidGlassFilter />` include in `Base.astro` are all gone. **Don't reintroduce an SVG filter as a
+`backdrop-filter`** — it renders badly on the majority browser. The scrim + `--aurora-opacity` still
+keep the headline AA-legible over the (now clean) aurora; keep the specular `.glass::before` highlight.
 
 ### Home IA — labeled sections, not an interleaved grid
 The home page is **stacked, labeled `<section>`s in a fixed order: Hero → Apps → Writing → About**

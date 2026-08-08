@@ -28,9 +28,6 @@
   --glass-bg-hi:   rgba(255, 255, 255, 0.09);
   --glass-blur:    20px;
   --glass-sat:     180%;
-  /* (The refraction amplitude lives on <feDisplacementMap scale> in
-     LiquidGlassFilter.astro — `scale` is not a presentation attribute, so it
-     cannot be driven from a custom property.) */
 
   /* --- Hero legibility ---
      The aurora's blue blob sits directly behind the hero tile, so the headline
@@ -150,19 +147,6 @@ a { color: inherit; }
   border-radius: inherit;
   pointer-events: none;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), transparent 40%);
-}
-
-/* Refraction / edge-lensing — hero surfaces only. Gated: Chromium honours the
-   SVG-filter backdrop; Safari/Firefox fall back to the base glass above.
-   Requires <LiquidGlassFilter /> (the #liquid <filter>) present in the DOM.
-   The blur matches --glass-blur rather than undercutting it: the hero used to
-   blur less than every other glass surface, which is exactly why the aurora
-   read through it as a coloured smear. */
-@supports (backdrop-filter: url(#liquid)) {
-  .glass--refract {
-    -webkit-backdrop-filter: url(#liquid) blur(var(--glass-blur)) saturate(var(--glass-sat));
-    backdrop-filter: url(#liquid) blur(var(--glass-blur)) saturate(var(--glass-sat));
-  }
 }
 
 /* ============================================================
