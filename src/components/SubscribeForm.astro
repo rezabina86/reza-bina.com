@@ -1,0 +1,90 @@
+---
+/**
+ * Email list (Buttondown): a plain <form action> posting straight to the
+ * provider — zero client JavaScript, per the hard budget. "New posts and new
+ * apps, nothing else."
+ *
+ * Renders nothing until BUTTONDOWN_USERNAME is set, because the account does
+ * not exist yet and only Reza can create it (buttondown.com, free tier).
+ * TODO(reza): create the account, put the username below — and update
+ * /privacy in the SAME commit. This form is the only thing on the site that
+ * collects anything about a visitor; the privacy page must say so before the
+ * form is live (the analytics/footer honesty rule, applied to email).
+ */
+const BUTTONDOWN_USERNAME = '';
+---
+
+{
+  BUTTONDOWN_USERNAME && (
+    <form
+      class="subscribe"
+      action={`https://buttondown.com/api/emails/embed-subscribe/${BUTTONDOWN_USERNAME}`}
+      method="post"
+    >
+      <label class="subscribe__label" for="subscribe-email">
+        new posts and new apps · nothing else
+      </label>
+      <div class="subscribe__row">
+        <input
+          class="subscribe__input"
+          type="email"
+          name="email"
+          id="subscribe-email"
+          required
+          placeholder="you@example.com"
+          autocomplete="email"
+        />
+        <button class="subscribe__button" type="submit">subscribe</button>
+      </div>
+    </form>
+  )
+}
+
+<style>
+  .subscribe {
+    border-top: 1px solid var(--rule);
+    padding: 9px 0; /* the specced row rhythm */
+    margin-top: 32px;
+  }
+
+  .subscribe__label {
+    display: block;
+    color: var(--ink-2);
+    margin-bottom: 8px;
+  }
+
+  .subscribe__row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .subscribe__input {
+    flex: 1;
+    min-width: 200px;
+    font: inherit;
+    color: var(--ink);
+    background: var(--bg);
+    border: 1px solid var(--rule-strong);
+    border-radius: 0;
+    padding: 4px 8px;
+  }
+
+  .subscribe__input::placeholder {
+    color: var(--ink-2);
+  }
+
+  .subscribe__button {
+    font: inherit;
+    color: var(--ink);
+    background: none;
+    border: 1px solid var(--rule-strong);
+    border-radius: 0;
+    padding: 4px 12px;
+    cursor: pointer;
+  }
+
+  .subscribe__button:hover {
+    color: var(--accent);
+  }
+</style>

@@ -44,6 +44,7 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
       <p>{study.summary}</p>
     </Prose>
     {appId && <AppStoreBadge appId={appId} label={study.name} />}
+    {study.price && <p class="case__price">{study.price}</p>}
   </Section>
 
   <Section label="how it works" id="how-it-works">
@@ -76,8 +77,8 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
         {related.map((post) => (
           <Row
             date={iso(post.data.pubDate)}
-            name={post.data.tags[0] ?? 'writing'}
-            description={post.data.title}
+            name={post.data.title}
+            href={`/writing/${post.id}`}
             action="read →"
             actionHref={`/writing/${post.id}`}
           />
@@ -115,6 +116,14 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
   }
 
   .case__meta {
+    color: var(--ink-2);
+  }
+
+  /* The price, stated plainly beside the badge — hiding the number reads as
+     reluctance on a site whose pitch is candour. */
+  .case__price {
+    font-size: 12.5px;
+    line-height: 1.6;
     color: var(--ink-2);
   }
 

@@ -3,8 +3,12 @@ import Base from '../../layouts/Base.astro';
 import TableOfContents from '../../components/TableOfContents.astro';
 import Prose from '../../components/Prose.astro';
 import Row from '../../components/Row.astro';
+import AppStoreBadge from '../../components/AppStoreBadge.astro';
+import SubscribeForm from '../../components/SubscribeForm.astro';
 import { getCollection, render } from 'astro:content';
 import { readingMinutes } from '../../lib/readingTime';
+import { veil } from '../../data/veil';
+import { zumnum } from '../../data/zumnum';
 
 export async function getStaticPaths() {
   // Drafts are readable with `npm run dev` but never get a production URL.
@@ -30,6 +34,17 @@ const published = (await getCollection('blog'))
 const index = published.findIndex((p) => p.id === post.id);
 const newer = index > 0 ? published[index - 1] : undefined;
 const older = index >= 0 && index < published.length - 1 ? published[index + 1] : undefined;
+
+// The app this article is about — the article's one path to the store.
+// Derived from mentions in the body (the same match CaseStudyPage uses for
+// related posts) so it cannot rot; when both apps appear, the most-mentioned
+// one is the subject, keeping the page at Apple's one badge per layout.
+const mentions = (name: string) => (post.body ?? '').split(name).length - 1;
+const subject = [veil, zumnum]
+  .map((app) => ({ app, n: mentions(app.name) }))
+  .filter((x) => x.n > 0)
+  .sort((a, b) => b.n - a.n)[0]?.app;
+const subjectAppId = subject?.appStoreUrl?.match(/id(\d+)/)?.[1];
 
 const canonical = new URL(`/writing/${post.id}/`, Astro.site).href;
 const blogPosting = {
@@ -99,11 +114,27 @@ const breadcrumb = {
 
     <footer class="article__foot">
       {
+        subject && subjectAppId && (
+          <div class="article__app">
+            <Row
+              date={subject.shipped}
+              name={subject.name}
+              href={`/work/${subject.slug}`}
+              description={subject.tagline}
+            >
+              <AppStoreBadge slot="action" appId={subjectAppId} label={subject.name} />
+            </Row>
+          </div>
+        )
+      }
+      <!-- newer/older are signposts, not content: they take the label slot;
+           the next article's title carries the emphasis. -->
+      {
         newer && (
           <Row
-            date={iso(newer.data.pubDate)}
-            name="newer"
-            description={newer.data.title}
+            date="newer"
+            name={newer.data.title}
+            href={`/writing/${newer.id}`}
             action="read →"
             actionHref={`/writing/${newer.id}`}
           />
@@ -112,14 +143,15 @@ const breadcrumb = {
       {
         older && (
           <Row
-            date={iso(older.data.pubDate)}
-            name="older"
-            description={older.data.title}
+            date="older"
+            name={older.data.title}
+            href={`/writing/${older.id}`}
             action="read →"
             actionHref={`/writing/${older.id}`}
           />
         )
       }
+      <SubscribeForm />
     </footer>
   </article>
 </Base>
@@ -148,5 +180,10 @@ const breadcrumb = {
 
   .article__foot {
     margin-top: 56px;
+  }
+
+  /* The way to get the app stands apart from the prev/next list. */
+  .article__app {
+    margin-bottom: 32px;
   }
 </style>
