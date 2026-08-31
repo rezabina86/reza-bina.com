@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import Row from '../../components/Row.astro';
+import SubscribeForm from '../../components/SubscribeForm.astro';
 import { getCollection } from 'astro:content';
 
 // Drafts are excluded at build time, not hidden with CSS.
@@ -38,6 +39,7 @@ const tags = (list: string[]) => list.map((t) => `[${t}]`).join(' ');
         />
       ))
     }
+    <SubscribeForm />
   </div>
 </Base>
 

@@ -4,6 +4,7 @@ import TableOfContents from '../../components/TableOfContents.astro';
 import Prose from '../../components/Prose.astro';
 import Row from '../../components/Row.astro';
 import AppStoreBadge from '../../components/AppStoreBadge.astro';
+import SubscribeForm from '../../components/SubscribeForm.astro';
 import { getCollection, render } from 'astro:content';
 import { readingMinutes } from '../../lib/readingTime';
 import { veil } from '../../data/veil';
@@ -150,6 +151,7 @@ const breadcrumb = {
           />
         )
       }
+      <SubscribeForm />
     </footer>
   </article>
 </Base>
