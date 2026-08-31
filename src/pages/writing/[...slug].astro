@@ -69,6 +69,7 @@ const breadcrumb = {
     tags: post.data.tags,
   }}
   schema={[blogPosting, breadcrumb]}
+  pageMax="42rem"
 >
   <article class="wrap article">
     <!-- Mono header block at prose width — the title is not a display size. -->
@@ -126,15 +127,7 @@ const breadcrumb = {
 
 <style>
   .article {
-    /* The page keeps the full 70rem frame (header, nav, footer, prev/next
-       rows span it, same as every other page); only the reading column —
-       title block, contents, prose — is capped at the 34rem measure,
-       left-aligned on the shared edge. */
     margin-top: 40px;
-  }
-
-  .article__head {
-    max-width: 34rem;
   }
 
   .article__title {

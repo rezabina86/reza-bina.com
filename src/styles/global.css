@@ -106,15 +106,17 @@ button {
   }
 }
 
-/* ---- Page container --------------------------------------------------------
-   Pages override --page-max: 70rem home/case studies (default), 62rem writing
-   index, 34rem article prose (the article header matches prose width). */
+/* ---- Page container -------------------------------------------------------- */
 .wrap {
-  max-width: var(--page-max, 70rem);
+  /* One frame per page: 42rem narrow (article, case study, privacy, 404),
+     54rem wide (home, writing index) — set per page via Base's pageMax.
+     The fallback is the wide frame, so a page that forgets to declare one
+     gets a sane frame rather than the widest. */
+  max-width: var(--page-max, 54rem);
   margin-inline: auto;
   padding-inline: 40px;
-  /* Rows collapse on container width, not just viewport — a Row inside the
-     34rem article column stacks even on a wide screen. */
+  /* Rows collapse on container width, not viewport — the container query in
+     Row.astro is the one mechanism. */
   container: page / inline-size;
 }
 

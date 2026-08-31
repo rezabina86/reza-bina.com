@@ -89,12 +89,14 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
   {
     study.shots && study.shots.length > 0 && (
       <Section label="screens" id="screens">
-        {study.shots.map((shot) => (
-          <figure class="case__shot">
-            <img src={shot.src} alt={shot.alt} loading="lazy" decoding="async" width="720" height="1565" />
-            <figcaption>{shot.caption}</figcaption>
-          </figure>
-        ))}
+        <div class="case__shots">
+          {study.shots.map((shot) => (
+            <figure class="case__shot">
+              <img src={shot.src} alt={shot.alt} loading="lazy" decoding="async" width="720" height="1565" />
+              <figcaption>{shot.caption}</figcaption>
+            </figure>
+          ))}
+        </div>
       </Section>
     )
   }
@@ -137,12 +139,26 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
   .case__stack td {
     padding: 9px 0;
     border-bottom: 1px solid var(--rule);
+    max-width: 62ch;
   }
 
-  /* Screenshots: plain images at prose width, mono caption, hairline edge. */
+  /* Screenshots are a contact sheet — a quiet reference strip, not the
+     page's main event. Size and arrangement do the quieting; the images are
+     never dimmed, faded or overlaid. */
+  .case__shots {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+
+  @container page (max-width: 560px) {
+    .case__shots {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
   .case__shot {
-    max-width: 34rem;
-    margin: 0 0 32px;
+    margin: 0;
   }
 
   .case__shot img {

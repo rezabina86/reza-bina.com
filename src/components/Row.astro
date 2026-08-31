@@ -65,9 +65,12 @@ const hasActionSlot = Astro.slots.has('action');
 
   .row__desc {
     /* Rows self-size: the description always wraps, never truncates
-       (Reza, 2026-08-31 — overrides the spec's desktop ellipsis). */
+       (Reza, 2026-08-31 — overrides the spec's desktop ellipsis). The 62ch
+       cap keeps a mono line readable as content grows; nothing else
+       enforces a measure. */
     grid-column: 3;
     color: var(--ink-2);
+    max-width: 62ch;
   }
 
   .row__action {
@@ -87,37 +90,11 @@ const hasActionSlot = Astro.slots.has('action');
     grid-column: 1 / 3;
   }
 
-  @media (max-width: 700px) {
-    .row {
-      grid-template-columns: 96px 1fr;
-    }
-
-    .row__date {
-      grid-row: 1;
-    }
-
-    .row__name {
-      grid-column: 2;
-      grid-row: 1;
-    }
-
-    .row:not(:has(.row__date)) .row__name {
-      grid-column: 1 / -1;
-    }
-
-    .row__desc {
-      grid-column: 1 / -1;
-    }
-
-    .row__action {
-      grid-column: 1 / -1;
-    }
-  }
-
-  /* Same collapse driven by the .wrap container's width — so rows inside the
-     34rem article column stack on any screen. The media query above stays as
-     the fallback for browsers without container queries. */
-  @container page (max-width: 700px) {
+  /* Collapse to stacked lines below 560px of container width. The container
+     query on .wrap is the one mechanism — no viewport media query duplicating
+     the number. 560, not 700: the narrow frame is a 672px container, and a
+     700px threshold would stack every row on a desktop display. */
+  @container page (max-width: 560px) {
     .row {
       grid-template-columns: 96px 1fr;
     }
