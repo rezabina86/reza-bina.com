@@ -123,4 +123,35 @@ const hasActionSlot = Astro.slots.has('action');
       grid-column: 1 / -1;
     }
   }
+
+  /* Same collapse driven by the .wrap container's width — so rows inside the
+     34rem article column stack on any screen. The media query above stays as
+     the fallback for browsers without container queries. */
+  @container page (max-width: 700px) {
+    .row {
+      grid-template-columns: 96px 1fr;
+    }
+
+    .row__date {
+      grid-row: 1;
+    }
+
+    .row__name {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    .row:not(:has(.row__date)) .row__name {
+      grid-column: 1 / -1;
+    }
+
+    .row__desc {
+      grid-column: 1 / -1;
+      white-space: normal;
+    }
+
+    .row__action {
+      grid-column: 1 / -1;
+    }
+  }
 </style>

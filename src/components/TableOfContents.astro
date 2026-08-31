@@ -2,18 +2,10 @@
 import type { MarkdownHeading } from 'astro';
 
 /**
- * TableOfContents (HANDOFF §7.5) — auto-generated from a post's h2/h3.
- *
- * Flat, aligned design: every row shares one left edge (no indentation). The
- * h2/h3 hierarchy is carried typographically — h2 links read brighter and a
- * touch heavier, h3 links quieter — so the list scans as a structure without
- * any indent that could look misaligned. The active row is a filled pill.
- * Each link carries a `--top`/`--sub` modifier so the level styling stays a
- * single flat class (no descendant-selector specificity fights with the
- * hover/active states).
- *
- * The only client JS is a small scroll-spy that marks the section in view
- * (progressive enhancement — the list is complete and usable without it).
+ * Table of contents, generated from a post's h2/h3. v3: a plain mono list in
+ * `--ink-2` — no box, no sticky positioning, no scroll-spy (zero client JS).
+ * The h2/h3 hierarchy is carried typographically, not by indent: h2 entries
+ * read at full muted strength, h3 entries smaller.
  */
 
 interface Props {
@@ -27,14 +19,13 @@ const items = headings.filter((h) => h.depth === 2 || h.depth === 3);
 {
   items.length > 1 && (
     <nav class="toc" aria-labelledby="toc-heading">
-      <p class="toc__title" id="toc-heading">On this page</p>
+      <p class="toc__title" id="toc-heading">contents</p>
       <ul class="toc__list">
         {items.map((h) => (
           <li class="toc__item">
             <a
-              class:list={['toc__link', h.depth === 3 ? 'toc__link--sub' : 'toc__link--top']}
+              class:list={['toc__link', h.depth === 3 && 'toc__link--sub']}
               href={`#${h.slug}`}
-              data-toc-link={h.slug}
             >
               {h.text}
             </a>
@@ -45,37 +36,34 @@ const items = headings.filter((h) => h.depth === 2 || h.depth === 3);
   )
 }
 
-<script>
-  // Scroll-spy: mark the section currently being read.
-  // Position-based rather than IntersectionObserver-band-based: the active item
-  // is the last heading above the trigger line, so exactly one item is always
-  // active — including past the final heading, where a band-based spy goes blank.
-  const links = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-toc-link]'));
-  if (links.length) {
-    const entries = links
-      .map((link) => ({ link, heading: document.getElementById(link.dataset.tocLink!) }))
-      .filter((e): e is { link: HTMLAnchorElement; heading: HTMLElement } => e.heading !== null);
-
-    const TRIGGER = 100; // px from viewport top, just below the sticky nav
-
-    let ticking = false;
-    const update = () => {
-      ticking = false;
-      let activeIndex = 0;
-      entries.forEach((entry, i) => {
-        if (entry.heading.getBoundingClientRect().top <= TRIGGER) activeIndex = i;
-      });
-      entries.forEach((entry, i) => entry.link.classList.toggle('is-active', i === activeIndex));
-    };
-
-    const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(update);
-    };
-
-    update();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll, { passive: true });
+<style>
+  .toc {
+    margin-top: 32px;
   }
-</script>
+
+  .toc__title {
+    font-size: 10.5px;
+    line-height: 1;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    margin-bottom: 12px;
+  }
+
+  .toc__list {
+    list-style: none;
+    padding: 0;
+  }
+
+  .toc__link {
+    color: var(--ink-2);
+  }
+
+  .toc__link:hover {
+    color: var(--accent-hi);
+  }
+
+  .toc__link--sub {
+    font-size: 12.5px;
+  }
+</style>

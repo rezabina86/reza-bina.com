@@ -20,9 +20,14 @@ export default defineConfig({
     }),
   ],
   markdown: {
-    // Apple-dark code blocks. Shiki is built in; theme applies to .md and .mdx.
+    // Dual-theme code blocks: Shiki inlines the light colours plus
+    // --shiki-dark variables; Prose.astro flips them with the same
+    // three-state logic as the palette.
     shikiConfig: {
-      theme: 'github-dark-default',
+      themes: {
+        light: 'github-light',
+        dark: 'github-dark',
+      },
       wrap: true,
     },
   },

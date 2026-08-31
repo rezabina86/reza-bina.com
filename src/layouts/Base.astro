@@ -13,6 +13,10 @@ interface Props {
   /** Extra JSON-LD injected by the page (BlogPosting, SoftwareApplication,
    *  BreadcrumbList, …). One object, or several to add to the @graph. */
   schema?: Record<string, unknown> | Record<string, unknown>[];
+  /** Page column width — set on <body> so the header, content and footer all
+   *  share one left edge. 70rem home/case studies, 62rem writing index,
+   *  34rem articles. */
+  pageMax?: string;
 }
 
 const {
@@ -21,6 +25,7 @@ const {
   ogSlug = 'home',
   article,
   schema,
+  pageMax,
 } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, Astro.site).href;
@@ -114,7 +119,7 @@ const jsonLd = {
          module script to bundle. -->
     <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
   </head>
-  <body>
+  <body style={pageMax ? `--page-max: ${pageMax}` : undefined}>
     <a class="skip-link" href="#main">Skip to content</a>
 
     <SiteHeader />
