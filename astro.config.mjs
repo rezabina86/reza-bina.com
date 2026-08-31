@@ -1,5 +1,4 @@
 import { defineConfig } from 'astro/config';
-import react from '@astrojs/react';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 
@@ -8,8 +7,6 @@ import sitemap from '@astrojs/sitemap';
 export default defineConfig({
   site: 'https://reza-bina.com',
   integrations: [
-    // React island — used only for the interactive case-study modal + device frame.
-    react(),
     // Blog: MDX with Shiki syntax highlighting.
     mdx(),
     // Generates sitemap-index.xml at build; robots.txt points crawlers at it.

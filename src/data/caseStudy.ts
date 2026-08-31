@@ -35,8 +35,11 @@ export interface CaseStudy {
   /** "Built with" — accurate tech only. */
   badges: string[];
   platform: string;
-  /** Omitted while an app is unreleased. */
+  /** Omitted while an app is unreleased. Storefront-agnostic form only —
+   *  `https://apps.apple.com/app/id<appId>`, never a `/us/` or `/de/` path. */
   appStoreUrl?: string;
+  /** ISO date the app first went live on the App Store (per iTunes lookup). */
+  shipped?: string;
   /** Real screen recording (HANDOFF §7.2). */
   video?: { src: string; poster?: string };
   /** Real screenshots. When present the device frame shows the first one. */
