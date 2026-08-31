@@ -3,7 +3,7 @@ title: "The state machine that runs both my apps"
 description: "How the same pure reducer runs a German-numbers game and an on-device redaction tool — choosing the pattern, building it, wiring async work into it, and extending it without the machine fighting back."
 pubDate: 2026-07-28
 draft: false
-tags: ["Architecture", "Swift Concurrency"]
+tags: ["architecture", "swift concurrency"]
 ---
 
 A while ago I wrote about [deleting Combine from ZumNum](/writing/the-state-machine-i-didnt-know-i-had), my German-numbers app, after a double-tap bug turned out to be a data race hiding in a chain of subscriptions. The fix was a small state machine: a pure function from the current state and an event to the next state.

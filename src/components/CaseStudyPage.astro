@@ -32,9 +32,9 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
 
 <article class="wrap case">
   <header class="case__head">
-    <h1 class="case__name">{study.name.toLowerCase()}</h1>
+    <h1 class="case__name">{study.name}</h1>
     <p class="case__meta">
-      {study.tagline.toLowerCase().replace(/\.$/, '')}
+      {study.tagline}
       {study.shipped && <span> · shipped {study.shipped}</span>}
     </p>
   </header>
@@ -76,7 +76,7 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
         {related.map((post) => (
           <Row
             date={iso(post.data.pubDate)}
-            name={post.data.tags[0]?.toLowerCase() ?? 'writing'}
+            name={post.data.tags[0] ?? 'writing'}
             description={post.data.title}
             action="read →"
             actionHref={`/writing/${post.id}`}
@@ -104,7 +104,8 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
 
 <style>
   .case__head {
-    margin-top: 40px;
+    /* A page title is a bigger event than a section: 56, not the section's 40. */
+    margin-top: 56px;
   }
 
   .case__name {
@@ -120,7 +121,6 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
   /* The stack is data — a real table in the mono voice. */
   .case__stack {
     border-collapse: collapse;
-    font-variant-numeric: tabular-nums;
   }
 
   .case__stack th {
@@ -131,13 +131,13 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
     font-weight: 600;
     color: var(--ink-2);
     text-align: left;
-    padding: 9px 0;
+    padding: 9px 0; /* the row rhythm */
     border-bottom: 1px solid var(--rule-strong);
     min-width: 240px;
   }
 
   .case__stack td {
-    padding: 9px 0;
+    padding: 9px 0; /* the row rhythm */
     border-bottom: 1px solid var(--rule);
     max-width: 62ch;
   }

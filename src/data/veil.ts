@@ -22,7 +22,7 @@ import type { CaseStudy } from './caseStudy';
 export const veil: CaseStudy = {
   slug: 'veil',
   name: 'Veil',
-  tagline: 'Share without revealing.',
+  tagline: 'Share without revealing',
   icon: '/icons/veil.png',
   status: 'live',
   appStoreUrl: 'https://apps.apple.com/app/id6780531974',

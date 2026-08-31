@@ -1,5 +1,7 @@
 ---
-/** A topic tag rendered `[on-device ml]` — brackets, not pills. */
+/** A topic tag rendered `[on-device ml]` — brackets, not pills. Casing is
+ *  content's business: tags are written lowercase in frontmatter, never
+ *  transformed here. */
 interface Props {
   name: string;
 }
@@ -7,7 +9,7 @@ interface Props {
 const { name } = Astro.props;
 ---
 
-<span class="tag">[{name.toLowerCase()}]</span>
+<span class="tag">[{name}]</span>
 
 <style>
   .tag {

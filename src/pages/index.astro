@@ -23,7 +23,7 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
         date="2026-08-07"
         name="Veil"
         href="/work/veil"
-        description="Find and remove the personal details in a document before you share it — entirely on the iPhone."
+        description="Find and remove the personal details in a document before you share it, entirely on the iPhone"
       >
         <AppStoreBadge slot="action" appId="6780531974" label="Veil" />
       </Row>
@@ -31,7 +31,7 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
         date="2025-08-01"
         name="ZumNum"
         href="/work/zumnum"
-        description="Learn German numbers by ear — hear one, type what you heard. Fully offline, no ads."
+        description="Learn German numbers by ear: hear one, type what you heard. Fully offline, no ads"
       >
         <AppStoreBadge slot="action" appId="6748617262" label="ZumNum" />
       </Row>
@@ -42,7 +42,7 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
         posts.map((post) => (
           <Row
             date={iso(post.data.pubDate)}
-            name={post.data.tags[0]?.toLowerCase() ?? 'writing'}
+            name={post.data.tags[0] ?? 'writing'}
             description={post.data.title}
             action="read →"
             actionHref={`/writing/${post.id}`}
@@ -54,11 +54,11 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
     <Section label="about" id="about">
       <Row
         name="now"
-        description="iOS engineer at Goodnotes; evenings and weekends on my own privacy-first apps."
+        description="iOS engineer at Goodnotes; evenings and weekends on my own privacy-first apps"
       />
       <Row
         name="before"
-        description="Building for iPhone since 2015 — ride-hailing, e-commerce, language learning. A physics degree before that."
+        description="Building for iPhone since 2015: ride-hailing, e-commerce, language learning. A physics degree before that"
       />
     </Section>
   </div>

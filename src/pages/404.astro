@@ -25,7 +25,8 @@ import Base from '../layouts/Base.astro';
 
 <style>
   .notfound {
-    margin-top: 40px;
+    /* A page title is a bigger event than a section: 56, not 40. */
+    margin-top: 56px;
   }
 
   .notfound__title {
@@ -46,6 +47,6 @@ import Base from '../layouts/Base.astro';
 
   .notfound__paths li {
     border-top: 1px solid var(--rule);
-    padding: 9px 0;
+    padding: 9px 0; /* the specced row rhythm — a deliberate off-scale value */
   }
 </style>

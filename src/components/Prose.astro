@@ -30,6 +30,9 @@
   .prose ol,
   .prose blockquote {
     margin-bottom: 16px;
+    /* body sets tabular-nums so date columns line up; in running serif text
+       tabular figures look mechanical, so prose resets them. */
+    font-variant-numeric: normal;
   }
 
   /* h2 — uppercase mono with a hairline above: the section marks of the page. */
@@ -170,12 +173,12 @@
     font-weight: 600;
     color: var(--ink-2);
     text-align: left;
-    padding: 9px 16px 9px 0;
+    padding: 9px 16px 9px 0; /* the row rhythm, in table form */
     border-bottom: 1px solid var(--rule-strong);
   }
 
   .prose td {
-    padding: 9px 16px 9px 0;
+    padding: 9px 16px 9px 0; /* the row rhythm, in table form */
     border-bottom: 1px solid var(--rule);
     vertical-align: top;
   }

@@ -66,7 +66,7 @@ export async function renderOgImage(card: OgCard): Promise<Buffer> {
               fontSize: 26,
               color: INK_2,
             },
-            `# ${card.eyebrow.toLowerCase()}`
+            `# ${card.eyebrow}`
           ),
           el(
             'div',
@@ -109,7 +109,8 @@ export async function renderOgImage(card: OgCard): Promise<Buffer> {
             },
             [
               el('div', { display: 'flex', alignItems: 'center' }, [
-                el('div', { display: 'flex', fontSize: 26, fontWeight: 600, color: INK }, 'reza bina'),
+                // Proper nouns keep their casing; the masthead is weight 400.
+                el('div', { display: 'flex', fontSize: 26, fontWeight: 400, color: INK }, 'Reza Bina'),
                 el('div', { display: 'flex', fontSize: 26, color: INK_2, marginLeft: 16 }, 'reza-bina.com'),
               ]),
               ...(card.meta

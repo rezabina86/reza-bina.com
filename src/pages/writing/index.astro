@@ -9,7 +9,8 @@ const posts = (await getCollection('blog'))
   .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
-const tags = (list: string[]) => list.map((t) => `[${t.toLowerCase()}]`).join(' ');
+// Tags render as written in frontmatter — casing is content's business.
+const tags = (list: string[]) => list.map((t) => `[${t}]`).join(' ');
 ---
 
 <Base
@@ -38,14 +39,16 @@ const tags = (list: string[]) => list.map((t) => `[${t.toLowerCase()}]`).join(' 
 
 <style>
   .writing-index {
-    margin-top: 40px;
+    /* A page title is a bigger event than a section: 56, not 40. */
+    margin-top: 56px;
   }
 
   .writing-index__title {
     font-size: 14px;
     line-height: 1.7;
     font-weight: 400;
+    letter-spacing: 0.08em;
     color: var(--ink-2);
-    margin-bottom: 10px;
+    margin-bottom: 12px;
   }
 </style>

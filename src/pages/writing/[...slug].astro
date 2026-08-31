@@ -85,7 +85,7 @@ const breadcrumb = {
           )
         }
         {` · ${minutes} min · `}
-        {post.data.tags.map((t) => `[${t.toLowerCase()}]`).join(' ')}
+        {post.data.tags.map((t) => `[${t}]`).join(' ')}
       </p>
     </header>
 
@@ -126,7 +126,8 @@ const breadcrumb = {
 
 <style>
   .article {
-    margin-top: 40px;
+    /* A page title is a bigger event than a section: 56, not 40. */
+    margin-top: 56px;
   }
 
   .article__title {

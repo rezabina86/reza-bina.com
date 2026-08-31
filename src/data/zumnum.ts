@@ -23,7 +23,7 @@ import type { CaseStudy } from './caseStudy';
 export const zumnum: CaseStudy = {
   slug: 'zumnum',
   name: 'ZumNum',
-  tagline: 'Learn German numbers by ear.',
+  tagline: 'Learn German numbers by ear',
   icon: '/icons/zumnum.png',
   status: 'live',
   summary:

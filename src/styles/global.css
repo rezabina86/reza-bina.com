@@ -121,12 +121,13 @@ button {
 
 @media (max-width: 700px) {
   .wrap {
-    padding-inline: 20px;
+    padding-inline: 20px; /* specced mobile page padding (48px 20px below 700) */
   }
 }
 
 /* ---- Skip link ------------------------------------------------------------ */
 .skip-link {
+  color: var(--ink); /* chrome, not content — accent stays inside rows/prose */
   position: absolute;
   left: -9999px;
   top: 8px;
