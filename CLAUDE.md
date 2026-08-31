@@ -1,9 +1,22 @@
 # CLAUDE.md — reza-bina.com
 
 Personal portfolio + blog for Reza Bina (Senior iOS Engineer). Astro static site, deployed to
-GitHub Pages on the apex domain `reza-bina.com`. Currently being redesigned per **`HANDOFF.md`**
-(Apple HIG / iOS 26 "Liquid Glass"). `HANDOFF.md` is the full redesign spec; this file is how to
-work in the codebase and the rules that must never be broken.
+GitHub Pages on the apex domain `reza-bina.com`. Being rebuilt as **v3, a monospace changelog**
+per the plan folder below; this file is how to work in the codebase and the rules that must
+never be broken. (`HANDOFF.md` was the v2 "Liquid Glass" spec and is historical.)
+
+---
+
+## Plans & context (outside this repo)
+
+- **Website plan:** `~/Developer/Documents/reza-bina.com/` — read its `0-START-HERE.md` first.
+  `1-DO-NEXT/` is the task list, `2-DECISIONS/` holds settled decisions (do not re-litigate),
+  `3-REFERENCE/Design-system.md` is the binding v3 design spec.
+- **Veil business context:** `~/Developer/Documents/Veil/` — read its `0-START-HERE.md` before
+  writing anything about Veil.
+
+Standing constraint from both folders: **all example data in articles must be synthetic**
+(never the author's real name, address, employer or family).
 
 ---
 
