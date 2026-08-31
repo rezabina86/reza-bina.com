@@ -19,7 +19,9 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
 >
   <div class="wrap writing-index">
     <h1 class="writing-index__title"><span aria-hidden="true"># </span>writing</h1>
-    <table class="writing-index__table">
+    <!-- Wide data scrolls in its own container; the page never scrolls sideways. -->
+    <div class="writing-index__scroll">
+      <table class="writing-index__table">
       <thead>
         <tr>
           <th scope="col">date</th>
@@ -46,7 +48,8 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
           ))
         }
       </tbody>
-    </table>
+      </table>
+    </div>
   </div>
 </Base>
 
@@ -61,6 +64,10 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
     font-weight: 400;
     color: var(--ink-2);
     margin-bottom: 10px;
+  }
+
+  .writing-index__scroll {
+    overflow-x: auto;
   }
 
   .writing-index__table {

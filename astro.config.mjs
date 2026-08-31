@@ -25,8 +25,11 @@ export default defineConfig({
     // three-state logic as the palette.
     shikiConfig: {
       themes: {
-        light: 'github-light',
-        dark: 'github-dark',
+        // The high-contrast variants, not plain github-light/dark: both
+        // plain themes set comment grey #6a737d, which fails AA on the
+        // light (3.69:1 on white) and dark (3.69:1 on #16181b) grounds.
+        light: 'github-light-high-contrast',
+        dark: 'github-dark-high-contrast',
       },
       wrap: true,
     },
