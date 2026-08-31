@@ -1,9 +1,10 @@
 # CLAUDE.md — reza-bina.com
 
 Personal portfolio + blog for Reza Bina (Senior iOS Engineer). Astro static site, deployed to
-GitHub Pages on the apex domain `reza-bina.com`. Being rebuilt as **v3, a monospace changelog**
-per the plan folder below; this file is how to work in the codebase and the rules that must
-never be broken. (`HANDOFF.md` was the v2 "Liquid Glass" spec and is historical.)
+GitHub Pages on the apex domain `reza-bina.com`. The design is **v3, a monospace changelog** —
+live since 2026-08-31 per the plan folder below; this file is how to work in the codebase and
+the rules that must never be broken. (`HANDOFF.md` was the v2 "Liquid Glass" spec and is
+historical.)
 
 ---
 
@@ -129,25 +130,40 @@ pattern. The site is mid-redesign; assume older files may predate the current ru
 The binding spec is **`~/Developer/Documents/reza-bina.com/3-REFERENCE/Design-system.md`** (v3
 "monospace changelog", decision 0001). The load-bearing rules:
 
-- **Rows, not cards.** Information is `date | name | description | action` (`Row.astro`). Nothing
-  is boxed, floated, elevated or tinted to look important.
+- **One frame: `.wrap { max-width: 46rem }`. Every page, no exceptions.** The header, content
+  and footer all read it, so nothing shifts between pages. Where 656px of content doesn't fit a
+  layout, the layout changes — the frame does not. No component sets its own `max-width` in
+  place of the frame (`Prose` included); the only measure caps are `62ch` on descriptions.
+- **The Row is two lines, always** (`Row.astro`): line one `date | name | action` on a
+  `96px 1fr auto` grid, centred; line two the description at the 112px name indent, 62ch cap.
+  Descriptions always wrap, never truncate. Rows collapse **once, at 400px of container width**
+  (container query on `.wrap`; no viewport duplicate) — date onto its own line, indent dropped.
+- **The emphasis belongs to the content, never to the label that files it.** The bold `name`
+  slot holds the thing itself — the app, the article title, the sentence. Categories, signposts
+  and timeframes (`on-device ml`, `newer`, `now`) go in the muted `date` slot. Hierarchy is
+  weight and colour only — masthead 400, page titles and row names 600, no display size ever.
+  The `#` prefix means "section" and nothing else; page titles don't carry it.
+- **Chrome is muted; accent lives in content.** Nav/footer links are `--ink-2` hover `--ink`,
+  current section marked with `aria-current="page"`; links in rows and prose carry a persistent
+  `--rule-strong` underline (WCAG 1.4.1 — never colour-only).
 - **Hairlines only.** A 1px `var(--rule)` line is the only separator. **Banned on every page:**
   cards, box shadows, gradients, `backdrop-filter`, aurora/grain layers, scroll reveals, magnetic
   buttons, sticky/condensing nav, border radii above 3px (code blocks 3px and Apple's badge are
   the only rounded things), web fonts, client-side React, emoji as section markers, and any
   heading set larger than the article body.
 - **Monospace is the voice; serif is for reading.** Structure, metadata, navigation and labels
-  are `--font-mono` at 14/1.7 with `tabular-nums`; article body copy is `--font-serif` at
-  17.5/1.7 (`Prose.astro` owns every MDX element style — nothing outside it styles article
-  content). There is no display type size anywhere.
+  are `--font-mono` at 14/1.7 with `tabular-nums` (Prose resets `font-variant-numeric` in
+  running text); article body copy is `--font-serif` at **19/1.65** — sized so the measure meets
+  the fixed frame (~70ch). `Prose.astro` owns every MDX element style.
+- **Casing:** proper nouns keep their real casing everywhere (Reza Bina, ZumNum, Veil, iPhone);
+  lowercase is for structural labels only (`# apps`, `email`, `read →`). **No `.toLowerCase()`
+  in any component** — casing is content's business (tags are lowercase in frontmatter).
+  Descriptions are sentence case with no terminal full stop; `·` is the one list separator.
 - **Nothing moves.** The entire motion budget is `transition: color .12s linear` on links.
-- **Tokens once, in `global.css` `:root`** — never hardcode a colour a token exists for. Rows
-  collapse below 700px via a container query on `.wrap` (`container: page / inline-size`) with a
-  viewport media query as fallback. Space scale: 4 8 12 16 24 32 40 56 72 (row padding 9px and
-  the 10px section-label gap are specced exceptions; the date column is 96px because the spec's
-  84px is exactly 10ch of 14px SF Mono and wraps).
-- Page column widths via Base's `pageMax` prop: 70rem default, 62rem `/writing`, 34rem articles
-  and `/privacy` — set on `<body>` so header, content and footer share one left edge.
+- **Tokens once, in `global.css` `:root`** — never hardcode a colour a token exists for. Space
+  scale: 4 8 12 16 24 32 40 56 72 (page titles get 56 above; sections 40). Off-scale survivors
+  are specced and commented: the 9px row rhythm, the 48/20 mobile page padding, the 96px date
+  column (84px is exactly 10ch of 14px SF Mono and wraps).
 
 ---
 
@@ -255,7 +271,7 @@ src/
   pages/          routes — index.astro, work/, writing/, privacy.astro, 404.astro, llms*.txt.ts
   layouts/        Base.astro — head/meta/JSON-LD, SiteHeader/SiteFooter, GoatCounter
   components/     Row, Section, Tag, Prose, SiteHeader, SiteFooter, AppStoreBadge,
-                  CaseStudyPage, TableOfContents (all static .astro)
+                  CaseStudyPage, TableOfContents, SubscribeForm (all static .astro)
   content/blog/   blog posts (collection)
   content.config.ts   collection schema
   data/           caseStudy.ts + veil.ts/zumnum.ts — verified case-study content
@@ -291,24 +307,40 @@ The whole site is the v3 monospace changelog (decision 0001; spec in the plan fo
 
 - **The `#apps` / `#writing` / `#about` ids on the homepage sections are nav anchors** — the
   header links point at them. Preserve them.
-- **Homepage writing rows and each case study's "# writing" rows are derived from the content**
-  (`getCollection('blog')`, drafts excluded; related posts = published posts whose body mentions
-  the app name) — never a hand-written list, or it rots.
-- **Ship dates are verified facts** from the iTunes lookup API (`ZumNum 2025-08-01`,
-  `Veil 2026-08-07`), stored as `shipped` in `src/data/<app>.ts`. "Shipping" an app = set
-  `status: 'live'` + `appStoreUrl` (storefront-agnostic) + `shipped` there; the homepage row is
-  edited by hand.
+- **The masthead is the homepage's `<h1>`** (`SiteHeader` derives it, and the nav's
+  `aria-current`, from `Astro.url` — no page passes a prop, so no page can forget). On every
+  other page the name is a link and the page supplies its own h1. Exactly one h1 per page,
+  outline h1→h2 with no skips.
+- **Lists are derived from content, never hand-written** — homepage writing rows (latest three
+  + an `all writing →` row), the writing index, each case study's `# writing` rows (published
+  posts whose body mentions the app name), and **each article's closing app row** (B1: the
+  most-mentioned app in the body is the subject; that rule keeps the both-apps article at
+  Apple's one badge per layout). All rot-proof by construction.
+- **Ship dates and prices are verified facts.** `shipped` per the iTunes lookup API (ZumNum
+  2025-08-01, Veil 2026-08-07); Veil's `price` string is "free to try · €9.99 one-time unlock ·
+  no subscription" because the store download is **free** — the €9.99 is the one-time IAP
+  unlock (iTunes lookup + the Veil business folder). Never imply a paid download. "Shipping" an
+  app = set `status: 'live'` + storefront-agnostic `appStoreUrl` + `shipped` (+ `price` once
+  verified) in `src/data/<app>.ts`; the homepage row is edited by hand.
 - **Badge SVGs are referenced as `<img>`, not inlined**, deliberately: inlining both theme
   variants of both homepage badges (~42 KB) would break the <30 KB page budget. Both variants are
   in the HTML; CSS shows the right one per theme (no JS to swap them).
-- **Prev/next rows on articles and the writing-index table** collapse via the container query on
-  `.wrap` — that is why `.wrap` declares `container: page / inline-size`; don't remove it.
+- **`.wrap` declares `container: page / inline-size`** — the 400px container query in `Row.astro`
+  and `CaseStudyPage.astro` (contact-sheet columns) depends on it; don't remove it.
+- **The email form is gated** (`SubscribeForm.astro`): a plain Buttondown `<form action>`, zero
+  JS, wired into article footers and `/writing`, rendering nothing until `BUTTONDOWN_USERNAME`
+  is set. Only Reza can create the account. **The flip commit must update `/privacy` in the same
+  change** — the analytics honesty rule applied to the one thing that would collect anything.
 - **Dark-mode code blocks** work because `Prose.astro` flips Shiki's `--shiki-dark` variables
-  with `!important` under the three-state selectors. Astro's `themes:` config alone renders
+  with `!important` under the three-state selectors (`github-*-high-contrast` pair — the plain
+  github themes' comment grey fails AA on both grounds). Astro's `themes:` config alone renders
   light-only.
 - The OG renderer (`src/lib/og.ts`) needs a real font file at build time (Satori cannot use
   system fonts on CI, nor read WOFF2) — that is the **only** reason `@fontsource/ibm-plex-mono`
   exists. Verify the `.woff` path inside the package before ever swapping it.
+- **Settled by Reza (2026-08-31), do not re-open:** the about line ("iOS engineer at
+  Goodnotes; evenings and weekends…") stays as-is — the honesty is the point; and row
+  descriptions always wrap, never truncate.
 
 ### SEO / discoverability conventions
 The site's structured data is a JSON-LD `@graph` (`Base.astro`): always Person + WebSite, plus
