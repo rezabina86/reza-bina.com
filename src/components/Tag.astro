@@ -1,0 +1,19 @@
+---
+/** A topic tag rendered `[on-device ml]` — brackets, not pills. */
+interface Props {
+  name: string;
+}
+
+const { name } = Astro.props;
+---
+
+<span class="tag">[{name.toLowerCase()}]</span>
+
+<style>
+  .tag {
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+</style>

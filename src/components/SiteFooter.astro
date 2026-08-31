@@ -1,0 +1,50 @@
+---
+/**
+ * Contact links above a hairline, then one muted line. The analytics phrase
+ * links /privacy and must change in the same commit as any analytics change —
+ * see CLAUDE.md, "Analytics".
+ */
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="site-footer__links">
+      <a href="mailto:rezabina.dev@gmail.com">email</a>
+      <a href="https://github.com/rezabina86" target="_blank" rel="noopener">github</a>
+      <a href="https://www.linkedin.com/in/reza-bina/" target="_blank" rel="noopener">linkedin</a>
+    </div>
+    <p class="site-footer__meta">
+      © {year} Reza Bina · Berlin · built &amp; hosted independently ·
+      <a href="/privacy">cookieless analytics</a>, no personal data
+    </p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    margin-top: 72px;
+    padding-bottom: 72px;
+  }
+
+  .site-footer__links {
+    display: flex;
+    gap: 24px;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 9px;
+  }
+
+  .site-footer__meta {
+    padding-top: 9px;
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--ink-2);
+  }
+
+  @media (max-width: 700px) {
+    .site-footer {
+      margin-top: 56px;
+      padding-bottom: 48px;
+    }
+  }
+</style>

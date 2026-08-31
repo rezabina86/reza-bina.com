@@ -1,0 +1,119 @@
+---
+/**
+ * The site's atom: one changelog row.
+ * `date | name | description | action`, hairline on top.
+ * The action column takes either the `action`/`actionHref` props (a text link)
+ * or the named slot `action` (the App Store badge).
+ */
+interface Props {
+  date?: string;
+  name: string;
+  href?: string;
+  description?: string;
+  action?: string;
+  actionHref?: string;
+}
+
+const { date, name, href, description, action, actionHref } = Astro.props;
+const hasActionSlot = Astro.slots.has('action');
+---
+
+<div class="row">
+  {date && <span class="row__date">{date}</span>}
+  <span class="row__name">
+    {href ? <a href={href}>{name}</a> : name}
+  </span>
+  {description && <span class="row__desc">{description}</span>}
+  {
+    hasActionSlot ? (
+      <span class="row__action">
+        <slot name="action" />
+      </span>
+    ) : (
+      action && (
+        <span class="row__action">
+          {actionHref ? <a href={actionHref}>{action}</a> : action}
+        </span>
+      )
+    )
+  }
+</div>
+
+<style>
+  .row {
+    /* Spec says 84px for the date column, but 84px is exactly 10ch of 14px
+       SF Mono — an ISO date wraps at the slightest rounding. 96px is the
+       nearest safe width. */
+    display: grid;
+    grid-template-columns: 96px 132px 1fr auto;
+    gap: 16px;
+    align-items: baseline;
+    border-top: 1px solid var(--rule);
+    padding: 9px 0;
+  }
+
+  .row__date {
+    grid-column: 1;
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+
+  .row__name {
+    grid-column: 2;
+    font-weight: 600;
+  }
+
+  .row__desc {
+    grid-column: 3;
+    color: var(--ink-2);
+    /* Truncate on desktop only — it must wrap, not truncate, on mobile. */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .row__action {
+    grid-column: 4;
+    white-space: nowrap;
+  }
+
+  /* A badge row centres everything against the badge's height; text-action
+     rows stay on the baseline. (No :global() here — the compiler drops
+     :global inside :has, and inner :has selectors are left unscoped anyway.) */
+  .row:has(.store-badge) {
+    align-items: center;
+  }
+
+  /* A dateless row gives its columns back to the name. */
+  .row:not(:has(.row__date)) .row__name {
+    grid-column: 1 / 3;
+  }
+
+  @media (max-width: 700px) {
+    .row {
+      grid-template-columns: 96px 1fr;
+    }
+
+    .row__date {
+      grid-row: 1;
+    }
+
+    .row__name {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    .row:not(:has(.row__date)) .row__name {
+      grid-column: 1 / -1;
+    }
+
+    .row__desc {
+      grid-column: 1 / -1;
+      white-space: normal;
+    }
+
+    .row__action {
+      grid-column: 1 / -1;
+    }
+  }
+</style>

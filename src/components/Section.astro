@@ -1,0 +1,33 @@
+---
+/**
+ * A labeled changelog section: `# {label}` in muted mono, then rows.
+ * The id defaults to the label so the nav anchors (#apps, #writing, #about)
+ * keep working — do not change those ids.
+ */
+interface Props {
+  label: string;
+  id?: string;
+}
+
+const { label, id = label } = Astro.props;
+const headingId = `${id}-heading`;
+---
+
+<section class="section" id={id} aria-labelledby={headingId}>
+  <h2 class="section__label" id={headingId}><span aria-hidden="true"># </span>{label}</h2>
+  <slot />
+</section>
+
+<style>
+  .section {
+    margin-top: 40px;
+  }
+
+  .section__label {
+    font-size: 14px;
+    line-height: 1.7;
+    font-weight: 400;
+    color: var(--ink-2);
+    margin-bottom: 10px;
+  }
+</style>

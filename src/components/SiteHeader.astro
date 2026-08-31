@@ -1,0 +1,59 @@
+---
+/**
+ * Name, one-line tagline, three plain text links. Not fixed, not sticky, no
+ * background, no border — it scrolls away like everything else. On the
+ * homepage this IS the title block; other pages add their own beneath it.
+ */
+---
+
+<header class="site-header">
+  <div class="wrap">
+    <div class="site-header__top">
+      <a class="site-header__name" href="/">reza bina</a>
+      <nav class="site-header__nav" aria-label="Main">
+        <a href="/#apps">apps</a>
+        <a href="/writing">writing</a>
+        <a href="/#about">about</a>
+      </nav>
+    </div>
+    <p class="site-header__tagline">private, on-device apps for iPhone — Berlin</p>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    padding-top: 72px;
+  }
+
+  .site-header__top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .site-header__name {
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .site-header__name:hover {
+    color: var(--accent-hi);
+  }
+
+  .site-header__nav {
+    display: flex;
+    gap: 24px;
+  }
+
+  .site-header__tagline {
+    color: var(--ink-2);
+  }
+
+  @media (max-width: 700px) {
+    .site-header {
+      padding-top: 48px;
+    }
+  }
+</style>

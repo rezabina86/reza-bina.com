@@ -1,814 +1,137 @@
 /* ============================================================
-   reza-bina.com — foundation (Apple HIG / iOS 26 "Liquid Glass")
-   Dark-only by design. Tokens per HANDOFF.md §3; glass per §4.
+   reza-bina.com — v3 "monospace changelog"
+   Spec: ~/Developer/Documents/reza-bina.com/3-REFERENCE/Design-system.md
+   One stylesheet, zero JavaScript, zero web fonts, on every route.
    ============================================================ */
 
+/* ---- Colour — three-state theming ----------------------------------------
+   Bare :root carries the complete light palette. The media query restyles a
+   dark OS only when the visitor has not explicitly chosen light; the attribute
+   block lets an explicit dark choice win. Never define a colour whose only
+   home is a media query or attribute block. */
 :root {
-  color-scheme: dark;
+  color-scheme: light dark;
 
-  /* --- Surfaces — true black base for OLED depth, glass for elevation --- */
-  --bg:            #000000;
-  --bg-elev:       #0a0a0c;
-  --label:         #f5f5f7;                    /* Apple primary label (dark) */
-  --label-2:       rgba(235, 235, 245, 0.60);  /* secondary label — 6.4:1 on --bg */
-  /* Tertiary label. Apple's dark tertiary is 0.30 alpha, but on this true-black
-     background that measures 2.25:1 — well under the 4.5:1 AA floor, and every
-     use here is real text (timestamps, section labels, footer). Raised to 0.55
-     (5.4:1) so the hierarchy survives without failing contrast. */
-  --label-3:       rgba(235, 235, 245, 0.55);
-  --separator:     rgba(255, 255, 255, 0.10);
-  --separator-hi:  rgba(255, 255, 255, 0.16);
+  --bg:          #f7f7f5;
+  --bg-raise:    #ffffff; /* code blocks only */
+  --ink:         #191b1d;
+  --ink-2:       #6a6e73; /* 4.6:1 on --bg — do not lighten (AA) */
+  --rule:        #e2e2de;
+  --rule-strong: #cfcfc9;
+  --accent:      #35547c;
+  --accent-hi:   #1f3a5c;
 
-  /* --- Accent — Apple systemBlue (dark). App cards carry their own colors. --- */
-  --accent:        #0a84ff;
-  --accent-rgb:    10, 132, 255;
-
-  /* --- Liquid Glass surface --- */
-  --glass-bg:      rgba(255, 255, 255, 0.055);
-  --glass-bg-hi:   rgba(255, 255, 255, 0.09);
-  --glass-blur:    20px;
-  --glass-sat:     180%;
-
-  /* --- Hero legibility ---
-     The aurora's blue blob sits directly behind the hero tile, so the headline
-     would otherwise read against a coloured smear. Two levers: a calmer ambient
-     opacity globally, and an inset scrim that darkens only the corner the blob
-     occupies, fading to nothing so the surface still reads as glass. */
-  --aurora-opacity: 0.30;
-  --hero-scrim: radial-gradient(125% 105% at 16% 8%,
-                  rgba(0, 0, 0, 0.46),
-                  rgba(0, 0, 0, 0.20) 52%,
-                  rgba(0, 0, 0, 0) 84%);
-
-  /* --- Radii — Apple continuous-corner scale --- */
-  --r-card:        28px;
-  --r-modal:       32px;
-  --r-control:     14px;
-
-  /* --- Type --- */
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
-               "Inter Variable", Inter, system-ui, sans-serif;
-  --font-mono: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
-
-  /* --- Motion --- */
-  --ease-ios: cubic-bezier(0.32, 0.72, 0, 1); /* Apple-ish ease for CSS transitions */
-
-  /* --- Veil brand emerald (its app icon) --- */
-  --warm:      #28c17e;
-  --warm-rgb:  40, 193, 126;
-
-  /* --- Status amber (Apple systemOrange, dark) ---
-     For "in development" states. Deliberately NOT green: green is reserved for
-     shipped ("On the App Store"), so shipped vs. forthcoming is legible at a
-     glance rather than two near-identical green chips. */
-  --amber:     #ff9f0a;
-  --amber-rgb: 255, 159, 10;
-
-  /* --- Layout --- */
-  --maxw:      1080px;
+  --font-mono:  ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --font-serif: "Iowan Old Style", Charter, Georgia, "Times New Roman", serif;
 }
 
-*, *::before, *::after { box-sizing: border-box; }
-* { margin: 0; padding: 0; }
-html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:          #0e1013;
+    --bg-raise:    #16181b;
+    --ink:         #d5d9de;
+    --ink-2:       #8b9198; /* 5.7:1 on --bg */
+    --rule:        #22262b;
+    --rule-strong: #333940;
+    --accent:      #8fb8dd;
+    --accent-hi:   #b3d0ec;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg:          #0e1013;
+  --bg-raise:    #16181b;
+  --ink:         #d5d9de;
+  --ink-2:       #8b9198;
+  --rule:        #22262b;
+  --rule-strong: #333940;
+  --accent:      #8fb8dd;
+  --accent-hi:   #b3d0ec;
+}
+
+/* ---- Reset ---------------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
 
 body {
-  font-family: var(--font-sans);
-  font-size: 17px;                 /* iOS body size */
-  background: var(--bg);
-  color: var(--label);
-  line-height: 1.6;
-  font-optical-sizing: auto;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-  overflow-x: hidden;
-  position: relative;
+  background: var(--bg); /* explicit — a transparent body borrows the host's ground */
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.7;
+  font-variant-numeric: tabular-nums; /* what makes the date columns line up */
 }
 
-a { color: inherit; }
+img,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
 
-/* Visible keyboard-focus ring, everywhere (a11y baseline). */
+/* ---- Links & focus -------------------------------------------------------- */
+a {
+  color: var(--accent);
+  text-decoration: none; /* tables carry links by colour; Prose re-underlines */
+  transition: color 0.12s linear;
+}
+
+a:hover {
+  color: var(--accent-hi);
+}
+
+button {
+  transition: color 0.12s linear;
+}
+
 :focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 3px;
-  border-radius: 4px;
-}
-:focus:not(:focus-visible) { outline: none; }
-
-/* Skip link — first tab stop, visible only when focused. */
-.skip-link {
-  position: absolute; top: 10px; left: 10px; z-index: 200;
-  padding: 10px 16px; border-radius: var(--r-control);
-  background: var(--label); color: #08080c; font-size: 14px; font-weight: 500;
-  text-decoration: none;
-  transform: translateY(-160%);
-  transition: transform .2s var(--ease-ios);
-}
-.skip-link:focus-visible { transform: translateY(0); }
-
-/* ============================================================
-   Liquid Glass primitives (HANDOFF.md §4)
-   Apply to FLOATING surfaces only — nav, modal, hero + featured.
-   Never to every card, or it reads as a theme rather than craft.
-   ============================================================ */
-
-.glass {
-  /* Indirection so a variant can layer something over the surface (see
-     .hero-card) without having to re-declare the @supports fallbacks below. */
-  --glass-surface: var(--glass-bg);
-  position: relative;
-  background: var(--glass-surface);
-  border: 1px solid var(--separator);
-  border-radius: var(--r-card);
-  /* Fallback (no backdrop-filter support): a solid elevated surface. */
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),   /* specular top edge */
-    inset 0 -1px 0 rgba(0, 0, 0, 0.30),         /* soft inner base */
-    0 30px 60px -30px rgba(0, 0, 0, 0.70);      /* floating drop */
+  outline-offset: 2px;
 }
 
-@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .glass {
-    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+/* Guard only — v3 has no motion to disable beyond the link colour fade. */
+@media (prefers-reduced-motion: reduce) {
+  a,
+  button {
+    transition: none;
   }
 }
 
-/* No backdrop-filter (e.g. older Firefox): opaque elevated fallback so text stays legible. */
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .glass { --glass-surface: var(--bg-elev); }
-}
-
-/* Bright specular highlight sweeping the top edge. */
-.glass::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), transparent 40%);
-}
-
-/* ============================================================
-   Ambient background — a subtle systemBlue glow + fine grain.
-   ============================================================ */
-.aurora { position: fixed; inset: 0; z-index: -2; pointer-events: none; overflow: hidden; }
-.aurora::before, .aurora::after {
-  content: ""; position: absolute; border-radius: 50%; filter: blur(90px);
-  opacity: var(--aurora-opacity);
-}
-.aurora::before {
-  width: 60vw; height: 60vw; top: -24vw; left: -12vw;
-  background: radial-gradient(circle, rgba(var(--accent-rgb), 0.24), transparent 60%);
-  animation: drift1 24s var(--ease-ios) infinite alternate;
-}
-.aurora::after {
-  width: 46vw; height: 46vw; top: -8vw; right: -14vw;
-  background: radial-gradient(circle, rgba(var(--warm-rgb), 0.12), transparent 60%);
-  animation: drift2 28s var(--ease-ios) infinite alternate;
-}
-@keyframes drift1 { to { transform: translate(8vw, 6vw) scale(1.15); } }
-@keyframes drift2 { to { transform: translate(-6vw, 4vw) scale(1.1); } }
-
-.grain {
-  position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: 0.04;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
-.wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 28px; }
-
-/* Reveal on scroll */
-.reveal { opacity: 0; transform: translateY(18px); transition: opacity .8s var(--ease-ios), transform .8s var(--ease-ios); }
-.reveal.in { opacity: 1; transform: none; }
-
-@media (prefers-reduced-motion: reduce) {
-  .reveal { opacity: 1; transform: none; transition: none; }
-  html { scroll-behavior: auto; }
-  .aurora::before, .aurora::after { animation: none; }
-}
-
-/* ============================================================
-   Glass nav (HANDOFF §7.4) — sticky, condenses on scroll.
-   ============================================================ */
-.nav {
-  position: sticky; top: 0; z-index: 50;
-  background: rgba(0, 0, 0, 0.55);
-  border-bottom: 1px solid var(--separator);
-  transition: background .3s var(--ease-ios), border-color .3s;
-}
-@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .nav {
-    background: rgba(0, 0, 0, 0.32);
-    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-  }
-}
-.nav.condensed { background: rgba(0, 0, 0, 0.62); }
-.nav .wrap { display: flex; justify-content: space-between; align-items: center; padding: 16px 28px; transition: padding .3s var(--ease-ios); }
-.nav.condensed .wrap { padding: 9px 28px; }
-.brand { font-weight: 600; letter-spacing: -0.01em; text-decoration: none; display: flex; align-items: center; gap: 10px; font-size: 16px; color: var(--label); }
-.brand .pip { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 14px rgba(var(--accent-rgb), 0.9); }
-.nav-links { display: flex; align-items: center; }
-.nav-links a { color: var(--label-2); text-decoration: none; font-size: 14.5px; margin-left: 26px; transition: color .2s; }
-.nav-links a:hover { color: var(--label); }
-
-/* ============================================================
-   Hero header — used by /writing (the home hero is a bento tile).
-   ============================================================ */
-.hero { padding: 108px 0 72px; }
-.eyebrow {
-  display: inline-flex; align-items: center; gap: 9px;
-  font-size: 13px; color: var(--label-2); letter-spacing: 0.02em;
-  border: 1px solid var(--separator); border-radius: 999px; padding: 7px 15px;
-  background: var(--glass-bg);
-}
-.eyebrow .pip { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.9); }
-
-h1 {
-  font-size: clamp(40px, 7.2vw, 78px);
-  line-height: 1.02; letter-spacing: -0.035em; font-weight: 600;
-  max-width: 16ch; margin: 26px 0 24px;
-}
-.lede { font-size: clamp(17px, 2.2vw, 20px); color: var(--label-2); max-width: 52ch; }
-
-/* ---------- Buttons ---------- */
-.btn {
-  font-size: 15px; font-weight: 500; text-decoration: none;
-  padding: 13px 22px; border-radius: 999px; display: inline-flex; align-items: center; gap: 8px;
-  transition: transform .18s var(--ease-ios), background .25s, border-color .25s, box-shadow .25s;
-}
-.btn.primary { background: var(--label); color: #08080c; }
-.btn.primary:hover { box-shadow: 0 12px 34px -12px rgba(var(--accent-rgb), 0.7); }
-.btn.ghost { border: 1px solid var(--separator-hi); color: var(--label); }
-.btn.ghost:hover { background: var(--glass-bg-hi); border-color: var(--accent); }
-
-/* ---------- Sections ---------- */
-.section { padding: 54px 0; }
-.section-label { font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--label-3); margin-bottom: 26px; }
-
-/* ============================================================
-   Bento home (HANDOFF §7.1)
-   12-col desktop; collapses via container queries. Hover: gentle
-   lift + cursor-tracked spotlight. Only hero + featured use full
-   Liquid Glass; secondary tiles use a lighter elevated surface.
-   ============================================================ */
-.home { padding: 44px 0 24px; }
-.home .wrap { container-type: inline-size; }
-
-/* Stacked, labeled sections (Hero → Apps → Writing → About). Generous rhythm
-   between them so the grouping reads at a glance; bento is still allowed
-   *inside* a section (the Apps pair), just never mixing content types across a
-   row. scroll-margin clears the sticky nav when the nav anchors jump here. */
-.home-section { margin-top: clamp(48px, 7vw, 80px); scroll-margin-top: 88px; }
-.section-head {
-  display: flex; align-items: baseline; justify-content: space-between;
-  gap: 16px; margin-bottom: 22px;
-}
-.section-head .section-label { margin-bottom: 0; }
-
-/* Apps: two cards, ZumNum wider + first = primary weight (collapses to one
-   column on narrow viewports). About: full-width bio card (matches the app/
-   writing cards), then a compact contact strip stacked beneath — single column,
-   so no short card strands next to the tall bio. */
-.apps-grid   { display: grid; grid-template-columns: 7fr 5fr; gap: 16px; }
-.about-stack { display: grid; gap: 16px; }
-
-.card {
-  position: relative; overflow: hidden;
-  border-radius: var(--r-card);
-  padding: 28px;
-  text-decoration: none; color: inherit;
-  display: flex; flex-direction: column;
-  transition: transform .3s var(--ease-ios), border-color .3s var(--ease-ios), box-shadow .3s;
-}
-/* Secondary (lighter) surface — the default tile look. */
-.card--soft { background: var(--bg-elev); border: 1px solid var(--separator); }
-
-/* Cursor-tracked spotlight for interactive tiles. */
-.card__spot {
-  position: absolute; inset: 0; pointer-events: none; opacity: 0;
-  background: radial-gradient(360px 220px at var(--mx, 50%) var(--my, 0%), rgba(var(--accent-rgb), 0.14), transparent 70%);
-  transition: opacity .3s var(--ease-ios);
-}
-a.card, button.card { cursor: pointer; text-align: left; font: inherit; width: 100%; }
-a.card:hover, button.card:hover,
-.card--interactive:hover { transform: translateY(-5px); border-color: var(--separator-hi); }
-a.card:hover .card__spot, button.card:hover .card__spot,
-.card--interactive:hover .card__spot,
-.card--interactive:focus-within .card__spot { opacity: 1; }
-a.card:focus-visible, button.card:focus-visible { outline-offset: 4px; }
-
-/* Stretched-link pattern: the primary link's ::after covers the whole card
-   (nearest positioned ancestor = .card), so the tile is clickable anywhere,
-   while a second real link (App Store) sits above it. Avoids nested anchors. */
-.stretched-link::after { content: ""; position: absolute; inset: 0; z-index: 1; }
-.cta-row .link-quiet { position: relative; z-index: 2; }
-
-/* --- Hero tile ---
-   The scrim is a BACKGROUND layer, not an ::after overlay: an absolutely
-   positioned pseudo-element paints above the in-flow copy and would dim the
-   headline along with the aurora. Layering it over --glass-surface keeps the
-   @supports fallbacks (and the specular ::before highlight) intact. */
-.hero-card {
-  justify-content: center; min-height: 300px; gap: 18px;
-  /* Hug the content: the stat pills felt bottom-heavy with the card's default
-     28px sitting below them, larger than the 18px internal rhythm. (The wide
-     right void is deliberate — reserved for a future device/motif.) */
-  padding-bottom: 20px;
-  background: var(--hero-scrim), var(--glass-surface);
-}
-.hero-card .eyebrow { align-self: flex-start; }
-/* Wider measure + balanced wrapping so the first-person headline breaks into
-   even lines and the accent phrase ("on your device") stays intact instead of
-   orphaning "on". text-wrap:balance degrades to normal wrapping where absent. */
-.hero-card h1 { margin: 0; max-width: 18ch; font-size: clamp(34px, 4.4vw, 58px); text-wrap: balance; }
-.hero-card .lede { max-width: 44ch; }
-.hero-card .accent { color: var(--accent); }
-.hero-cta { margin-top: 6px; display: flex; gap: 12px; flex-wrap: wrap; }
-.hero-stats { margin-top: 4px; display: flex; gap: 10px; flex-wrap: wrap; list-style: none; }
-/* "Now —" status line: a quiet current-momentum signal under the stat pills.
-   The dot uses --warm (systemGreen), which carries a light-appearance value.
-   Scoped to .hero-card so the smaller/quieter sizing beats the generic
-   `.card p` rule (which is one step more specific than a bare `.hero-now`). */
-.hero-card .hero-now {
-  margin-top: 16px; display: flex; align-items: center; gap: 8px;
-  font-size: 14px; color: var(--label-3);
-}
-.hero-now__dot {
-  width: 7px; height: 7px; border-radius: 50%; background: var(--warm);
-  box-shadow: 0 0 10px rgba(var(--warm-rgb), 0.9); flex: none;
-}
-.stat-pill {
-  font-size: 12.5px; color: var(--label-2);
-  border: 1px solid var(--separator); border-radius: 999px; padding: 6px 12px;
-  background: rgba(255, 255, 255, 0.03);
-}
-
-/* --- App tiles (icon + tags) --- */
-.app-head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
-.icon-img {
-  width: 60px; height: 60px; border-radius: 15px; display: block; object-fit: cover; flex: none;
-  border: 1px solid var(--separator-hi);
-  box-shadow: 0 12px 30px -14px rgba(0, 0, 0, 0.85);
-}
-.card :is(h2, h3) { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; min-width: 0; flex: 1 1 auto; }
-.card p { color: var(--label-2); font-size: 15.5px; }
-.tag { font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
-.tag--live { background: rgba(48, 209, 88, 0.18); color: #4fd07a; }
-/* Amber, muted, on a translucent field — reads as "forthcoming", never as
-   shipped. Text #ffb84d over the composited chip is ~9:1 (AA). */
-.tag--soon {
-  background: rgba(var(--amber-rgb), 0.14); color: #ffb84d;
-  border: 1px solid rgba(var(--amber-rgb), 0.30);
-}
-
-/* --- Featured (ZumNum) — full glass, taller --- */
-.featured { min-height: 340px; }
-
-/* "Work in progress" de-emphasis — the one signal that separates a forthcoming
-   app from a shipped one. A dashed, lower-contrast edge reads as "outlined, not
-   finished" at a glance (the amber tag reinforces it) while the surface itself
-   stays full glass, so the card is still attractive. Comes after `.glass` so it
-   overrides its solid border; hover still lifts and brightens via border-color. */
-.card--wip { border-style: dashed; border-color: var(--separator-hi); }
-.featured .spacer { flex: 1 1 auto; min-height: 8px; }
-.badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
-.badge {
-  font-size: 12px; color: var(--label-2);
-  border: 1px solid var(--separator); border-radius: 8px; padding: 5px 10px;
-  background: rgba(255, 255, 255, 0.03);
-}
-.cta-row { margin-top: 20px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
-.link-arrow { color: var(--accent); font-size: 15px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
-.link-quiet { color: var(--label-2); font-size: 14px; text-decoration: none; }
-.link-quiet:hover { color: var(--label); }
-
-/* --- Writing tile: the two most recent posts --- */
-.eyebrow-sm { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--label-3); margin-bottom: 14px; }
-.card h2.eyebrow-sm { font-size: 12px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; color: var(--label-3); display: block; }
-.writing-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
-.writing-head .eyebrow-sm { margin-bottom: 0; }
-
-.post-list { list-style: none; display: grid; gap: 0; margin-top: 4px; }
-.post-item { padding: 20px 0; border-top: 1px solid var(--separator); }
-.post-item:first-child { border-top: none; padding-top: 16px; }
-.post-item:last-child { padding-bottom: 0; }
-
-.post-item__link { text-decoration: none; display: inline-block; }
-.post-item__title {
-  font-size: clamp(18px, 1.9vw, 21px); font-weight: 600; letter-spacing: -0.015em;
-  line-height: 1.3; color: var(--label);
-  transition: color .2s var(--ease-ios);
-}
-.post-item__link:hover .post-item__title { color: var(--accent); }
-
-/* Full description, no clamp. The writing section is a single-column stack now,
-   so entries don't need to match heights — and a 2-line clamp truncated the
-   blurb mid-sentence on narrow screens. */
-.post-item__desc {
-  margin-top: 7px; color: var(--label-2); font-size: 14.5px; line-height: 1.55;
-}
-.post-item__meta {
-  margin-top: 11px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
-  font-size: 12.5px; color: var(--label-3);
-}
-.topic {
-  color: var(--label-2); border: 1px solid var(--separator); border-radius: 999px;
-  padding: 3px 9px; font-size: 11.5px; letter-spacing: 0.01em;
-}
-
-/* --- Contact strip --- a peer-framed invitation on its own full-width line,
-   then the label + icon links on one row beneath it. The card stays a column
-   (its .card default); .contact-row carries the label-left / links-right flow. */
-.about-contact .contact-invite {
-  color: var(--label-2); font-size: 15px; line-height: 1.55; max-width: 52ch; margin: 0 0 18px;
-}
-.contact-row {
-  display: flex; align-items: baseline; justify-content: space-between;
-  gap: 16px 24px; flex-wrap: wrap;
-}
-.contact-row .eyebrow-sm { margin-bottom: 0; }
-/* Reset the generic `.card :is(h2,h3)` sizing/flex so the label reads as a small
-   eyebrow, not a 20px flex-grow heading that strands the links. */
-.about-contact .eyebrow-sm {
-  margin-bottom: 0; flex: none; display: block;
-  font-size: 12px; font-weight: 400; letter-spacing: 0.08em;
-}
-
-.contact { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 0; }
-.contact a {
-  display: inline-flex; align-items: center; gap: 8px;
-  font-size: 14px; text-decoration: none; color: var(--label);
-  border: 1px solid var(--separator); border-radius: 999px; padding: 9px 16px;
-  transition: border-color .2s, background .2s, color .2s;
-}
-.contact a svg { width: 16px; height: 16px; flex: none; display: block; }
-.contact a:hover { border-color: var(--accent); background: var(--glass-bg); }
-
-/* --- Responsive collapse (container queries on .home .wrap) --- */
-@container (max-width: 720px) {
-  .apps-grid { grid-template-columns: 1fr; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  a.card, button.card, .btn { transition: none; }
-  a.card:hover, button.card:hover { transform: none; }
-}
-
-/* ============================================================
-   Writing list — used by /writing and the home blog fallback.
-   ============================================================ */
-.posts { display: grid; }
-.post {
-  display: flex; justify-content: space-between; align-items: baseline; gap: 16px;
-  padding: 20px 6px; border-bottom: 1px solid var(--separator);
-  text-decoration: none; color: inherit; transition: padding-left .25s var(--ease-ios), background .25s; border-radius: 10px;
-}
-.post:hover { padding-left: 14px; background: var(--glass-bg); }
-.post-title { font-size: 17px; font-weight: 500; }
-.post time { font-size: 14px; color: var(--label-3); flex: none; }
-
-/* ---------- Footer ---------- */
-.footer { padding: 60px 0 48px; margin-top: 44px; border-top: 1px solid var(--separator); color: var(--label-3); font-size: 14px; }
-.footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
-.footer a { color: inherit; text-decoration: underline; text-underline-offset: 2px; text-decoration-color: var(--separator-hi); transition: color .2s var(--ease-ios), text-decoration-color .2s var(--ease-ios); }
-.footer a:hover { color: var(--label); text-decoration-color: var(--label-2); }
-
-/* ---------- Article (blog post) ---------- */
-.article { padding: 52px 0 20px; }
-.article .wrap { max-width: 1000px; }
-.article .back { color: var(--label-2); text-decoration: none; font-size: 14px; }
-.article .back:hover { color: var(--label); }
-.article h1 { font-size: clamp(30px, 5vw, 46px); max-width: 22ch; margin: 24px 0 12px; }
-.article .meta { color: var(--label-3); font-size: 14px; margin-bottom: 40px; display: flex; align-items: center; gap: 9px; }
-.meta__dot { color: var(--label-3); }
-
-/* Two-column reading layout: TOC rail + prose. The prose keeps a ~68ch measure. */
-.article__layout { display: grid; grid-template-columns: 1fr minmax(0, 68ch); gap: 48px; align-items: start; }
-.article__aside { position: sticky; top: 96px; justify-self: end; width: 100%; max-width: 230px; }
-
-/* ---------- Table of contents ----------
-   Flat, aligned: every row shares one left edge — no indentation to look
-   misaligned. The h2/h3 hierarchy is typographic instead: h2 links read
-   brighter and a touch heavier, h3 links quieter. The active row is a
-   full-width rounded highlight (iOS/macOS sidebar-selection pattern). Level and
-   state styling are single-class selectors on the link so nothing fights over
-   specificity. Same design on desktop and mobile. */
-.toc__title { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--label-3); margin: 0 0 10px 12px; }
-.toc__list { list-style: none; display: grid; gap: 2px; }
-.toc__link {
-  display: block; padding: 7px 12px; border-radius: 8px;
-  color: var(--label-2); text-decoration: none; font-size: 13.5px;
-  /* Integer line-height (not unitless 1.4 → 18.9px): keeps every row exactly
-     33px tall so the vertical rhythm never rounds unevenly between rows. */
-  line-height: 19px;
-  transition: color .2s var(--ease-ios), background-color .2s var(--ease-ios);
-}
-/* Hierarchy by weight + colour, not indent — all rows still start at the same x. */
-.toc__link--top { color: var(--label); font-weight: 500; }
-.toc__link--sub { color: var(--label-3); }
-/* Hover (0,2,0) and active (0,2,0) both out-specify the level modifiers (0,1,0);
-   active is declared last so it wins when a row is both active and hovered. */
-.toc__link:hover { color: var(--label); background-color: var(--glass-bg); }
-.toc__link.is-active { color: var(--accent); background-color: rgba(var(--accent-rgb), 0.12); }
-
-@media (max-width: 900px) {
-  .article .wrap { max-width: 720px; }
-  /* minmax(0, 1fr), not 1fr: a plain `1fr` is `minmax(auto, 1fr)`, whose `auto`
-     floor is forced wide by the prose's min-content (a code line/long token),
-     blowing the single column past the viewport so text clipped off the right
-     edge under `body { overflow-x: hidden }`. The 0 floor lets it shrink. */
-  .article__layout { grid-template-columns: minmax(0, 1fr); gap: 28px; }
-  .article__aside { position: static; justify-self: stretch; max-width: none; }
-  /* Mobile: the TOC becomes a bordered card. The row highlights (base rules) sit
-     inside its padding, so they're inset from the card edge — no rail needed. */
-  .toc { border: 1px solid var(--separator); border-radius: var(--r-control); padding: 10px; background: var(--bg-elev); }
-}
-
-.prose { font-size: 18px; line-height: 1.78; color: #d9dae1; max-width: 68ch; }
-/* Anchor offset so a jumped-to heading clears the sticky nav. */
-.prose :is(h2, h3) { scroll-margin-top: 96px; }
-.prose > * + * { margin-top: 1.15em; }
-.prose h2 { color: var(--label); font-size: 25px; letter-spacing: -0.02em; margin-top: 1.9em; }
-.prose h3 { color: var(--label); font-size: 20px; margin-top: 1.5em; }
-.prose a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(var(--accent-rgb), 0.4); }
-.prose a:hover { text-decoration-color: var(--accent); }
-.prose blockquote { border-left: 3px solid var(--separator-hi); padding-left: 18px; color: var(--label-2); font-style: italic; }
-.prose code { background: var(--bg-elev); padding: 2px 6px; border-radius: 6px; font-size: 0.9em; font-family: var(--font-mono); }
-/* Shiki output (.astro-code) — keep its own token colors, restyle the frame. */
-.prose pre {
-  background: var(--bg-elev) !important;
-  padding: 18px 20px; border-radius: var(--r-control);
-  overflow-x: auto; border: 1px solid var(--separator);
-  font-size: 14px; line-height: 1.7;
-}
-.prose pre code { background: none; padding: 0; font-family: var(--font-mono); font-size: inherit; }
-.prose img, .prose video { max-width: 100%; height: auto; border-radius: var(--r-control); display: block; }
-.prose hr { border: none; border-top: 1px solid var(--separator); margin: 2.4em 0; }
-.prose table { width: 100%; border-collapse: collapse; font-size: 15.5px; display: block; overflow-x: auto; }
-.prose th, .prose td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--separator); }
-.prose th { color: var(--label); font-weight: 600; }
-.prose td { color: var(--label-2); }
-.prose ul, .prose ol { padding-left: 1.3em; }
-.prose li + li { margin-top: 0.4em; }
-
-/* ============================================================
-   Phase 3 — Case study: DeviceFrame, modal, feature list, page.
-   ============================================================ */
-
-/* ---------- Device frame — iPhone 17 Pro geometry (HANDOFF §7.2) ----------
-   The screenshots are captured at 1206 × 2622 px @3x, i.e. a 402 × 874 pt
-   display. Every dimension below is derived from the frame width so the
-   proportions survive at any size (the frame is ~190px on mobile):
-
-     · display aspect      402 : 874        → 201 / 437
-     · corner radius       62 pt            → 15.42% of screen width
-     · Dynamic Island      125 × 36.67 pt   → 31.09% × 9.12% of screen width
-     · island top inset    11 pt            → 2.74% of screen width
-
-   The aspect ratio belongs to the SCREEN, never the padded frame: with
-   border-box sizing, putting it on the frame makes the inner box a different
-   shape than the image, and object-fit then crops the screenshot. */
-.device {
-  --dev-w:    min(270px, 68vw);           /* outer width, incl. bezel */
-  --bezel:    calc(var(--dev-w) * 0.032);
-  --screen-w: calc(var(--dev-w) - 2 * var(--bezel));
-  --screen-r: calc(var(--screen-w) * 0.1542);
-  width: var(--dev-w);
+/* ---- Page container --------------------------------------------------------
+   Pages override --page-max: 70rem home/case studies (default), 62rem writing
+   index, 34rem article prose (the article header matches prose width). */
+.wrap {
+  max-width: var(--page-max, 70rem);
   margin-inline: auto;
-}
-.device__frame {
-  position: relative;
-  padding: var(--bezel);
-  border-radius: calc(var(--screen-r) + var(--bezel));
-  /* Titanium band: a bright top edge falling into shadow round the sides. */
-  background: linear-gradient(155deg, #3c3f47 0%, #101114 55%, #2a2c33 100%);
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.07),
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    0 40px 80px -30px rgba(0, 0, 0, 0.85);
-}
-.device__screen {
-  position: relative;
-  aspect-ratio: 201 / 437;
-  border-radius: var(--screen-r);
-  overflow: hidden;
-  background: #000;
-}
-/* Sits inside the screen, so it is clipped by it and positioned against it. */
-.device__island {
-  position: absolute;
-  top: calc(var(--screen-w) * 0.0274);
-  left: 50%;
-  transform: translateX(-50%);
-  width: calc(var(--screen-w) * 0.3109);
-  height: calc(var(--screen-w) * 0.0912);
-  background: #000;
-  border-radius: 999px;
-  z-index: 3;
-}
-.device__video { width: 100%; height: 100%; object-fit: cover; display: block; }
-.device__placeholder {
-  position: absolute; inset: 0;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
-  background: radial-gradient(120% 90% at 50% 0%, #1f6bff 0%, #0a2a6b 55%, #050b1c 100%);
-  color: #fff; text-align: center; padding: 24px;
-}
-.device__ph-num { font-size: 64px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
-.device__ph-name { font-size: 20px; font-weight: 600; }
-.device__ph-note { font-size: 12.5px; color: rgba(255, 255, 255, 0.7); margin-top: 10px; }
-.device__play {
-  position: absolute; inset: 0; margin: auto; width: 64px; height: 64px; border-radius: 50%;
-  background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.3);
-  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-  color: #fff; display: grid; place-items: center; cursor: pointer; z-index: 4;
-}
-.device__play-glyph { font-size: 22px; margin-left: 3px; }
-
-/* ---------- Feature list (shared by page + modal) ---------- */
-.feature-list { list-style: none; display: grid; gap: 14px; margin: 6px 0; }
-.feature-list li { display: grid; gap: 3px; }
-.feature-list strong { font-size: 15px; font-weight: 600; color: var(--label); }
-.feature-list span { font-size: 14px; color: var(--label-2); }
-
-/* ---------- Case-study modal (HANDOFF §7.3) ---------- */
-.modal-scrim {
-  position: fixed; inset: 0; z-index: 100;
-  display: flex; align-items: center; justify-content: center; padding: 24px;
-  background: rgba(0, 0, 0, 0.6);
-}
-@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .modal-scrim { -webkit-backdrop-filter: blur(25px); backdrop-filter: blur(25px); }
-}
-/* The panel is the rounded, clipping frame: bounded height, no scroll of its
-   own, so its border-radius always contains everything and the close button
-   stays fixed. Inside sits a flex dialog — a device column plus a
-   header/body/footer stack where ONLY the body scrolls (ARIA APG dialog). */
-.modal-panel {
-  position: relative;
-  width: min(940px, 100%);
-  max-height: min(88vh, 780px);
-  overflow: hidden;
-  border-radius: var(--r-modal);
-  display: flex;
-}
-.modal-close {
-  position: absolute; top: 16px; right: 16px; z-index: 5;
-  width: 34px; height: 34px; border-radius: 50%;
-  background: var(--glass-bg-hi); border: 1px solid var(--separator);
-  color: var(--label); cursor: pointer; display: grid; place-items: center; font-size: 13px;
-  transition: border-color .2s;
-}
-.modal-close:hover { border-color: var(--separator-hi); }
-
-/* Device. Centred in whatever holds it. On desktop it's a direct panel child
-   (a non-scrolling left column, top-aligned, so it stays put while the body
-   scrolls); on mobile it's the first child of the scrolling body instead. */
-.modal-media { display: flex; justify-content: center; }
-.modal-panel > .modal-media {
-  flex: none; align-self: center; padding: 34px 0 34px 34px;
-}
-/* Bound the device by viewport height so it never exceeds the panel on short
-   laptop screens (where it would otherwise be clipped by the frame). */
-.modal-panel > .modal-media .device { --dev-w: min(260px, 36vh); }
-
-/* Header / body / footer stack. */
-.modal-main {
-  flex: 1; min-width: 0; min-height: 0;
-  display: flex; flex-direction: column;
-}
-.modal-header {
-  flex: none;
-  padding: 34px 52px 18px 34px;   /* right padding clears the close button */
-  border-bottom: 1px solid var(--separator);
-}
-/* The ONLY scroller — bounded between the fixed header and footer. Keeps the
-   thin, inset, rounded-frame scrollbar from the earlier fix. Focusable
-   (tabindex=0 in the markup) so keyboard users can arrow-scroll it. */
-.modal-body {
-  flex: 1; min-height: 0;
-  overflow-y: auto; overscroll-behavior: contain;
-  padding: 20px 34px;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
-}
-.modal-body::-webkit-scrollbar { width: 10px; }
-.modal-body::-webkit-scrollbar-track { background: transparent; }
-.modal-body::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.22);
-  border-radius: 999px;
-  border: 3px solid transparent;      /* inset the thumb so it floats inside the padding */
-  background-clip: padding-box;
-}
-.modal-body:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 6px; }
-.modal-footer {
-  flex: none;
-  padding: 18px 34px 34px;
-  border-top: 1px solid var(--separator);
+  padding-inline: 40px;
 }
 
-.modal-title { font-size: clamp(24px, 3vw, 32px); letter-spacing: -0.02em; font-weight: 600; }
-.modal-tagline { color: var(--label-2); font-weight: 500; }
-.modal-summary { color: var(--label-2); font-size: 15.5px; margin-bottom: 18px; }
-.modal-cta { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
-
-/* ---------- Case-study page (/work/zumnum) ---------- */
-.case { padding: 40px 0 56px; }
-.case .back { color: var(--label-2); text-decoration: none; font-size: 14px; }
-.case .back:hover { color: var(--label); }
-.case-head { display: flex; align-items: center; gap: 18px; margin: 22px 0 36px; }
-.case-icon { width: 72px; height: 72px; border-radius: 18px; }
-.case-title { font-size: clamp(34px, 5vw, 52px); margin: 4px 0 6px; letter-spacing: -0.03em; max-width: none; }
-.case-tagline { color: var(--label-2); font-size: clamp(16px, 2vw, 19px); }
-.case-split { display: grid; grid-template-columns: minmax(0, 320px) 1fr; gap: 46px; align-items: start; }
-.case-media { position: sticky; top: 92px; }
-.case-summary { font-size: 17px; color: var(--label-2); margin-bottom: 22px; line-height: 1.7; }
-.case-cta { margin-top: 26px; }
-
-/* Modal, mobile: single flex column. The device moves into the scrolling body
-   (rendered there by the island < 720px), so header/footer stay fixed and the
-   device scrolls with the content — a ~410px frame pinned to the top would
-   leave no room to read. */
-@media (max-width: 719px) {
-  .modal-scrim { padding: 14px; }
-  .modal-panel { max-height: 90vh; }
-  .modal-header { padding: 22px 48px 14px 22px; }
-  .modal-body { padding: 16px 22px; }
-  .modal-footer { padding: 14px 22px 22px; }
-  .modal-media { padding: 2px 0 18px; }
-  /* Keep the frame a preview, not the whole screen — content must stay visible. */
-  .modal-media .device { --dev-w: min(190px, 46vw); }
-  .modal-title { font-size: 22px; }
-  /* Footer CTAs stack and centre: full-width primary (App Store button OR the
-     "In development" chip — same treatment so the layout doesn't jump), with the
-     secondary "Open full page" link centred beneath it. */
-  .modal-cta { flex-direction: column; align-items: stretch; gap: 14px; }
-  .modal-cta .btn.primary,
-  .modal-cta .badge--status { width: 100%; justify-content: center; text-align: center; }
-  .modal-cta .link-quiet { text-align: center; }
-}
-
-@media (max-width: 760px) {
-  .case-split { grid-template-columns: 1fr; gap: 30px; }
-  .case-media { position: static; }
-  .case-media .device { --dev-w: min(240px, 62vw); }
-  .case-head { gap: 14px; }
-  .case-icon { width: 56px; height: 56px; border-radius: 14px; }
-}
-
-/* ============================================================
-   Reduced motion — global safety net.
-   Individual components already handle this (reveal, aurora, card
-   hover, modal springs, video autoplay). This blanket rule is the
-   backstop so any motion added later is covered by default.
-   Uses a near-zero duration rather than `none` so transitionend
-   still fires for anything that might listen for it.
-   ============================================================ */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+@media (max-width: 700px) {
+  .wrap {
+    padding-inline: 20px;
   }
 }
 
-/* ============================================================
-   Case-study screenshots (real app imagery)
-   ============================================================ */
-
-/* A screenshot filling the device screen. */
-.device__shot { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-/* "In development" — an honest status chip where a store link would go. */
-.badge--status { color: var(--label-2); border-color: var(--separator-hi); padding: 9px 14px; }
-
-.case-gallery { margin-top: 64px; }
-.case-gallery__title { font-size: clamp(20px, 2.6vw, 26px); letter-spacing: -0.02em; margin-bottom: 24px; }
-.shot-grid {
-  list-style: none;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 26px;
+/* ---- Skip link ------------------------------------------------------------ */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 8px;
+  z-index: 10;
+  padding: 4px 8px;
+  background: var(--bg);
+  border: 1px solid var(--rule-strong);
 }
-.shot img {
-  width: 100%; height: auto; display: block;
-  border-radius: 18px;
-  border: 1px solid var(--separator);
-  background: var(--bg-elev);
-  box-shadow: 0 24px 50px -28px rgba(0, 0, 0, 0.85);
-}
-.shot__caption { margin-top: 12px; font-size: 13.5px; color: var(--label-2); line-height: 1.5; }
 
-/* The About card is full width (matching the app/writing cards); the bio is a
-   single column whose text fills that full width — no reading-measure cap, so
-   there's no void beside it. */
-#about .about-bio p { max-width: none; }
-#about .about-bio p + p { margin-top: 0.9em; }
-/* Thesis lead: the point of view, up front and larger than the body. Specificity
-   (id + 2 classes) beats the `#about .about-bio p` rule above. Capped to ~40ch so
-   it reads as a statement, not a paragraph. */
-#about .about-bio .about-thesis {
-  font-size: clamp(19px, 2.4vw, 24px); line-height: 1.38; letter-spacing: -0.01em;
-  color: var(--label); font-weight: 500; max-width: 40ch; margin: 0 0 22px;
+.skip-link:focus {
+  left: 8px;
 }
