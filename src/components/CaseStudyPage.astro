@@ -47,7 +47,7 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
   </Section>
 
   <Section label="how it works" id="how-it-works">
-    {study.features.map((f) => <Row name={f.title} description={f.body} wrap />)}
+    {study.features.map((f) => <Row name={f.title} description={f.body} />)}
   </Section>
 
   <Section label="stack" id="stack">

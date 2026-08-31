@@ -12,12 +12,9 @@ interface Props {
   description?: string;
   action?: string;
   actionHref?: string;
-  /** List rows truncate the description on desktop; content rows (e.g. a
-   *  case study's capabilities) set `wrap` so nothing real is elided. */
-  wrap?: boolean;
 }
 
-const { date, name, href, description, action, actionHref, wrap = false } = Astro.props;
+const { date, name, href, description, action, actionHref } = Astro.props;
 const hasActionSlot = Astro.slots.has('action');
 ---
 
@@ -26,7 +23,7 @@ const hasActionSlot = Astro.slots.has('action');
   <span class="row__name">
     {href ? <a href={href}>{name}</a> : name}
   </span>
-  {description && <span class:list={['row__desc', { 'row__desc--wrap': wrap }]}>{description}</span>}
+  {description && <span class="row__desc">{description}</span>}
   {
     hasActionSlot ? (
       <span class="row__action">
@@ -67,16 +64,10 @@ const hasActionSlot = Astro.slots.has('action');
   }
 
   .row__desc {
+    /* Rows self-size: the description always wraps, never truncates
+       (Reza, 2026-08-31 — overrides the spec's desktop ellipsis). */
     grid-column: 3;
     color: var(--ink-2);
-    /* Truncate on desktop only — it must wrap, not truncate, on mobile. */
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .row__desc--wrap {
-    white-space: normal;
   }
 
   .row__action {
@@ -116,7 +107,6 @@ const hasActionSlot = Astro.slots.has('action');
 
     .row__desc {
       grid-column: 1 / -1;
-      white-space: normal;
     }
 
     .row__action {
@@ -147,7 +137,6 @@ const hasActionSlot = Astro.slots.has('action');
 
     .row__desc {
       grid-column: 1 / -1;
-      white-space: normal;
     }
 
     .row__action {
