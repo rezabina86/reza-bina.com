@@ -31,35 +31,57 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
         date="2025-08-01"
         name="ZumNum"
         href="/work/zumnum"
-        description="Learn German numbers by ear: hear one, type what you heard. Fully offline, no ads"
+        description="Learn German numbers by ear: hear one, type what you heard, fully offline, no ads"
       >
         <AppStoreBadge slot="action" appId="6748617262" label="ZumNum" />
       </Row>
     </Section>
 
     <Section label="writing" id="writing">
+      <!-- The title is the content and takes the emphasis; tags are metadata
+           and stay off the homepage. Capped at three so the homepage never
+           becomes a wall as the archive grows. -->
       {
-        posts.map((post) => (
+        posts.slice(0, 3).map((post) => (
           <Row
             date={iso(post.data.pubDate)}
-            name={post.data.tags[0] ?? 'writing'}
-            description={post.data.title}
+            name={post.data.title}
+            href={`/writing/${post.id}`}
             action="read →"
             actionHref={`/writing/${post.id}`}
           />
         ))
       }
+      <a class="all-writing" href="/writing">all writing →</a>
     </Section>
 
     <Section label="about" id="about">
+      <!-- now/before are timeframes — label slot, muted; the sentence is the
+           content and takes the emphasis. -->
       <Row
-        name="now"
-        description="iOS engineer at Goodnotes; evenings and weekends on my own privacy-first apps"
+        date="now"
+        name="iOS engineer at Goodnotes; evenings and weekends on my own privacy-first apps"
       />
       <Row
-        name="before"
-        description="Building for iPhone since 2015: ride-hailing, e-commerce, language learning. A physics degree before that"
+        date="before"
+        name="Building for iPhone since 2015: ride-hailing, e-commerce, language learning, and a physics degree before that"
       />
     </Section>
   </div>
 </Base>
+
+<style>
+  /* A quiet trailing row: the archive link, not a bold destination. */
+  .all-writing {
+    display: block;
+    border-top: 1px solid var(--rule);
+    padding: 9px 0; /* the specced row rhythm */
+    text-decoration: underline;
+    text-decoration-color: var(--rule-strong);
+    text-underline-offset: 0.15em;
+  }
+
+  .all-writing:hover {
+    text-decoration-color: currentColor;
+  }
+</style>

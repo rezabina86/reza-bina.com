@@ -19,7 +19,11 @@ const tags = (list: string[]) => list.map((t) => `[${t}]`).join(' ');
   ogSlug="writing"
 >
   <div class="wrap writing-index">
-    <h1 class="writing-index__title"><span aria-hidden="true"># </span>writing</h1>
+    <!-- The # marker means "section"; a page title doesn't carry it. -->
+    <div class="writing-index__head">
+      <h1 class="writing-index__title">writing</h1>
+      <a class="writing-index__rss" href="/rss.xml">rss →</a>
+    </div>
     <!-- The index is the same Row as everywhere else — no separate table shape.
          date | title | read → on line one, tags on line two. -->
     {
@@ -43,12 +47,29 @@ const tags = (list: string[]) => list.map((t) => `[${t}]`).join(' ');
     margin-top: 56px;
   }
 
+  .writing-index__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 12px;
+  }
+
+  /* A page title: weight and colour, not a section label. */
   .writing-index__title {
     font-size: 14px;
     line-height: 1.7;
-    font-weight: 400;
-    letter-spacing: 0.08em;
-    color: var(--ink-2);
-    margin-bottom: 12px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .writing-index__rss {
+    text-decoration: underline;
+    text-decoration-color: var(--rule-strong);
+    text-underline-offset: 0.15em;
+  }
+
+  .writing-index__rss:hover {
+    text-decoration-color: currentColor;
   }
 </style>
