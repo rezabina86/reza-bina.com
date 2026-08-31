@@ -11,16 +11,18 @@ import path from 'node:path';
  * satori (layout → SVG) + resvg (SVG → PNG), so nothing runs at request time
  * and the static-hosting constraint holds.
  *
- * Fonts must be TTF/OTF/WOFF — satori cannot read WOFF2, which is all the
- * variable Inter package ships, hence the static @fontsource/inter files.
+ * v3 changelog style: light palette only (social cards have no theme),
+ * monospace throughout, one hairline rule, no gradient. Satori needs a real
+ * font file and cannot read WOFF2, hence the static @fontsource/ibm-plex-mono
+ * WOFFs — a devDependency used only here, never shipped to the client.
  */
 
-const FONT_DIR = path.join(process.cwd(), 'node_modules/@fontsource/inter/files');
+const FONT_DIR = path.join(process.cwd(), 'node_modules/@fontsource/ibm-plex-mono/files');
 const font = (weight: 400 | 600) =>
-  fs.readFileSync(path.join(FONT_DIR, `inter-latin-${weight}-normal.woff`));
+  fs.readFileSync(path.join(FONT_DIR, `ibm-plex-mono-latin-${weight}-normal.woff`));
 
 export interface OgCard {
-  /** Small uppercase label above the title, e.g. "Case study". */
+  /** Small label above the title, e.g. "Case study". */
   eyebrow: string;
   title: string;
   /** Optional supporting line under the title. */
@@ -29,11 +31,11 @@ export interface OgCard {
   meta?: string;
 }
 
-const BG = '#000000';
-const LABEL = '#f5f5f7';
-const LABEL_2 = 'rgba(235, 235, 245, 0.60)';
-const LABEL_3 = 'rgba(235, 235, 245, 0.42)';
-const ACCENT = '#0a84ff';
+// The v3 light palette (global.css :root).
+const BG = '#f7f7f5';
+const INK = '#191b1d';
+const INK_2 = '#6a6e73';
+const RULE = '#cfcfc9';
 
 /** Satori takes a React-element-shaped object; built by hand to avoid JSX here. */
 const el = (type: string, style: Record<string, unknown>, children?: unknown) => ({
@@ -52,11 +54,8 @@ export async function renderOgImage(card: OgCard): Promise<Buffer> {
         flexDirection: 'column',
         justifyContent: 'space-between',
         background: BG,
-        // Mirrors the site's ambient systemBlue glow.
-        backgroundImage:
-          'radial-gradient(900px 500px at 12% -10%, rgba(10,132,255,0.28), transparent 60%)',
         padding: '72px 80px',
-        fontFamily: 'Inter',
+        fontFamily: 'IBM Plex Mono',
       },
       [
         el('div', { display: 'flex', flexDirection: 'column' }, [
@@ -64,24 +63,20 @@ export async function renderOgImage(card: OgCard): Promise<Buffer> {
             'div',
             {
               display: 'flex',
-              fontSize: 24,
-              fontWeight: 600,
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              color: ACCENT,
+              fontSize: 26,
+              color: INK_2,
             },
-            card.eyebrow
+            `# ${card.eyebrow.toLowerCase()}`
           ),
           el(
             'div',
             {
               display: 'flex',
               marginTop: 28,
-              fontSize: card.title.length > 52 ? 62 : 76,
+              fontSize: card.title.length > 52 ? 52 : 62,
               fontWeight: 600,
-              letterSpacing: '-0.03em',
-              lineHeight: 1.08,
-              color: LABEL,
+              lineHeight: 1.2,
+              color: INK,
             },
             card.title
           ),
@@ -91,57 +86,46 @@ export async function renderOgImage(card: OgCard): Promise<Buffer> {
                   'div',
                   {
                     display: 'flex',
-                    marginTop: 26,
-                    fontSize: 30,
-                    lineHeight: 1.4,
-                    color: LABEL_2,
+                    marginTop: 24,
+                    fontSize: 27,
+                    lineHeight: 1.5,
+                    color: INK_2,
                   },
                   card.subtitle
                 ),
               ]
             : []),
         ]),
-        el(
-          'div',
-          { display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
-          [
-            el(
-              'div',
-              { display: 'flex', alignItems: 'center' },
-              [
-                el('div', {
-                  display: 'flex',
-                  width: 16,
-                  height: 16,
-                  borderRadius: 999,
-                  background: ACCENT,
-                  marginRight: 16,
-                }),
-                el(
-                  'div',
-                  { display: 'flex', fontSize: 26, fontWeight: 600, color: LABEL },
-                  'Reza Bina'
-                ),
-                el(
-                  'div',
-                  { display: 'flex', fontSize: 26, color: LABEL_3, marginLeft: 14 },
-                  'reza-bina.com'
-                ),
-              ]
-            ),
-            ...(card.meta
-              ? [el('div', { display: 'flex', fontSize: 24, color: LABEL_3 }, card.meta)]
-              : []),
-          ]
-        ),
+        // The single hairline, then the meta line beneath it.
+        el('div', { display: 'flex', flexDirection: 'column' }, [
+          el('div', { display: 'flex', height: 1, background: RULE }),
+          el(
+            'div',
+            {
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginTop: 20,
+            },
+            [
+              el('div', { display: 'flex', alignItems: 'center' }, [
+                el('div', { display: 'flex', fontSize: 26, fontWeight: 600, color: INK }, 'reza bina'),
+                el('div', { display: 'flex', fontSize: 26, color: INK_2, marginLeft: 16 }, 'reza-bina.com'),
+              ]),
+              ...(card.meta
+                ? [el('div', { display: 'flex', fontSize: 24, color: INK_2 }, card.meta)]
+                : []),
+            ]
+          ),
+        ]),
       ]
     ) as unknown as Parameters<typeof satori>[0],
     {
       width: 1200,
       height: 630,
       fonts: [
-        { name: 'Inter', data: font(400), weight: 400, style: 'normal' },
-        { name: 'Inter', data: font(600), weight: 600, style: 'normal' },
+        { name: 'IBM Plex Mono', data: font(400), weight: 400, style: 'normal' },
+        { name: 'IBM Plex Mono', data: font(600), weight: 600, style: 'normal' },
       ],
     }
   );
