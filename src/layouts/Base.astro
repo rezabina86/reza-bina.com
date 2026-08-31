@@ -1,6 +1,7 @@
 ---
-import '@fontsource-variable/inter';
 import '../styles/global.css';
+import SiteHeader from '../components/SiteHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
 
 interface Props {
   title?: string;
@@ -72,7 +73,8 @@ const jsonLd = {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#f7f7f5" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0e1013" media="(prefers-color-scheme: dark)" />
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
@@ -111,96 +113,17 @@ const jsonLd = {
     <!-- is:inline so Astro emits this verbatim instead of treating it as a
          module script to bundle. -->
     <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
-
-    <!-- Scroll-reveal starts at opacity:0 and is revealed by JS. Without this
-         override a JS-disabled visitor would get a blank page — the content is
-         in the HTML, so show it immediately instead. -->
-    <noscript>
-      <style>
-        .reveal { opacity: 1 !important; transform: none !important; }
-      </style>
-    </noscript>
   </head>
   <body>
-    <div class="aurora" aria-hidden="true"></div>
-    <div class="grain" aria-hidden="true"></div>
-
     <a class="skip-link" href="#main">Skip to content</a>
 
-    <nav class="nav" aria-label="Main">
-      <div class="wrap">
-        <a class="brand" href="/"><span class="pip" aria-hidden="true"></span> Reza Bina</a>
-        <div class="nav-links">
-          <a href="/#apps">Apps</a>
-          <a href="/writing">Writing</a>
-          <a href="/#about">About</a>
-        </div>
-      </div>
-    </nav>
+    <SiteHeader />
 
     <main id="main">
       <slot />
     </main>
 
-    <footer class="footer">
-      <div class="wrap">
-        <span>© {new Date().getFullYear()} Reza Bina · Berlin</span>
-        <span>Built &amp; hosted independently. <a href="/privacy">Cookieless analytics</a>, no personal data.</span>
-      </div>
-    </footer>
-
-    <script>
-      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-      // 1. Reveal on scroll
-      const io = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((e) => {
-            if (e.isIntersecting) {
-              e.target.classList.add('in');
-              io.unobserve(e.target);
-            }
-          });
-        },
-        { threshold: 0.12 }
-      );
-      document.querySelectorAll('.reveal').forEach((el, i) => {
-        (el as HTMLElement).style.transitionDelay = Math.min(i, 7) * 55 + 'ms';
-        io.observe(el);
-      });
-
-      // 2. Cursor-tracked spotlight on bento cards
-      document.querySelectorAll<HTMLElement>('.card').forEach((card) => {
-        card.addEventListener('pointermove', (ev) => {
-          const r = card.getBoundingClientRect();
-          card.style.setProperty('--mx', ev.clientX - r.left + 'px');
-          card.style.setProperty('--my', ev.clientY - r.top + 'px');
-        });
-      });
-
-      // 3. Magnetic buttons (skipped under reduced-motion)
-      if (!reduced) {
-        document.querySelectorAll<HTMLElement>('.magnetic').forEach((btn) => {
-          btn.addEventListener('pointermove', (ev) => {
-            const r = btn.getBoundingClientRect();
-            const x = ev.clientX - r.left - r.width / 2;
-            const y = ev.clientY - r.top - r.height / 2;
-            btn.style.transform = `translate(${x * 0.18}px, ${y * 0.28}px)`;
-          });
-          btn.addEventListener('pointerleave', () => {
-            btn.style.transform = '';
-          });
-        });
-      }
-
-      // 4. Condense the glass nav once the page is scrolled
-      const nav = document.querySelector('.nav');
-      if (nav) {
-        const onScroll = () => nav.classList.toggle('condensed', window.scrollY > 8);
-        onScroll();
-        window.addEventListener('scroll', onScroll, { passive: true });
-      }
-    </script>
+    <SiteFooter />
 
     {
       /* Cookieless, GDPR-consent-free analytics (GoatCounter): no cookies, no

@@ -1,6 +1,8 @@
 ---
 import Base from '../../layouts/Base.astro';
 import TableOfContents from '../../components/TableOfContents.astro';
+import Prose from '../../components/Prose.astro';
+import Row from '../../components/Row.astro';
 import { getCollection, render } from 'astro:content';
 import { readingMinutes } from '../../lib/readingTime';
 
@@ -18,10 +20,16 @@ export async function getStaticPaths() {
 const { post } = Astro.props;
 const { Content, headings } = await render(post);
 
-const fmt = (d: Date) =>
-  d.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
-
+const iso = (d: Date) => d.toISOString().slice(0, 10);
 const minutes = readingMinutes(post.body);
+
+// Prev/next across the published posts, newest first (prev = newer).
+const published = (await getCollection('blog'))
+  .filter((p) => !p.data.draft)
+  .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+const index = published.findIndex((p) => p.id === post.id);
+const newer = index > 0 ? published[index - 1] : undefined;
+const older = index >= 0 && index < published.length - 1 ? published[index + 1] : undefined;
 
 const canonical = new URL(`/writing/${post.id}/`, Astro.site).href;
 const blogPosting = {
@@ -62,31 +70,83 @@ const breadcrumb = {
   }}
   schema={[blogPosting, breadcrumb]}
 >
-  <article class="article">
-    <div class="wrap">
-      <a class="back" href="/writing">← Writing</a>
-      <h1>{post.data.title}</h1>
-      <p class="meta">
-        <time datetime={post.data.pubDate.toISOString()}>{fmt(post.data.pubDate)}</time>
-        <span class="meta__dot" aria-hidden="true">·</span>
-        <span>{minutes} min read</span>
-        {post.data.updated && (
-          <>
-            <span class="meta__dot" aria-hidden="true">·</span>
-            <span>Updated <time datetime={post.data.updated.toISOString()}>{fmt(post.data.updated)}</time></span>
-          </>
-        )}
+  <article class="wrap article">
+    <!-- Mono header block at prose width — the title is not a display size. -->
+    <header class="article__head">
+      <h1 class="article__title">{post.data.title}</h1>
+      <p class="article__meta">
+        <time datetime={post.data.pubDate.toISOString()}>{iso(post.data.pubDate)}</time>
+        {
+          post.data.updated && (
+            <>
+              {' · updated '}
+              <time datetime={post.data.updated.toISOString()}>{iso(post.data.updated)}</time>
+            </>
+          )
+        }
+        {` · ${minutes} min · `}
+        {post.data.tags.map((t) => `[${t}]`).join(' ')}
       </p>
+    </header>
 
-      <div class="article__layout">
-        <aside class="article__aside">
-          <TableOfContents headings={headings} />
-        </aside>
+    <TableOfContents headings={headings} />
 
-        <div class="prose">
-          <Content />
-        </div>
-      </div>
+    <div class="article__body">
+      <Prose>
+        <Content />
+      </Prose>
     </div>
+
+    <footer class="article__foot">
+      {
+        newer && (
+          <Row
+            date={iso(newer.data.pubDate)}
+            name="newer"
+            description={newer.data.title}
+            action="read →"
+            actionHref={`/writing/${newer.id}`}
+          />
+        )
+      }
+      {
+        older && (
+          <Row
+            date={iso(older.data.pubDate)}
+            name="older"
+            description={older.data.title}
+            action="read →"
+            actionHref={`/writing/${older.id}`}
+          />
+        )
+      }
+    </footer>
   </article>
 </Base>
+
+<style>
+  .article {
+    /* A page title is a bigger event than a section: 56, not 40. */
+    margin-top: 56px;
+  }
+
+  .article__title {
+    font-size: 14px;
+    line-height: 1.7;
+    font-weight: 600;
+  }
+
+  .article__meta {
+    color: var(--ink-2);
+    font-size: 12.5px;
+    line-height: 1.6;
+  }
+
+  .article__body {
+    margin-top: 32px;
+  }
+
+  .article__foot {
+    margin-top: 56px;
+  }
+</style>

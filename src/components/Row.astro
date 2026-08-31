@@ -1,0 +1,130 @@
+---
+/**
+ * The site's atom: one changelog row, two lines, always.
+ *
+ *   2026-04   ZumNum                        [ Download on the App Store ]
+ *             german practice · on-device neural speech · foundation models
+ *
+ * Line one is `date | name | action` (grid 96px 1fr auto, centred); line two
+ * is the description, indented to the name column and capped at 62ch. Two
+ * lines is what lets one 46rem frame serve every page: a one-line row with a
+ * date, a name, a description and a 120px badge needs ~900px — it was the
+ * only thing on the site that did. There is no second row shape.
+ *
+ * The action column takes either the `action`/`actionHref` props (a text
+ * link) or the named slot `action` (the App Store badge).
+ */
+interface Props {
+  date?: string;
+  name: string;
+  href?: string;
+  description?: string;
+  action?: string;
+  actionHref?: string;
+}
+
+const { date, name, href, description, action, actionHref } = Astro.props;
+const hasActionSlot = Astro.slots.has('action');
+---
+
+<div class:list={['row', { 'row--dateless': !date }]}>
+  <div class="row__line">
+    {date && <span class="row__date">{date}</span>}
+    <span class="row__name">
+      {href ? <a href={href}>{name}</a> : name}
+    </span>
+    {
+      hasActionSlot ? (
+        <span class="row__action">
+          <slot name="action" />
+        </span>
+      ) : (
+        action && (
+          <span class="row__action">
+            {actionHref ? <a href={actionHref}>{action}</a> : action}
+          </span>
+        )
+      )
+    }
+  </div>
+  {description && <span class="row__desc">{description}</span>}
+</div>
+
+<style>
+  .row {
+    border-top: 1px solid var(--rule);
+    padding: 9px 0; /* the specced row rhythm — a deliberate off-scale value */
+  }
+
+  /* A link is never identified by colour alone (WCAG 1.4.1): rows carry a
+     quiet persistent underline that sharpens on hover. */
+  .row a {
+    text-decoration: underline;
+    text-decoration-color: var(--rule-strong);
+    text-underline-offset: 0.15em;
+  }
+
+  .row a:hover {
+    text-decoration-color: currentColor;
+  }
+
+  /* 2px offset inside 9px of row padding puts the ring on the hairline. */
+  .row a:focus-visible {
+    outline-offset: 1px;
+  }
+
+  .row__line {
+    display: grid;
+    grid-template-columns: 96px 1fr auto;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .row__date {
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+
+  .row__name {
+    font-weight: 600;
+  }
+
+  .row__action {
+    white-space: nowrap;
+  }
+
+  .row__desc {
+    /* Always wraps, never truncates (Reza, 2026-08-31). 62ch keeps the mono
+       measure readable; the 112px indent aligns it with the name column. */
+    display: block;
+    color: var(--ink-2);
+    max-width: 62ch;
+    margin-left: 112px;
+  }
+
+  /* A dateless row starts at the left edge, description included. */
+  .row--dateless .row__line {
+    grid-template-columns: 1fr auto;
+  }
+
+  .row--dateless .row__desc {
+    margin-left: 0;
+  }
+
+  /* Below 400px of container width the date takes its own line above the
+     name and the description loses its indent. The container query on .wrap
+     is the one mechanism — no viewport media query duplicating the number. */
+  @container page (max-width: 400px) {
+    .row__line {
+      grid-template-columns: 1fr auto;
+    }
+
+    .row__date {
+      grid-column: 1 / -1;
+    }
+
+    .row__desc {
+      margin-left: 0;
+    }
+  }
+</style>

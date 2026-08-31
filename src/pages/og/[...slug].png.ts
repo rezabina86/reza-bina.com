@@ -23,7 +23,7 @@ export async function getStaticPaths() {
     {
       params: { slug: 'home' },
       props: {
-        eyebrow: 'Senior iOS Engineer',
+        eyebrow: 'senior iOS engineer',
         title: 'I build native iOS apps that run entirely on your device.',
         subtitle: 'Small, fast, and native — and quietly ambitious under the hood. Nothing leaves your phone.',
       },
@@ -31,7 +31,7 @@ export async function getStaticPaths() {
     {
       params: { slug: 'writing' },
       props: {
-        eyebrow: 'Writing',
+        eyebrow: 'writing',
         title: 'Notes on private software.',
         subtitle: 'On-device engineering, privacy, and the craft of shipping alone.',
       },
@@ -42,7 +42,7 @@ export async function getStaticPaths() {
     paths.push({
       params: { slug: `work-${study.slug}` },
       props: {
-        eyebrow: 'Case study',
+        eyebrow: 'case study',
         title: study.name,
         subtitle: study.tagline,
         meta: study.platform,
@@ -54,7 +54,7 @@ export async function getStaticPaths() {
     paths.push({
       params: { slug: `writing-${post.id}` },
       props: {
-        eyebrow: 'Writing',
+        eyebrow: 'writing',
         title: post.data.title,
         subtitle: post.data.description,
         meta: `${fmt(post.data.pubDate)} · ${readingMinutes(post.body)} min read`,

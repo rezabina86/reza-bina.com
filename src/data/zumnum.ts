@@ -23,7 +23,7 @@ import type { CaseStudy } from './caseStudy';
 export const zumnum: CaseStudy = {
   slug: 'zumnum',
   name: 'ZumNum',
-  tagline: 'Learn German numbers by ear.',
+  tagline: 'Learn German numbers by ear',
   icon: '/icons/zumnum.png',
   status: 'live',
   summary:
@@ -58,7 +58,8 @@ export const zumnum: CaseStudy = {
     'Fully offline',
   ],
   platform: 'iOS 17+',
-  appStoreUrl: 'https://apps.apple.com/de/app/zumnum/id6748617262?l=en-GB',
+  appStoreUrl: 'https://apps.apple.com/app/id6748617262',
+  shipped: '2025-08-01',
   shots: [
     {
       src: '/shots/zumnum/feedback.webp',

@@ -22,10 +22,11 @@ import type { CaseStudy } from './caseStudy';
 export const veil: CaseStudy = {
   slug: 'veil',
   name: 'Veil',
-  tagline: 'Share without revealing.',
+  tagline: 'Share without revealing',
   icon: '/icons/veil.png',
   status: 'live',
-  appStoreUrl: 'https://apps.apple.com/us/app/veil-redact-hide-info/id6780531974',
+  appStoreUrl: 'https://apps.apple.com/app/id6780531974',
+  shipped: '2026-08-07',
   summary:
     "People paste documents into chatbots to get help with them — a tax letter, a payslip, a contract — and hand over their name, address and account numbers in the process. Veil is the step in between: photograph or import the document, let it find the personal details, remove the ones you choose, and share the redacted copy instead. Detection, redaction and storage all happen on your iPhone; the original never leaves the device.",
   features: [

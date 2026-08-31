@@ -1,0 +1,98 @@
+---
+/**
+ * Masthead: name, one-line tagline, three plain text links. Not fixed, not
+ * sticky; it scrolls away. A 1px bottom rule brackets the page against the
+ * footer's matching rule.
+ *
+ * The name is weight 400 — chrome recedes; the page title (h1, 600) is the
+ * only bold thing above the fold. On the homepage the name IS the h1 (the
+ * page that ranks for "Reza Bina" needs one) and is not a link, since it
+ * would point at the page you are on. Both derive from Astro.url, so no
+ * page can forget to pass a prop.
+ *
+ * Nav is --ink-2 (accent is reserved for links inside content); the section
+ * of the current page carries aria-current="page" and reads --ink.
+ */
+const path = Astro.url.pathname;
+const isHome = path === '/';
+const current: 'apps' | 'writing' | undefined = path.startsWith('/work/')
+  ? 'apps'
+  : path.startsWith('/writing')
+    ? 'writing'
+    : undefined;
+---
+
+<header class="site-header" aria-label="Site header">
+  <div class="wrap site-header__inner">
+    <div class="site-header__masthead">
+      {
+        isHome ? (
+          <h1 class="site-header__name">Reza Bina</h1>
+        ) : (
+          <a class="site-header__name site-header__name--link" href="/">Reza Bina</a>
+        )
+      }
+      <p class="site-header__tagline">private, on-device apps for iPhone · Berlin</p>
+    </div>
+    <nav class="site-header__nav" aria-label="Main">
+      <a href="/#apps" aria-current={current === 'apps' ? 'page' : undefined}>apps</a>
+      <a href="/writing" aria-current={current === 'writing' ? 'page' : undefined}>writing</a>
+      <a href="/#about">about</a>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    padding-top: 72px;
+  }
+
+  .site-header__inner {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    /* 24px between the tagline and the rule that closes the chrome. */
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .site-header__name {
+    font-size: 14px;
+    line-height: 1.7;
+    font-weight: 400;
+    color: var(--ink);
+  }
+
+  .site-header__name--link:hover {
+    color: var(--ink);
+  }
+
+  .site-header__nav {
+    display: flex;
+    gap: 24px;
+  }
+
+  .site-header__nav a {
+    color: var(--ink-2);
+  }
+
+  .site-header__nav a:hover {
+    color: var(--ink);
+  }
+
+  .site-header__nav a[aria-current='page'] {
+    color: var(--ink);
+  }
+
+  .site-header__tagline {
+    color: var(--ink-2);
+  }
+
+  @media (max-width: 700px) {
+    .site-header {
+      padding-top: 48px; /* specced mobile page padding */
+    }
+  }
+</style>

@@ -9,35 +9,44 @@ import Base from '../layouts/Base.astro';
   title="Page not found — Reza Bina"
   description="That page doesn't exist. Head back to the home page or browse the writing."
 >
-  <section class="notfound">
-    <div class="wrap">
-      <p class="notfound__code">404</p>
-      <h1 class="notfound__title">This page slipped off the device.</h1>
-      <p class="notfound__lede">
-        The link is broken or the page has moved. Nothing left your phone, but
-        this page isn't here.
-      </p>
-      <div class="notfound__cta">
-        <a class="btn primary" href="/">Back home</a>
-        <a class="btn ghost" href="/writing">Read the writing</a>
-      </div>
-    </div>
+  <section class="wrap notfound">
+    <h1 class="notfound__title">404 — no such path</h1>
+    <p class="notfound__lede">The paths that do exist:</p>
+    <ul class="notfound__paths">
+      <li><a href="/">/</a></li>
+      <li><a href="/work/veil">/work/veil</a></li>
+      <li><a href="/work/zumnum">/work/zumnum</a></li>
+      <li><a href="/writing">/writing</a></li>
+      <li><a href="/privacy">/privacy</a></li>
+      <li><a href="/rss.xml">/rss.xml</a></li>
+    </ul>
   </section>
 </Base>
 
 <style>
-  .notfound { padding: clamp(72px, 16vh, 160px) 0; }
-  .notfound__code {
-    font-size: 15px; font-weight: 600; letter-spacing: 0.14em;
-    color: var(--accent); margin-bottom: 18px;
+  .notfound {
+    /* A page title is a bigger event than a section: 56, not 40. */
+    margin-top: 56px;
   }
+
   .notfound__title {
-    font-size: clamp(30px, 5vw, 52px); line-height: 1.05; letter-spacing: -0.03em;
-    font-weight: 600; max-width: 18ch; text-wrap: balance;
+    font-size: 14px;
+    line-height: 1.7;
+    font-weight: 600;
   }
+
   .notfound__lede {
-    margin-top: 18px; font-size: clamp(16px, 2vw, 19px);
-    color: var(--label-2); max-width: 48ch;
+    color: var(--ink-2);
   }
-  .notfound__cta { margin-top: 32px; display: flex; gap: 12px; flex-wrap: wrap; }
+
+  .notfound__paths {
+    list-style: none;
+    padding: 0;
+    margin-top: 16px;
+  }
+
+  .notfound__paths li {
+    border-top: 1px solid var(--rule);
+    padding: 9px 0; /* the specced row rhythm — a deliberate off-scale value */
+  }
 </style>

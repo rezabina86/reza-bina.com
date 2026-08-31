@@ -3,7 +3,7 @@ title: "How an iPhone app redacts a document without a server"
 description: "Camera scan to encrypted vault: the on-device pipeline of an iPhone app that finds and removes the personal details in documents before you share them."
 pubDate: 2026-08-07
 draft: false
-tags: ["On-device ML", "Privacy", "Architecture"]
+tags: ["on-device ml", "privacy", "architecture"]
 ---
 
 You get a letter from the German tax office. You want to paste it into ChatGPT and ask what it means and how to reply. The letter also contains your full name, your home address, your tax ID, and a case number that identifies you to a government agency. Pasting it means handing all of that to someone else's server.
@@ -15,8 +15,6 @@ You get a letter from the German tax office. You want to paste it into ChatGPT a
 There is no account and no sign-in. On first launch you get a splash animation and a six-step intro that shows what the app does, ends on the two controls worth knowing about (always-redact terms and detection categories), and writes nothing but a "completed" flag. It is educational only, and you can replay it from Settings.
 
 The app's own networking amounts to one optional thing: downloading the on-device detection model, later, if you choose it. Veil ships two detection engines, a large downloaded model and a built-in instant one, and asks you to pick the first time you scan, not at launch. That decision and its costs are a story of their own, so I'll leave it at that here.
-
-{/* TODO(reza): when the two-engines post publishes, link it from the paragraph above. */}
 
 One more thing is set up before any document arrives: whenever the app is not active, an opaque cover with the wordmark is placed over the UI, so a document never appears in the app switcher's screenshot.
 
@@ -120,4 +118,4 @@ Some things it makes impossible rather than hard. There is no recovering a vault
 
 Those are real costs, and I'd pay them again. A redaction tool you have to trust with your documents is a contradiction; one you can check is not.
 
-[Veil is on the App Store](https://apps.apple.com/us/app/veil-redact-hide-info/id6780531974) if you want to see the pipeline from the outside.
+[Veil is on the App Store](https://apps.apple.com/app/id6780531974) if you want to see the pipeline from the outside.

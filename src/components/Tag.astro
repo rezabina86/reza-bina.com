@@ -1,0 +1,21 @@
+---
+/** A topic tag rendered `[on-device ml]` — brackets, not pills. Casing is
+ *  content's business: tags are written lowercase in frontmatter, never
+ *  transformed here. */
+interface Props {
+  name: string;
+}
+
+const { name } = Astro.props;
+---
+
+<span class="tag">[{name}]</span>
+
+<style>
+  .tag {
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+</style>

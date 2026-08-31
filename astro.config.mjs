@@ -1,5 +1,4 @@
 import { defineConfig } from 'astro/config';
-import react from '@astrojs/react';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 
@@ -8,8 +7,6 @@ import sitemap from '@astrojs/sitemap';
 export default defineConfig({
   site: 'https://reza-bina.com',
   integrations: [
-    // React island — used only for the interactive case-study modal + device frame.
-    react(),
     // Blog: MDX with Shiki syntax highlighting.
     mdx(),
     // Generates sitemap-index.xml at build; robots.txt points crawlers at it.
@@ -23,9 +20,17 @@ export default defineConfig({
     }),
   ],
   markdown: {
-    // Apple-dark code blocks. Shiki is built in; theme applies to .md and .mdx.
+    // Dual-theme code blocks: Shiki inlines the light colours plus
+    // --shiki-dark variables; Prose.astro flips them with the same
+    // three-state logic as the palette.
     shikiConfig: {
-      theme: 'github-dark-default',
+      themes: {
+        // The high-contrast variants, not plain github-light/dark: both
+        // plain themes set comment grey #6a737d, which fails AA on the
+        // light (3.69:1 on white) and dark (3.69:1 on #16181b) grounds.
+        light: 'github-light-high-contrast',
+        dark: 'github-dark-high-contrast',
+      },
       wrap: true,
     },
   },

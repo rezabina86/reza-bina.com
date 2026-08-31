@@ -1,0 +1,190 @@
+---
+/**
+ * The article-body wrapper. Owns every rule that applies to MDX output —
+ * nothing outside this component styles article content. Body copy is serif
+ * (monospace is measurably slower to read at 2–4k words — decision 0001);
+ * headings, code and captions stay mono so the article reads as the same site.
+ *
+ * Styles are `is:global` under `.prose` because the MDX children are not
+ * Astro-scoped; keep every selector prefixed with `.prose`.
+ */
+---
+
+<div class="prose">
+  <slot />
+</div>
+
+<style is:global>
+  .prose {
+    /* No max-width — Prose fills the one 46rem frame; the frame is the
+       measure. 19px, not 17.5: at 656px of content, 17.5px serif runs to
+       ~75 characters a line. 19px lands at ~69. The frame is fixed, so the
+       type moves to meet it. */
+    font-family: var(--font-serif);
+    font-size: 19px;
+    line-height: 1.65;
+  }
+
+  .prose p,
+  .prose ul,
+  .prose ol,
+  .prose blockquote {
+    margin-bottom: 16px;
+    /* body sets tabular-nums so date columns line up; in running serif text
+       tabular figures look mechanical, so prose resets them. */
+    font-variant-numeric: normal;
+  }
+
+  /* h2 — uppercase mono with a hairline above: the section marks of the page. */
+  .prose h2 {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.4;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    border-top: 1px solid var(--rule);
+    padding-top: 16px;
+    margin-top: 56px;
+    margin-bottom: 16px;
+  }
+
+  .prose h3 {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    line-height: 1.5;
+    font-weight: 600;
+    margin-top: 40px;
+    margin-bottom: 12px;
+  }
+
+  .prose a {
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+    text-decoration-color: var(--rule-strong);
+  }
+
+  .prose ul,
+  .prose ol {
+    padding-left: 24px;
+  }
+
+  .prose li {
+    margin-bottom: 4px;
+  }
+
+  .prose blockquote {
+    border-left: 1px solid var(--rule-strong);
+    padding-left: 16px;
+    color: var(--ink-2);
+  }
+
+  .prose strong {
+    font-weight: 600;
+  }
+
+  .prose img {
+    margin-block: 24px;
+  }
+
+  .prose figure {
+    margin-block: 24px;
+  }
+
+  .prose figure img {
+    margin-block: 0;
+  }
+
+  .prose figcaption {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--ink-2);
+    margin-top: 8px;
+  }
+
+  .prose hr {
+    border: 0;
+    border-top: 1px solid var(--rule);
+    margin-block: 40px;
+  }
+
+  /* Inline code. */
+  .prose code {
+    font-family: var(--font-mono);
+    font-size: 13px;
+  }
+
+  /* Code blocks — the only rounded, raised thing on the site (3px). */
+  .prose pre {
+    background: var(--bg-raise);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 16px;
+    overflow-x: auto;
+    margin-bottom: 16px;
+    font-size: 13px;
+    line-height: 1.65;
+  }
+
+  .prose pre code {
+    font-size: inherit;
+    line-height: inherit;
+  }
+
+  /* Shiki dual themes: the build inlines light colours plus --shiki-dark
+     variables; these blocks flip them with the same three-state logic as the
+     palette. Background comes from --bg-raise so blocks match the page. */
+  .prose .astro-code {
+    background-color: var(--bg-raise) !important;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) .prose .astro-code,
+    :root:not([data-theme='light']) .prose .astro-code span {
+      color: var(--shiki-dark) !important;
+      font-style: var(--shiki-dark-font-style) !important;
+      font-weight: var(--shiki-dark-font-weight) !important;
+    }
+  }
+
+  :root[data-theme='dark'] .prose .astro-code,
+  :root[data-theme='dark'] .prose .astro-code span {
+    color: var(--shiki-dark) !important;
+    font-style: var(--shiki-dark-font-style) !important;
+    font-weight: var(--shiki-dark-font-weight) !important;
+  }
+
+  /* Tables in prose are data — real markup, mono voice. */
+  .prose table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.65;
+    margin-bottom: 16px;
+  }
+
+  .prose th {
+    font-size: 10.5px;
+    line-height: 1;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--ink-2);
+    text-align: left;
+    padding: 9px 16px 9px 0; /* the row rhythm, in table form */
+    border-bottom: 1px solid var(--rule-strong);
+  }
+
+  .prose td {
+    padding: 9px 16px 9px 0; /* the row rhythm, in table form */
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+
+  /* Wide content scrolls in place; the page never scrolls sideways. */
+  .prose .table-scroll {
+    overflow-x: auto;
+  }
+</style>

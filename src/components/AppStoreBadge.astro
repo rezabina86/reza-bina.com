@@ -1,0 +1,85 @@
+---
+/**
+ * Apple's official Download-on-the-App-Store badge. Rules (decision 0001):
+ * unmodified artwork from App Store Marketing Tools, 40px height minimum,
+ * ≥10px clear space, black on the light theme / white on dark, and a
+ * storefront-agnostic link — never `/us/`.
+ *
+ * The two variants are referenced as <img>, not inlined: inlining both
+ * variants of both homepage badges would add ~42 KB of SVG to the page and
+ * break the <30 KB page budget. The theme swap is the same three-state
+ * pattern as the palette. `width: max-content` is load-bearing — without it
+ * the badge stretches to fill its grid/flex parent.
+ */
+interface Props {
+  appId: string;
+  /** App name, for the link's accessible name. */
+  label: string;
+}
+
+const { appId, label } = Astro.props as Props;
+---
+
+<a
+  class="store-badge"
+  href={`https://apps.apple.com/app/id${appId}`}
+  target="_blank"
+  rel="noopener"
+  aria-label={`Download ${label} on the App Store`}
+>
+  <img
+    class="store-badge__img store-badge__img--black"
+    src="/badges/app-store-black.svg"
+    alt=""
+    width="120"
+    height="40"
+    loading="lazy"
+    decoding="async"
+  />
+  <img
+    class="store-badge__img store-badge__img--white"
+    src="/badges/app-store-white.svg"
+    alt=""
+    width="120"
+    height="40"
+    loading="lazy"
+    decoding="async"
+  />
+</a>
+
+<style>
+  .store-badge {
+    display: block;
+    align-self: flex-start;
+    width: max-content;
+    margin: 10px 0; /* clear space ≥ ¼ badge height on all sides */
+  }
+
+  .store-badge__img {
+    display: block;
+    height: 40px;
+    width: auto;
+  }
+
+  .store-badge__img--white {
+    display: none;
+  }
+
+  /* :global() — Astro would otherwise scope :root itself, and the rule would
+     never match <html>. */
+  @media (prefers-color-scheme: dark) {
+    :global(:root:not([data-theme='light'])) .store-badge__img--black {
+      display: none;
+    }
+    :global(:root:not([data-theme='light'])) .store-badge__img--white {
+      display: block;
+    }
+  }
+
+  :global(:root[data-theme='dark']) .store-badge__img--black {
+    display: none;
+  }
+  :global(:root[data-theme='dark']) .store-badge__img--white {
+    display: block;
+  }
+</style>

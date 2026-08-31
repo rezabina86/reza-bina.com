@@ -1,41 +1,54 @@
 ---
 import Base from '../../layouts/Base.astro';
+import Row from '../../components/Row.astro';
 import { getCollection } from 'astro:content';
 
+// Drafts are excluded at build time, not hidden with CSS.
 const posts = (await getCollection('blog'))
   .filter((p) => !p.data.draft)
   .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
 
-const fmt = (d: Date) =>
-  d.toLocaleDateString('en-GB', { year: 'numeric', month: 'short' });
+const iso = (d: Date) => d.toISOString().slice(0, 10);
+// Tags render as written in frontmatter — casing is content's business.
+const tags = (list: string[]) => list.map((t) => `[${t}]`).join(' ');
 ---
 
-<Base title="Writing — Reza Bina" description="Essays on privacy, on-device software, and building independent iOS apps." ogSlug="writing">
-  <header class="hero">
-    <div class="wrap">
-      <p class="eyebrow reveal">Writing</p>
-      <h1 class="reveal">Notes on private software.</h1>
-      <p class="lede reveal">
-        On building apps that respect the people who use them — privacy,
-        on-device processing, and the craft of shipping alone.
-      </p>
-    </div>
-  </header>
-
-  <section class="section">
-    <div class="wrap">
-      <div class="posts reveal">
-        {
-          posts.map((post) => (
-            <a class="post" href={`/writing/${post.id}`}>
-              <span class="post-title">{post.data.title}</span>
-              <time datetime={post.data.pubDate.toISOString()}>
-                {fmt(post.data.pubDate)}
-              </time>
-            </a>
-          ))
-        }
-      </div>
-    </div>
-  </section>
+<Base
+  title="Writing — Reza Bina"
+  description="Essays on privacy, on-device software, and building independent iOS apps."
+  ogSlug="writing"
+>
+  <div class="wrap writing-index">
+    <h1 class="writing-index__title"><span aria-hidden="true"># </span>writing</h1>
+    <!-- The index is the same Row as everywhere else — no separate table shape.
+         date | title | read → on line one, tags on line two. -->
+    {
+      posts.map((post) => (
+        <Row
+          date={iso(post.data.pubDate)}
+          name={post.data.title}
+          href={`/writing/${post.id}`}
+          description={tags(post.data.tags)}
+          action="read →"
+          actionHref={`/writing/${post.id}`}
+        />
+      ))
+    }
+  </div>
 </Base>
+
+<style>
+  .writing-index {
+    /* A page title is a bigger event than a section: 56, not 40. */
+    margin-top: 56px;
+  }
+
+  .writing-index__title {
+    font-size: 14px;
+    line-height: 1.7;
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    color: var(--ink-2);
+    margin-bottom: 12px;
+  }
+</style>

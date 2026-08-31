@@ -1,10 +1,15 @@
 ---
-import DeviceFrame from './DeviceFrame.tsx';
+import { getCollection } from 'astro:content';
 import type { CaseStudy } from '../data/caseStudy';
+import Row from './Row.astro';
+import Section from './Section.astro';
+import Prose from './Prose.astro';
+import AppStoreBadge from './AppStoreBadge.astro';
 
 /**
- * The static case-study page body, shared by every /work/<slug> route so the
- * pages stay consistent with each other and with the modal (HANDOFF §5, §7.3).
+ * The case-study page body, shared by every /work/<slug> route. v3 changelog
+ * layout: title block → prose summary → one badge (the page's single,
+ * fully-compliant badge) → capability rows → stack table → related writing.
  */
 
 interface Props {
@@ -12,78 +17,160 @@ interface Props {
 }
 
 const { study } = Astro.props;
-const gallery = study.shots?.slice(1) ?? [];
+
+// Storefront-agnostic store URL carries the app id.
+const appId = study.appStoreUrl?.match(/id(\d+)/)?.[1];
+
+// Posts that actually mention this app — derived from the content, so the
+// list can't rot against a hand-written one.
+const related = (await getCollection('blog'))
+  .filter((p) => !p.data.draft && (p.body ?? '').includes(study.name))
+  .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+
+const iso = (d: Date) => d.toISOString().slice(0, 10);
 ---
 
-<article class="case">
-  <div class="wrap">
-    <a class="back" href="/#apps">← Back</a>
+<article class="wrap case">
+  <header class="case__head">
+    <h1 class="case__name">{study.name}</h1>
+    <p class="case__meta">
+      {study.tagline}
+      {study.shipped && <span> · shipped {study.shipped}</span>}
+    </p>
+  </header>
 
-    <header class="case-head">
-      <img class="icon-img case-icon" src={study.icon} width="72" height="72" alt={`${study.name} app icon`} />
-      <div>
-        <p class="eyebrow-sm">Case study</p>
-        <h1 class="case-title">{study.name}</h1>
-        <p class="case-tagline">{study.tagline}</p>
-      </div>
-    </header>
+  <Section label="what it does" id="what-it-does">
+    <Prose>
+      <p>{study.summary}</p>
+    </Prose>
+    {appId && <AppStoreBadge appId={appId} label={study.name} />}
+  </Section>
 
-    <div class="case-split">
-      <div class="case-media">
-        <DeviceFrame
-          client:visible
-          video={study.video}
-          image={study.shots?.[0]}
-          label={`${study.name} preview`}
-          appName={study.name}
-        />
-      </div>
+  <Section label="how it works" id="how-it-works">
+    {study.features.map((f) => <Row name={f.title} description={f.body} />)}
+  </Section>
 
-      <div class="case-content">
-        <p class="case-summary">{study.summary}</p>
+  <Section label="stack" id="stack">
+    <table class="case__stack">
+      <thead>
+        <tr>
+          <th scope="col">built with</th>
+        </tr>
+      </thead>
+      <tbody>
+        {study.badges.map((b) => (
+          <tr>
+            <td>{b}</td>
+          </tr>
+        ))}
+        <tr>
+          <td>{study.platform}</td>
+        </tr>
+      </tbody>
+    </table>
+  </Section>
 
-        <ul class="feature-list">
-          {study.features.map((f) => (
-            <li>
-              <strong>{f.title}</strong>
-              <span>{f.body}</span>
-            </li>
+  {
+    related.length > 0 && (
+      <Section label="writing" id="writing">
+        {related.map((post) => (
+          <Row
+            date={iso(post.data.pubDate)}
+            name={post.data.tags[0] ?? 'writing'}
+            description={post.data.title}
+            action="read →"
+            actionHref={`/writing/${post.id}`}
+          />
+        ))}
+      </Section>
+    )
+  }
+
+  {
+    study.shots && study.shots.length > 0 && (
+      <Section label="screens" id="screens">
+        <div class="case__shots">
+          {study.shots.map((shot) => (
+            <figure class="case__shot">
+              <img src={shot.src} alt={shot.alt} loading="lazy" decoding="async" width="720" height="1565" />
+              <figcaption>{shot.caption}</figcaption>
+            </figure>
           ))}
-        </ul>
-
-        <div class="badges" aria-label="Built with">
-          {study.badges.map((b) => <span class="badge">{b}</span>)}
-          <span class="badge">{study.platform}</span>
         </div>
-
-        <div class="case-cta">
-          {
-            study.appStoreUrl ? (
-              <a class="btn primary" href={study.appStoreUrl} target="_blank" rel="noopener">
-                View on the App Store ↗
-              </a>
-            ) : (
-              <span class="badge badge--status">In development · not yet released</span>
-            )
-          }
-        </div>
-      </div>
-    </div>
-
-    {
-      gallery.length > 0 && (
-        <section class="case-gallery" aria-label={`${study.name} screenshots`}>
-          <h2 class="case-gallery__title">Inside the app</h2>
-          <ul class="shot-grid">
-            {gallery.map((shot) => (
-              <li class="shot">
-                <img src={shot.src} alt={shot.alt} loading="lazy" decoding="async" width="720" height="1565" />
-                <p class="shot__caption">{shot.caption}</p>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )
-    }
-  </div>
+      </Section>
+    )
+  }
 </article>
+
+<style>
+  .case__head {
+    /* A page title is a bigger event than a section: 56, not the section's 40. */
+    margin-top: 56px;
+  }
+
+  .case__name {
+    font-size: 14px;
+    line-height: 1.7;
+    font-weight: 600;
+  }
+
+  .case__meta {
+    color: var(--ink-2);
+  }
+
+  /* The stack is data — a real table in the mono voice. */
+  .case__stack {
+    border-collapse: collapse;
+  }
+
+  .case__stack th {
+    font-size: 10.5px;
+    line-height: 1;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--ink-2);
+    text-align: left;
+    padding: 9px 0; /* the row rhythm */
+    border-bottom: 1px solid var(--rule-strong);
+    min-width: 240px;
+  }
+
+  .case__stack td {
+    padding: 9px 0; /* the row rhythm */
+    border-bottom: 1px solid var(--rule);
+    max-width: 62ch;
+  }
+
+  /* Screenshots are a contact sheet — a quiet reference strip, not the
+     page's main event. Size and arrangement do the quieting; the images are
+     never dimmed, faded or overlaid. */
+  .case__shots {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+
+  @container page (max-width: 400px) {
+    .case__shots {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .case__shot {
+    margin: 0;
+  }
+
+  .case__shot img {
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--rule);
+  }
+
+  .case__shot figcaption {
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--ink-2);
+    margin-top: 8px;
+  }
+</style>

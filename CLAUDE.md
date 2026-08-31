@@ -1,9 +1,22 @@
 # CLAUDE.md — reza-bina.com
 
 Personal portfolio + blog for Reza Bina (Senior iOS Engineer). Astro static site, deployed to
-GitHub Pages on the apex domain `reza-bina.com`. Currently being redesigned per **`HANDOFF.md`**
-(Apple HIG / iOS 26 "Liquid Glass"). `HANDOFF.md` is the full redesign spec; this file is how to
-work in the codebase and the rules that must never be broken.
+GitHub Pages on the apex domain `reza-bina.com`. Being rebuilt as **v3, a monospace changelog**
+per the plan folder below; this file is how to work in the codebase and the rules that must
+never be broken. (`HANDOFF.md` was the v2 "Liquid Glass" spec and is historical.)
+
+---
+
+## Plans & context (outside this repo)
+
+- **Website plan:** `~/Developer/Documents/reza-bina.com/` — read its `0-START-HERE.md` first.
+  `1-DO-NEXT/` is the task list, `2-DECISIONS/` holds settled decisions (do not re-litigate),
+  `3-REFERENCE/Design-system.md` is the binding v3 design spec.
+- **Veil business context:** `~/Developer/Documents/Veil/` — read its `0-START-HERE.md` before
+  writing anything about Veil.
+
+Standing constraint from both folders: **all example data in articles must be synthetic**
+(never the author's real name, address, employer or family).
 
 ---
 
@@ -52,9 +65,10 @@ pattern. The site is mid-redesign; assume older files may predate the current ru
   succeed before any push.
 
 ### Framework
-- **Astro 5.** Do not switch frameworks (no Next.js). Ships zero JS by default.
-- **React islands** (`@astrojs/react`) are surgical — only the interactive case-study modal + device
-  frame. Everything else stays static `.astro`. Framer Motion lives inside that one island only.
+- **Astro 5.** Do not switch frameworks (no Next.js).
+- **Zero client-side JavaScript on every route** (v3, decision 0001). No React, no islands, no
+  inline behaviour scripts. If a feature needs a client island, the feature is cut. The one script
+  in the built HTML is the GoatCounter beacon (see Analytics below) — that list is closed.
 
 ### Content integrity
 - **No fabricated data.** No invented FPS/memory/benchmark numbers, no fake metrics or testimonials.
@@ -62,22 +76,31 @@ pattern. The site is mid-redesign; assume older files may predate the current ru
 - Don't guess at Reza's bio, app details, or the blog essay's accuracy — flag for his review.
 
 ### Assets & licensing
-- **Do not self-host SF Pro** (Apple's license forbids it for non-Apple devices). Use the
-  `-apple-system` stack + Inter fallback. Space Grotesk is being removed.
-- Site is **dark-only** by design (`color-scheme: dark`).
+- **Zero web fonts on any route.** System stacks only: `--font-mono` (ui-monospace/SF Mono/Menlo)
+  and `--font-serif` (Iowan Old Style/Charter/Georgia). Never self-host SF Pro (Apple's license
+  forbids it). The one font package (`@fontsource/ibm-plex-mono`, devDependency) exists solely so
+  Satori can render the build-time OG PNGs — it ships nothing to the client.
+- **Light and dark, three-state.** Bare `:root` carries the full light palette; a
+  `prefers-color-scheme: dark` block guarded with `:root:not([data-theme="light"])` redefines it;
+  `:root[data-theme="dark"]` repeats it so an explicit choice wins. Never define a colour whose
+  only home is a media query or attribute block.
+- **The App Store badge is Apple's unmodified artwork** (`public/badges/`, from App Store
+  Marketing Tools): 40px height minimum, ≥10px clear space, black variant on light / white on
+  dark, storefront-agnostic link (`https://apps.apple.com/app/id<appId>` — never `/us/` or
+  `/de/`). Never redraw it in CSS. The homepage's two badges are a knowing deviation from
+  Apple's one-badge-per-layout rule, settled in decision 0001 — don't re-litigate either way.
 
 ---
 
 ## Architecture & Reuse
 
-- **Astro is the default; reach for a React island only when interactivity genuinely requires it.**
-  Static content, layout, and one-off motion stay in `.astro` with CSS. A component becomes an island
-  only when it needs client state, effects, or event handling that CSS can't express.
-- **Hydrate with the narrowest directive.** Prefer `client:visible` / `client:idle` over
-  `client:load`; never hydrate what can be static. Keep island boundaries small — an island wraps the
-  interactive part, not a whole page.
+- **Everything is static `.astro` + CSS.** There are no client islands and no hydration
+  directives anywhere; a feature that would need one is cut (decision 0001).
 - **Search before you add.** Before creating a component, utility, or CSS token, grep the repo and
-  skim `src/components`, `src/styles`, and `HANDOFF.md` for an existing one. Reuse it; don't duplicate.
+  skim `src/components`, `src/styles`, and the design system
+  (`~/Developer/Documents/reza-bina.com/3-REFERENCE/Design-system.md`) for an existing one. If a
+  page needs a component the design system doesn't have, either the page is wrong or the design
+  system needs a new entry — decide which before writing CSS.
 - **Reuse, don't clone.** When the same markup/logic/style appears a second time, extract the shared
   piece rather than copying it — two copies drift. But extract on the **second** use, not the first: a
   page-local snippet is correct until a second surface needs it.
@@ -86,39 +109,54 @@ pattern. The site is mid-redesign; assume older files may predate the current ru
 
 ## Component Conventions
 
-- **One component per file**, PascalCase (`Bento.astro`, `DeviceFrame.tsx`). Co-locate a component's
+- **One component per file**, PascalCase (`Row.astro`, `Prose.astro`). Co-locate a component's
   styles in its own `<style>` block (Astro scopes them) unless it's a global token/primitive.
-- **Type the props.** Astro components declare a `Props` interface; React islands are typed. No
-  untyped `any` prop bags.
+- **Type the props.** Astro components declare a `Props` interface. No untyped `any` prop bags.
 - **Keep components dumb where possible.** Presentational components take data via props and render it;
   they don't fetch, compute business logic, or reach into globals. Data assembly happens in the page
   frontmatter or a small helper, then flows down as props.
-- **No inline `<script>` for behavior that belongs in an island.** If it needs state or lifecycle, it's
-  a React island; if it's a tiny progressive-enhancement sprinkle (e.g. intercept a link to open the
-  modal), keep it minimal and ensure the no-JS path still works.
+- **No behaviour `<script>`s, inline or otherwise.** Zero client JS is a hard constraint; there is
+  no progressive-enhancement tier to put a sprinkle in.
+- **Astro scoping gotchas** (both bit this build): a scoped `:root` selector compiles to
+  `:root:where(.astro-x)` and never matches `<html>` — wrap it in `:global(:root…)`; and
+  `:global()` *inside* `:has()` is dropped by the compiler — write the inner selector bare
+  (inner `:has()` selectors are left unscoped anyway).
 
 ---
 
 ## Styling & Design System
 
-- **Design tokens are the single source of truth** — defined once in `src/styles/global.css` `:root`,
-  per `HANDOFF.md` §3. **Never hardcode** a colour, radius, blur, or motion curve that a token exists
-  for; add a token instead of a magic value.
-- **Liquid Glass is a shared primitive** (`.glass` and variants, `HANDOFF.md` §4), applied to floating
-  surfaces only (nav, modal, hero) — never every card. Don't re-implement glass per component.
-- Every `backdrop-filter` sits behind an `@supports` query with a solid elevated-surface fallback.
-- Prefer modern layout (grid, container queries) over nested flex hacks. Fluid type/space with `clamp()`.
-- Whether tokens live in plain CSS or Tailwind is settled by what's already in the repo — match it;
-  don't introduce a second styling system.
+The binding spec is **`~/Developer/Documents/reza-bina.com/3-REFERENCE/Design-system.md`** (v3
+"monospace changelog", decision 0001). The load-bearing rules:
+
+- **Rows, not cards.** Information is `date | name | description | action` (`Row.astro`). Nothing
+  is boxed, floated, elevated or tinted to look important.
+- **Hairlines only.** A 1px `var(--rule)` line is the only separator. **Banned on every page:**
+  cards, box shadows, gradients, `backdrop-filter`, aurora/grain layers, scroll reveals, magnetic
+  buttons, sticky/condensing nav, border radii above 3px (code blocks 3px and Apple's badge are
+  the only rounded things), web fonts, client-side React, emoji as section markers, and any
+  heading set larger than the article body.
+- **Monospace is the voice; serif is for reading.** Structure, metadata, navigation and labels
+  are `--font-mono` at 14/1.7 with `tabular-nums`; article body copy is `--font-serif` at
+  17.5/1.7 (`Prose.astro` owns every MDX element style — nothing outside it styles article
+  content). There is no display type size anywhere.
+- **Nothing moves.** The entire motion budget is `transition: color .12s linear` on links.
+- **Tokens once, in `global.css` `:root`** — never hardcode a colour a token exists for. Rows
+  collapse below 700px via a container query on `.wrap` (`container: page / inline-size`) with a
+  viewport media query as fallback. Space scale: 4 8 12 16 24 32 40 56 72 (row padding 9px and
+  the 10px section-label gap are specced exceptions; the date column is 96px because the spec's
+  84px is exactly 10ch of 14px SF Mono and wraps).
+- Page column widths via Base's `pageMax` prop: 70rem default, 62rem `/writing`, 34rem articles
+  and `/privacy` — set on `<body>` so header, content and footer share one left edge.
 
 ---
 
 ## Naming Conventions
 
 - **Components:** PascalCase files — `Hero.astro`, `Modal.tsx`.
-- **CSS custom properties:** kebab-case, grouped by role — `--label-2`, `--glass-bg`, `--r-card`.
-- **CSS classes:** lowercase, hyphenated, purposeful — `.bento-grid`, `.glass--refract`. No cryptic
-  abbreviations.
+- **CSS custom properties:** kebab-case, grouped by role — `--ink-2`, `--rule-strong`, `--font-mono`.
+- **CSS classes:** lowercase, hyphenated, BEM-ish, purposeful — `.row__desc`, `.store-badge`. No
+  cryptic abbreviations.
 - **Content slugs / routes:** lowercase-kebab — `/work/zumnum`, `/writing/<slug>`.
 - **Utilities/helpers:** camelCase functions in `src/lib` or `src/utils` (create the folder when the
   first shared helper appears — don't scaffold it empty).
@@ -127,26 +165,36 @@ pattern. The site is mid-redesign; assume older files may predate the current ru
 
 ## Accessibility & Motion (requirements, not extras)
 
-- Honor `prefers-reduced-motion`: disable springs/parallax/autoplay; keep opacity fades; no
-  motion-triggered content reveal.
-- Full keyboard nav; visible `:focus-visible` rings; modal focus trap + `Esc` + focus restore + scroll
-  lock + `aria-modal` + labelled title.
-- AA contrast minimum for all text, **including text over glass** — add a scrim before sacrificing the
-  effect.
-- Semantic landmarks, correct heading order, real `alt` text, labelled controls.
-- Video: `muted loop playsinline`, poster frame, lazy, no layout shift.
+- Full keyboard nav; visible `:focus-visible` rings (2px `--accent`, 2px offset) on every stop;
+  keep the skip link.
+- **AA contrast minimum for all text, measured with a tool, in both themes** — including muted
+  `--ink-2` text and every Shiki token colour. That is why Shiki uses the
+  `github-*-high-contrast` pair: the plain github themes' comment grey (#6a737d) measures 3.69:1
+  on both code grounds and fails.
+- A link inside running text never relies on colour alone — underline it (WCAG 1.4.1; the footer's
+  analytics link is the precedent).
+- Semantic landmarks, correct heading order, real `alt` text, labelled controls. Data uses real
+  `<table>` markup with `<th scope="col">` (writing index, case-study stack); layout grids stay
+  `<div>`s. Wide tables scroll in their own `overflow-x: auto` container — the page never scrolls
+  sideways.
+- Keep an (empty-in-practice) `prefers-reduced-motion` guard; there is nothing to disable beyond
+  the link-colour fade.
 
 ---
 
 ## Performance & SEO (definition of done)
 
-- **Zero-JS by default.** Justify every kilobyte of shipped JS; measure island payloads.
-- Targets: Lighthouse ≥ 95 Performance / Best-Practices / SEO, **100 Accessibility**; no console
-  errors; verified in Safari + Chrome + Firefox.
-- Images/video compressed (video H.264/H.265, target < 3 MB); explicit dimensions to avoid CLS.
+- **Zero JS bundles, zero font requests, on every route** — `dist/` has no `_astro/*.js` at all
+  (the small stylesheet inlines, so pages are effectively single-request). Budgets: `global.css`
+  < 12 KB; any page HTML+CSS < 30 KB.
+- Targets: Lighthouse ≥ 99 Performance, **100 Accessibility**, ≥ 95 SEO; no console errors;
+  verified in Safari + Chrome + Firefox. (Best-practices reads 81 on localhost solely from the
+  `is-on-https` audit — it's green on the live domain.)
+- Images compressed, explicit dimensions to avoid CLS.
 - **Every page has** a unique `<title>`, meta description, canonical URL, and Open Graph/Twitter tags.
-- Case studies are **real crawlable routes**, not modal-only — the modal is progressive enhancement
-  over a link that works without JS.
+- Case studies are **real crawlable routes** (`/work/<slug>`); the case-study modal is gone.
+- **No URL may ever break** — the site ranks first for "Reza Bina" and is linked from the iOS Dev
+  Directory, and GitHub Pages cannot serve redirects.
 
 ---
 
@@ -180,8 +228,8 @@ non-trivial helper warrants one. Before calling work done:
 
 - `npm run build` succeeds (static output intact).
 - `npm run check` (`astro check`) is clean — no type or diagnostic errors.
-- Manually verify the change in the browser, including a mobile viewport, keyboard-only, and
-  reduced-motion. For glass/motion work, spot-check Safari + Chrome + Firefox.
+- Manually verify the change in the browser, in **both themes**, including a mobile viewport
+  (no horizontal scroll at 320px) and keyboard-only. Spot-check Safari + Chrome + Firefox.
 - No new console errors or broken links.
 
 If you add a genuinely non-trivial pure helper (a date formatter, a TOC builder), a small unit test is
@@ -191,8 +239,9 @@ welcome; don't manufacture tests for markup.
 
 ## Workflow, Branching & PRs
 
-- Follow the phased build in `HANDOFF.md` §9 and **stop for review after each phase.**
-- Flag the open design decisions in `HANDOFF.md` §12 to Reza rather than guessing.
+- Task order and open decisions live in the plan folder
+  (`~/Developer/Documents/reza-bina.com/1-DO-NEXT/`); flag open questions to Reza rather than
+  guessing.
 - **Don't commit or push unless asked.** When you do: branch off `main` (don't commit straight to it),
   use a short descriptive branch name (`redesign/bento-home`, `blog/mdx-migration`), and write a clear
   commit message. Open a PR only when Reza asks.
@@ -203,16 +252,19 @@ welcome; don't manufacture tests for markup.
 
 ```
 src/
-  pages/          routes — index.astro, work/, writing/
-  layouts/        shared HTML shells (Base.astro)
-  components/     reusable .astro / .tsx components (create as the redesign grows)
+  pages/          routes — index.astro, work/, writing/, privacy.astro, 404.astro, llms*.txt.ts
+  layouts/        Base.astro — head/meta/JSON-LD, SiteHeader/SiteFooter, GoatCounter
+  components/     Row, Section, Tag, Prose, SiteHeader, SiteFooter, AppStoreBadge,
+                  CaseStudyPage, TableOfContents (all static .astro)
   content/blog/   blog posts (collection)
   content.config.ts   collection schema
-  styles/         global.css — tokens, glass primitives, resets
-public/           static assets — CNAME, favicon.svg, icons/{zumnum,veil}.png
+  data/           caseStudy.ts + veil.ts/zumnum.ts — verified case-study content
+  lib/            og.ts (build-time OG PNGs), readingTime.ts
+  styles/         global.css — tokens, reset, .wrap container (3.7 KB)
+public/           static assets — CNAME, favicon.svg, icons/, shots/, badges/
 .github/workflows/deploy.yml   auto-deploy (do not break)
-astro.config.mjs  site config (site set, no base)
-HANDOFF.md        full redesign spec
+astro.config.mjs  site config (site set, no base; mdx + sitemap; Shiki high-contrast pair)
+HANDOFF.md        the v2 spec — historical only
 ```
 
 ## Commands
@@ -227,90 +279,36 @@ npm run check    # astro check (types/diagnostics)
 
 ## Feature Documentation
 
-For anything non-obvious — a tricky glass fallback, the modal's progressive-enhancement wiring, a
-performance trade-off — record the decision and its *why* here (and in memory), so the next session
-doesn't re-litigate it. A decision you had to think hard about is worth one paragraph.
+For anything non-obvious — a compiler gotcha, a spec deviation, a performance trade-off — record
+the decision and its *why* here (and in memory), so the next session doesn't re-litigate it. A
+decision you had to think hard about is worth one paragraph. (The v2 feature notes — case-study
+modal, status chips, glass/refraction, bento IA, founder-positioning copy — described components
+deleted in the v3 rebuild and were removed with them; git history has them.)
 
-### Case-study modal — flex dialog, only the body scrolls
-`CaseStudyModal.tsx` is a bounded flex/grid dialog (ARIA APG pattern), **not** one scroller. The
-`.modal-panel` is the rounded, `overflow:hidden`, `max-height` frame; inside, a `.modal-header`
-(eyebrow + title, hairline `border-bottom`) and a `.modal-footer` (CTAs, hairline `border-top`) are
-`flex:none` and stay fixed, while **`.modal-body` is the only scroller** (`flex:1; min-height:0;
-overflow-y:auto; overscroll-behavior:contain`). Don't reintroduce `position:sticky` (fragile with the
-rounded corners + backdrop blur) or a single `.modal-scroll`. The device can't be both a fixed desktop
-column and scroll inside the body on mobile via CSS (an element can't cross the overflow boundary), so
-it's placed by breakpoint with a `useMediaQuery('(min-width:720px)')` hook: on desktop it's a direct
-panel child (left column, `align-self:center` so it's balanced against the full panel height, bounded by `36vh` so it isn't clipped on short laptops);
-on mobile it's the first child of `.modal-body`. Load-bearing a11y: `.modal-body` has `tabindex="0"` +
-`aria-label` so keyboard users can arrow-scroll it; the focus trap includes it; `aria-labelledby` still
-points at the title id (now in the header). Keep the thin inset scrollbar and the Framer-Motion spring.
+### v3 changelog rebuild (2026-08-31) — what is load-bearing
+The whole site is the v3 monospace changelog (decision 0001; spec in the plan folder's
+`Design-system.md`). Things a future session must not undo or re-guess:
 
-### Status colour convention — shipped vs. in-development
-`--amber` (systemOrange) means **in development**; **green is reserved for shipped** ("On the App
-Store"). Never render a forthcoming app's status chip green. For an unshipped app the honest
-de-emphasis is `.tag--soon` (muted amber on a translucent field) + `.card--wip` (a dashed,
-lower-contrast border) on its home card, and a `.badge--status` ("In development · not yet released")
-on its work page — **no fabricated progress bars or metrics** to signal "in progress". Veil wore
-exactly that treatment until it shipped (2026-08-07); both apps are now green `.tag--live`. The
-work-page/modal badges branch on `appStoreUrl` presence in the case-study data, so flipping
-`status` + adding `appStoreUrl` in `src/data/<app>.ts` is what "shipping" an app means there; the
-home card chip + store link are edited by hand in `index.astro`.
-
-### Hero legibility over Liquid Glass — SVG refraction removed (2026-08-08)
-The hero tile uses **plain base `.glass`** (`blur + saturate`, the `--hero-scrim`, and the specular
-`.glass::before` top edge) — the same clean surface on every browser. The earlier `.glass--refract`
-variant applied an SVG displacement filter (`url(#liquid)`: `feTurbulence` → `feDisplacementMap`) as a
-`backdrop-filter`. **Chromium is the only engine that renders an SVG filter on a backdrop, and it does
-so at low resolution / tiled** — so the displacement chewed the ambient `.aurora`'s soft green blob
-(which sits directly behind the tile) into a **blocky, mottled smear** behind the `<h1>`. Safari and
-Firefox don't support `url(#…)` as a backdrop-filter, hit the `@supports` fallback (plain blur), and
-looked correct — which is exactly why the bug was Chrome-only. Tuning the displacement `scale` (42 → 18
-in an earlier pass) reduced but never fixed it: the blockiness is Chromium's low-res backdrop
-rasterization, not the amplitude. So the whole refraction was retired: the `.glass--refract` rule, the
-`@supports (backdrop-filter: url(#liquid))` block, the `LiquidGlassFilter.astro` component, and its
-`<LiquidGlassFilter />` include in `Base.astro` are all gone. **Don't reintroduce an SVG filter as a
-`backdrop-filter`** — it renders badly on the majority browser. The scrim + `--aurora-opacity` still
-keep the headline AA-legible over the (now clean) aurora; keep the specular `.glass::before` highlight.
-
-### Home IA — labeled sections, not an interleaved grid
-The home page is **stacked, labeled `<section>`s in a fixed order: Hero → Apps → Writing → About**
-(the researched portfolio sequence, projects first). It is **not** one bento grid mixing content types
-across rows — testers found that confusing, because a hero sat beside an app, then a writing tile, then
-the second app. Bento is still allowed *inside* a section (Apps is a two-card grid: ZumNum wider + first
-= primary, Veil second), just never across content types. Each section carries a visible
-`.section-label` heading wired with `aria-labelledby`, generous `.home-section` rhythm between them, and
-`scroll-margin-top` so the nav anchors (`#apps`, `#writing`, `#about` — **preserve these**, the nav
-scrolls to them) clear the sticky nav. Heading order is `h1` (hero) → `h2` (section) → `h3` (app names,
-post titles, "Contact"). The two `CaseStudyModal` trigger ids (`#zumnum-trigger`, `#veil-trigger`) and
-the stretched-link + App Store z-index behaviour are load-bearing — keep them on the app cards. Don't
-re-merge the sections back into a single `.bento`/`.col-*` grid; those classes were removed with this
-change. **About is single-column**: a full-width `.about-bio` card, then a compact `.about-contact`
-strip (label left, icon links right — inline SVG, `aria-hidden`, so the visible text stays the
-accessible name) — *not* the old two-column `.about-grid`, which stranded a short card beside the tall
-bio. **The `.about-bio` card is full width (same as the app/writing cards) and the bio is a single
-column whose text fills that full width** — `#about .about-bio p { max-width: none }`, no reading-measure
-cap, so no void beside the text. Per Reza (2026-07-29): keep it one column filling the width — don't cap
-it to a narrow reading measure (which strands it visually next to the full-width cards) and don't split
-it into multiple columns. (The *hero* card is different: it hugs its content vertically but keeps its
-wide right void on purpose, reserved for a future device/motif.)
-
-### Home positioning — founder-forward, by implication (FIX-11)
-The home is written to read as a **founder's** site — someone who owns products end-to-end and has
-momentum — **not an engineer-for-hire's**. The signal is always *indirect*: nothing on the page may say
-"available", "hire", "freelance", or "seeking co-founder". Four load-bearing pieces carry it (per Reza,
-2026-07-29): (1) the hero **`.hero-now`** status line ("Now — building Veil, and looking for the next
-thing worth building.") with a small **`--warm`** (systemGreen) `.hero-now__dot` — a current-momentum
-cue; (2) the About **`.about-thesis`** lead — a prominent point-of-view statement, capped ~40ch, that the
-body paragraphs must **not** re-echo; (3) the About third paragraph's end-to-end **ownership** claim
-(empty Xcode project → App Store, myself); (4) the **`.contact-invite`** — a peer-framed line above the
-contact row ("If you're building something ambitious on Apple platforms…"). Keep the tone this side of a
-pitch; if you edit this copy, preserve the "never says for-hire" rule.
-**CSS gotcha:** `.card p` (specificity 0,1,1) beats a bare `.hero-now`/`.contact-invite` (0,1,0) and was
-silently forcing both to the 15.5px body size/`--label-2`. They're intentionally scoped
-(`.hero-card .hero-now`, `.about-contact .contact-invite`) to win, keeping the quieter 14px/`--label-3`
-"now" line and the 15px invite. Contact layout is now: `.about-contact` is a **column** (its `.card`
-default — the old row-flex override was removed); the invite sits full-width on its own line, and
-**`.contact-row`** carries the label-left / links-right flex row beneath it (wraps on mobile).
+- **The `#apps` / `#writing` / `#about` ids on the homepage sections are nav anchors** — the
+  header links point at them. Preserve them.
+- **Homepage writing rows and each case study's "# writing" rows are derived from the content**
+  (`getCollection('blog')`, drafts excluded; related posts = published posts whose body mentions
+  the app name) — never a hand-written list, or it rots.
+- **Ship dates are verified facts** from the iTunes lookup API (`ZumNum 2025-08-01`,
+  `Veil 2026-08-07`), stored as `shipped` in `src/data/<app>.ts`. "Shipping" an app = set
+  `status: 'live'` + `appStoreUrl` (storefront-agnostic) + `shipped` there; the homepage row is
+  edited by hand.
+- **Badge SVGs are referenced as `<img>`, not inlined**, deliberately: inlining both theme
+  variants of both homepage badges (~42 KB) would break the <30 KB page budget. Both variants are
+  in the HTML; CSS shows the right one per theme (no JS to swap them).
+- **Prev/next rows on articles and the writing-index table** collapse via the container query on
+  `.wrap` — that is why `.wrap` declares `container: page / inline-size`; don't remove it.
+- **Dark-mode code blocks** work because `Prose.astro` flips Shiki's `--shiki-dark` variables
+  with `!important` under the three-state selectors. Astro's `themes:` config alone renders
+  light-only.
+- The OG renderer (`src/lib/og.ts`) needs a real font file at build time (Satori cannot use
+  system fonts on CI, nor read WOFF2) — that is the **only** reason `@fontsource/ibm-plex-mono`
+  exists. Verify the `.woff` path inside the package before ever swapping it.
 
 ### SEO / discoverability conventions
 The site's structured data is a JSON-LD `@graph` (`Base.astro`): always Person + WebSite, plus
