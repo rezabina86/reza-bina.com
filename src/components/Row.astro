@@ -1,9 +1,18 @@
 ---
 /**
- * The site's atom: one changelog row.
- * `date | name | description | action`, hairline on top.
- * The action column takes either the `action`/`actionHref` props (a text link)
- * or the named slot `action` (the App Store badge).
+ * The site's atom: one changelog row, two lines, always.
+ *
+ *   2026-04   ZumNum                        [ Download on the App Store ]
+ *             german practice · on-device neural speech · foundation models
+ *
+ * Line one is `date | name | action` (grid 96px 1fr auto, centred); line two
+ * is the description, indented to the name column and capped at 62ch. Two
+ * lines is what lets one 46rem frame serve every page: a one-line row with a
+ * date, a name, a description and a 120px badge needs ~900px — it was the
+ * only thing on the site that did. There is no second row shape.
+ *
+ * The action column takes either the `action`/`actionHref` props (a text
+ * link) or the named slot `action` (the App Store badge).
  */
 interface Props {
   date?: string;
@@ -18,106 +27,87 @@ const { date, name, href, description, action, actionHref } = Astro.props;
 const hasActionSlot = Astro.slots.has('action');
 ---
 
-<div class="row">
-  {date && <span class="row__date">{date}</span>}
-  <span class="row__name">
-    {href ? <a href={href}>{name}</a> : name}
-  </span>
-  {description && <span class="row__desc">{description}</span>}
-  {
-    hasActionSlot ? (
-      <span class="row__action">
-        <slot name="action" />
-      </span>
-    ) : (
-      action && (
+<div class:list={['row', { 'row--dateless': !date }]}>
+  <div class="row__line">
+    {date && <span class="row__date">{date}</span>}
+    <span class="row__name">
+      {href ? <a href={href}>{name}</a> : name}
+    </span>
+    {
+      hasActionSlot ? (
         <span class="row__action">
-          {actionHref ? <a href={actionHref}>{action}</a> : action}
+          <slot name="action" />
         </span>
+      ) : (
+        action && (
+          <span class="row__action">
+            {actionHref ? <a href={actionHref}>{action}</a> : action}
+          </span>
+        )
       )
-    )
-  }
+    }
+  </div>
+  {description && <span class="row__desc">{description}</span>}
 </div>
 
 <style>
   .row {
-    /* Spec says 84px for the date column, but 84px is exactly 10ch of 14px
-       SF Mono — an ISO date wraps at the slightest rounding. 96px is the
-       nearest safe width. */
-    display: grid;
-    grid-template-columns: 96px 132px 1fr auto;
-    gap: 16px;
-    align-items: baseline;
     border-top: 1px solid var(--rule);
     padding: 9px 0;
   }
 
+  .row__line {
+    display: grid;
+    grid-template-columns: 96px 1fr auto;
+    gap: 16px;
+    align-items: center;
+  }
+
   .row__date {
-    grid-column: 1;
     color: var(--ink-2);
     white-space: nowrap;
   }
 
   .row__name {
-    grid-column: 2;
     font-weight: 600;
   }
 
-  .row__desc {
-    /* Rows self-size: the description always wraps, never truncates
-       (Reza, 2026-08-31 — overrides the spec's desktop ellipsis). The 62ch
-       cap keeps a mono line readable as content grows; nothing else
-       enforces a measure. */
-    grid-column: 3;
-    color: var(--ink-2);
-    max-width: 62ch;
-  }
-
   .row__action {
-    grid-column: 4;
     white-space: nowrap;
   }
 
-  /* A badge row centres everything against the badge's height; text-action
-     rows stay on the baseline. (No :global() here — the compiler drops
-     :global inside :has, and inner :has selectors are left unscoped anyway.) */
-  .row:has(.store-badge) {
-    align-items: center;
+  .row__desc {
+    /* Always wraps, never truncates (Reza, 2026-08-31). 62ch keeps the mono
+       measure readable; the 112px indent aligns it with the name column. */
+    display: block;
+    color: var(--ink-2);
+    max-width: 62ch;
+    margin-left: 112px;
   }
 
-  /* A dateless row gives its columns back to the name. */
-  .row:not(:has(.row__date)) .row__name {
-    grid-column: 1 / 3;
+  /* A dateless row starts at the left edge, description included. */
+  .row--dateless .row__line {
+    grid-template-columns: 1fr auto;
   }
 
-  /* Collapse to stacked lines below 560px of container width. The container
-     query on .wrap is the one mechanism — no viewport media query duplicating
-     the number. 560, not 700: the narrow frame is a 672px container, and a
-     700px threshold would stack every row on a desktop display. */
-  @container page (max-width: 560px) {
-    .row {
-      grid-template-columns: 96px 1fr;
+  .row--dateless .row__desc {
+    margin-left: 0;
+  }
+
+  /* Below 400px of container width the date takes its own line above the
+     name and the description loses its indent. The container query on .wrap
+     is the one mechanism — no viewport media query duplicating the number. */
+  @container page (max-width: 400px) {
+    .row__line {
+      grid-template-columns: 1fr auto;
     }
 
     .row__date {
-      grid-row: 1;
-    }
-
-    .row__name {
-      grid-column: 2;
-      grid-row: 1;
-    }
-
-    .row:not(:has(.row__date)) .row__name {
       grid-column: 1 / -1;
     }
 
     .row__desc {
-      grid-column: 1 / -1;
-    }
-
-    .row__action {
-      grid-column: 1 / -1;
+      margin-left: 0;
     }
   }
 </style>

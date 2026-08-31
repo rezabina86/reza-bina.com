@@ -16,11 +16,13 @@
 
 <style is:global>
   .prose {
-    /* No max-width — Prose fills the page frame (one frame per page; never
-       two widths on one page). The narrow 42rem frame is the measure. */
+    /* No max-width — Prose fills the one 46rem frame; the frame is the
+       measure. 19px, not 17.5: at 656px of content, 17.5px serif runs to
+       ~75 characters a line. 19px lands at ~69. The frame is fixed, so the
+       type moves to meet it. */
     font-family: var(--font-serif);
-    font-size: 17.5px;
-    line-height: 1.7;
+    font-size: 19px;
+    line-height: 1.65;
   }
 
   .prose p,

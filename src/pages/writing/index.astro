@@ -1,7 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
+import Row from '../../components/Row.astro';
 import { getCollection } from 'astro:content';
-import { readingMinutes } from '../../lib/readingTime';
 
 // Drafts are excluded at build time, not hidden with CSS.
 const posts = (await getCollection('blog'))
@@ -9,47 +9,30 @@ const posts = (await getCollection('blog'))
   .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
+const tags = (list: string[]) => list.map((t) => `[${t.toLowerCase()}]`).join(' ');
 ---
 
 <Base
   title="Writing — Reza Bina"
   description="Essays on privacy, on-device software, and building independent iOS apps."
   ogSlug="writing"
-  pageMax="54rem"
 >
   <div class="wrap writing-index">
     <h1 class="writing-index__title"><span aria-hidden="true"># </span>writing</h1>
-    <!-- Wide data scrolls in its own container; the page never scrolls sideways. -->
-    <div class="writing-index__scroll">
-      <table class="writing-index__table">
-      <thead>
-        <tr>
-          <th scope="col">date</th>
-          <th scope="col">title</th>
-          <th scope="col" class="writing-index__tags-col">tags</th>
-          <th scope="col"><span class="visually-hidden">read</span></th>
-        </tr>
-      </thead>
-      <tbody>
-        {
-          posts.map((post) => (
-            <tr>
-              <td class="writing-index__date">
-                <time datetime={post.data.pubDate.toISOString()}>{iso(post.data.pubDate)}</time>
-              </td>
-              <td class="writing-index__name">
-                <a href={`/writing/${post.id}`}>{post.data.title}</a>
-              </td>
-              <td class="writing-index__tags writing-index__tags-col">
-                {post.data.tags.map((t) => `[${t.toLowerCase()}]`).join(' ')}
-              </td>
-              <td class="writing-index__read">{readingMinutes(post.body)} min</td>
-            </tr>
-          ))
-        }
-      </tbody>
-      </table>
-    </div>
+    <!-- The index is the same Row as everywhere else — no separate table shape.
+         date | title | read → on line one, tags on line two. -->
+    {
+      posts.map((post) => (
+        <Row
+          date={iso(post.data.pubDate)}
+          name={post.data.title}
+          href={`/writing/${post.id}`}
+          description={tags(post.data.tags)}
+          action="read →"
+          actionHref={`/writing/${post.id}`}
+        />
+      ))
+    }
   </div>
 </Base>
 
@@ -64,72 +47,5 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
     font-weight: 400;
     color: var(--ink-2);
     margin-bottom: 10px;
-  }
-
-  .writing-index__scroll {
-    overflow-x: auto;
-  }
-
-  .writing-index__table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  .writing-index__table th {
-    font-size: 10.5px;
-    line-height: 1;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    font-weight: 600;
-    color: var(--ink-2);
-    text-align: left;
-    padding: 9px 16px 9px 0;
-    border-bottom: 1px solid var(--rule-strong);
-  }
-
-  .writing-index__table td {
-    padding: 9px 16px 9px 0;
-    border-top: 1px solid var(--rule);
-    vertical-align: baseline;
-  }
-
-  .writing-index__table tbody tr:first-child td {
-    border-top: 0;
-  }
-
-  .writing-index__date {
-    white-space: nowrap;
-    color: var(--ink-2);
-  }
-
-  .writing-index__name {
-    font-weight: 600;
-  }
-
-  .writing-index__tags {
-    font-size: 12.5px;
-    color: var(--ink-2);
-  }
-
-  .writing-index__read {
-    white-space: nowrap;
-    color: var(--ink-2);
-    text-align: right;
-    padding-right: 0;
-  }
-
-  .visually-hidden {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-
-  @media (max-width: 700px) {
-    .writing-index__tags-col {
-      display: none;
-    }
   }
 </style>
