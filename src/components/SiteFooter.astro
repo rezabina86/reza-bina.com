@@ -1,8 +1,13 @@
 ---
 /**
- * Contact links above a hairline, then one muted line. The analytics phrase
- * links /privacy and must change in the same commit as any analytics change —
- * see CLAUDE.md, "Analytics".
+ * Contact links above a hairline, then one muted copyright line.
+ *
+ * The line once carried a "cookieless analytics, no personal data" clause
+ * linking /privacy. It was removed in the 2026-09-09 repositioning: an
+ * analytics disclosure in the footer was one of four privacy signals that
+ * mispositioned the site (decision 0002). GoatCounter still runs and /privacy
+ * still exists (indexed, in the sitemap) — it is simply no longer linked from
+ * the footer. See CLAUDE.md, "Analytics".
  */
 const year = new Date().getFullYear();
 ---
@@ -16,8 +21,7 @@ const year = new Date().getFullYear();
       <a href="/rss.xml">rss</a>
     </div>
     <p class="site-footer__meta">
-      © {year} Reza Bina · Berlin · built &amp; hosted independently ·
-      <a href="/privacy">cookieless analytics</a>, no personal data
+      © {year} Reza Bina · Berlin · built &amp; hosted independently
     </p>
   </div>
 </footer>
@@ -49,13 +53,6 @@ const year = new Date().getFullYear();
     font-size: 12.5px;
     line-height: 1.6;
     color: var(--ink-2);
-  }
-
-  /* A link inside muted running text can't rely on colour alone (WCAG 1.4.1). */
-  .site-footer__meta a {
-    text-decoration: underline;
-    text-underline-offset: 0.15em;
-    text-decoration-color: var(--rule-strong);
   }
 
   @media (max-width: 700px) {

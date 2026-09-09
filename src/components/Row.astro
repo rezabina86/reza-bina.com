@@ -13,10 +13,15 @@
  *
  * The action column takes either the `action`/`actionHref` props (a text
  * link) or the named slot `action` (the App Store badge).
+ *
+ * The name is normally the `name` string prop. When a row needs rich content
+ * in that slot — e.g. the about lines, whose sentence carries inline links to
+ * former employers — pass a `name` slot instead; it overrides the prop. Any
+ * `<a>` inside it inherits the row's persistent underline below.
  */
 interface Props {
   date?: string;
-  name: string;
+  name?: string;
   href?: string;
   description?: string;
   action?: string;
@@ -25,13 +30,14 @@ interface Props {
 
 const { date, name, href, description, action, actionHref } = Astro.props;
 const hasActionSlot = Astro.slots.has('action');
+const hasNameSlot = Astro.slots.has('name');
 ---
 
 <div class:list={['row', { 'row--dateless': !date }]}>
   <div class="row__line">
     {date && <span class="row__date">{date}</span>}
     <span class="row__name">
-      {href ? <a href={href}>{name}</a> : name}
+      {hasNameSlot ? <slot name="name" /> : href ? <a href={href}>{name}</a> : name}
     </span>
     {
       hasActionSlot ? (
