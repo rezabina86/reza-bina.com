@@ -27,9 +27,10 @@ export const GET: APIRoute = async ({ site }) => {
 
   const body = `# Reza Bina — Senior iOS Engineer
 
-> Private, on-device iOS apps (ZumNum, Veil) and engineering writing on Swift
-> concurrency, on-device ML, and privacy-by-architecture. Everything runs on the
-> device; nothing is uploaded.
+> iPhone apps taken from nothing to shipped (ZumNum, Veil) and engineering
+> writing on Swift concurrency, on-device ML, and app architecture. Building
+> for iPhone since 2015, across ride-hailing, marketplaces and language
+> learning.
 
 ## Writing
 ${writing}

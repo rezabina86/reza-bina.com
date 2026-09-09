@@ -338,9 +338,33 @@ The whole site is the v3 monospace changelog (decision 0001; spec in the plan fo
 - The OG renderer (`src/lib/og.ts`) needs a real font file at build time (Satori cannot use
   system fonts on CI, nor read WOFF2) — that is the **only** reason `@fontsource/ibm-plex-mono`
   exists. Verify the `.woff` path inside the package before ever swapping it.
-- **Settled by Reza (2026-08-31), do not re-open:** the about line ("iOS engineer at
-  Goodnotes; evenings and weekends…") stays as-is — the honesty is the point; and row
-  descriptions always wrap, never truncate.
+- **Settled by Reza (2026-08-31):** row descriptions always wrap, never truncate. (The
+  companion "keep the about line as-is" ruling from the same day was **overturned
+  2026-09-09** by the repositioning — see the Positioning section below.)
+
+### Positioning — iOS engineer who ships, never privacy-led (2026-09-09)
+The copy was rewritten (commit "Rewrite site copy…") to position Reza as **an iOS engineer
+who takes products from nothing to shipped, in any domain** — not a privacy-focused indie
+developer. The reasoning is in the plan folder's decisions `0002`–`0008`; the canonical
+strings are `~/Developer/Documents/reza-bina.com/3-REFERENCE/Site-copy.md`. Load-bearing:
+
+- **"privacy-first" appears nowhere, and privacy is never the site's frame** (decision
+  0002). Veil's own `/work/veil` page and `/privacy` may state accurately that its
+  detection runs on the phone; nothing else leads with privacy. This governs the visible
+  copy **and** the metadata — the `<title>`, meta description and JSON-LD Person
+  description in `Base.astro`, and the `/llms.txt` blurb, all lead with shipping, not
+  privacy. Don't reintroduce "private, on-device apps" as the site's tagline or title.
+- **Tagline** is `iphone apps, built and shipped · berlin`; the homepage `about` block is
+  the now/before lines in `Site-copy.md` (employers named: Goodnotes, SnappBox, Ronaker,
+  1stDibs, Babbel — decision 0007, facts confirmed 2026-09-09).
+- **Homepage `writing` rows are an explicit, maintained selection** (decision 0008), not
+  the newest three: the featured slugs + subtitles are the `FEATURED` array in
+  `index.astro`. This is the one homepage list that is *not* purely date-derived — a
+  missing slug throws at build. Date and title still come from the collection.
+- **A single closing line** sits between `about` and the footer (decision 0005) — an
+  invitation, not a "hire me" panel. No new pages, no availability statement.
+- Only **Veil and ZumNum** are listed; DailySort and FocusInc are deprecated (decision
+  0004) — off the site, though still in the App Store until pulled.
 
 ### SEO / discoverability conventions
 The site's structured data is a JSON-LD `@graph` (`Base.astro`): always Person + WebSite, plus
@@ -367,11 +391,23 @@ so `npm run dev` stays out of the stats, `is:inline` so Astro doesn't bundle the
 the only analytics consistent with this site. **Never** add Google Analytics, a tag manager, cookies, a
 consent banner, or any fingerprinting/cross-site tracking; that list is closed. The endpoint is
 `https://rezabina.goatcounter.com/count` (Reza owns the `rezabina` GoatCounter account).
-**The honesty rule (load-bearing):** the footer once read "No trackers". Any analytics makes that
-arguable, and on a site whose whole credibility is not overclaiming, a beacon under a "No trackers"
-footer is a real hit. So the footer now reads **"Cookieless analytics, no personal data"** (the phrase
-links to `/privacy`), and **the footer copy must change in the same commit as any analytics change** —
-they are never allowed to drift. `/privacy` (`src/pages/privacy.astro`, in Reza's voice) states plainly
-what is counted (aggregate page views, referrer, rough country/browser), what is not (no cookies, no
-personal data, no cross-site tracking, no ads, no fingerprinting), and who/why (GoatCounter, to see which
-posts land). It's indexed on purpose — on a privacy-first site the page is an asset, not boilerplate.
+**The honesty rule (load-bearing), and its 2026-09-09 revision:** the footer once read "No
+trackers", which a beacon makes arguable; it then read **"Cookieless analytics, no personal
+data"** linking `/privacy`. The **2026-09-09 repositioning removed that clause from the
+footer** — an analytics disclosure in the footer was one of the privacy signals mispositioning
+the site (decision 0002). The copyright line is now just `© <year> Reza Bina · Berlin · built
+& hosted independently`. What this means going forward:
+- **GoatCounter still runs and `/privacy` still exists** (indexed, in the sitemap) — the page
+  is simply no longer linked from the footer. Do not read the clause's removal as permission to
+  overclaim: **never** put "No trackers" (or any wording that denies analytics) back into the
+  footer or anywhere else while the beacon runs. That is the actual honesty rule — the specific
+  footer sentence was a means, not the rule.
+- The old **"footer copy must change in the same commit as any analytics change"** still holds
+  in spirit: if you ever *change what is collected* (a new tool, cookies, anything), the honesty
+  surface — `/privacy`, and any wording anywhere that characterises tracking — must move in the
+  same commit. Adding Google Analytics, a tag manager, cookies, a consent banner, or
+  fingerprinting is still a closed "never".
+`/privacy` (`src/pages/privacy.astro`, in Reza's voice) states plainly what is counted (aggregate
+page views, referrer, rough country/browser), what is not (no cookies, no personal data, no
+cross-site tracking, no ads, no fingerprinting), and who/why (GoatCounter, to see which posts
+land). It stays indexed on purpose.

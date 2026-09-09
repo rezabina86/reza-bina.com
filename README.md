@@ -1,7 +1,7 @@
 # reza-bina.com
 
-Personal site for Reza Bina — an independent iOS developer building private,
-on-device apps. Built with [Astro](https://astro.build), served as a static
+Personal site for Reza Bina — an iOS engineer who takes iPhone products from
+nothing to shipped. Built with [Astro](https://astro.build), served as a static
 site on GitHub Pages from the apex domain `reza-bina.com`.
 
 ## Develop

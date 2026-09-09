@@ -12,6 +12,32 @@ const posts = (await getCollection('blog'))
   .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
+
+// The three featured posts are a deliberate, maintained choice (decision 0008):
+// they span on-device ML, architecture and Swift so the homepage shows range,
+// not one preoccupation. Selection and subtitle are explicit; the date and
+// title still come from the collection, so those can't rot — and a missing
+// slug fails the build loudly rather than silently dropping a row.
+const FEATURED: { id: string; subtitle: string }[] = [
+  {
+    id: 'how-veil-redacts-a-document-on-device',
+    subtitle: 'The whole Veil pipeline, stage by stage, framework by framework',
+  },
+  {
+    id: 'the-state-machine-that-runs-both-my-apps',
+    subtitle: 'One pattern I reuse across every app I ship, and where it stops working',
+  },
+  {
+    id: 'the-state-machine-i-didnt-know-i-had',
+    subtitle: "A migration on a shipping app, and what I'd do differently",
+  },
+];
+
+const featured = FEATURED.map(({ id, subtitle }) => {
+  const post = posts.find((p) => p.id === id);
+  if (!post) throw new Error(`Featured post not found in the blog collection: ${id}`);
+  return { post, subtitle };
+});
 ---
 
 <Base>
@@ -23,7 +49,7 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
         date="2026-08-07"
         name="Veil"
         href="/work/veil"
-        description="Find and remove the personal details in a document before you share it, entirely on the iPhone"
+        description="Finds the personal details in a document and takes them out before you share it, all on the phone"
       >
         <AppStoreBadge slot="action" appId="6780531974" label="Veil" />
       </Row>
@@ -31,7 +57,7 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
         date="2025-08-01"
         name="ZumNum"
         href="/work/zumnum"
-        description="Learn German numbers by ear: hear one, type what you heard, fully offline, no ads"
+        description="Hear a German number, type what you heard, offline, no ads"
       >
         <AppStoreBadge slot="action" appId="6748617262" label="ZumNum" />
       </Row>
@@ -42,13 +68,14 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
            and stay off the homepage. Capped at three so the homepage never
            becomes a wall as the archive grows. -->
       {
-        posts.slice(0, 3).map((post) => (
+        featured.map(({ post, subtitle }) => (
           <Row
             date={iso(post.data.pubDate)}
             name={post.data.title}
             href={`/writing/${post.id}`}
             action="read →"
             actionHref={`/writing/${post.id}`}
+            description={subtitle}
           />
         ))
       }
@@ -58,15 +85,41 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
     <Section label="about" id="about">
       <!-- now/before are timeframes — label slot, muted; the sentence is the
            content and takes the emphasis. -->
-      <Row
-        date="now"
-        name="iOS engineer at Goodnotes; evenings and weekends on my own privacy-first apps"
-      />
-      <Row
-        date="before"
-        name="Building for iPhone since 2015: ride-hailing, e-commerce, language learning, and a physics degree before that"
-      />
+      <Row date="now">
+        <Fragment slot="name"
+          >iOS engineer at <a
+            class="about-link"
+            href="https://www.goodnotes.com"
+            target="_blank"
+            rel="noopener">Goodnotes</a
+          >; two apps of my own in the App Store, designed, built and supported end to end</Fragment
+        >
+      </Row>
+      <Row date="before">
+        <Fragment slot="name"
+          >Building for iPhone since 2015: ride-hailing at SnappBox, co-founder at Ronaker, a
+          marketplace at <a
+            class="about-link"
+            href="https://www.1stdibs.com"
+            target="_blank"
+            rel="noopener">1stDibs</a
+          >, language learning at <a
+            class="about-link"
+            href="https://www.babbel.com"
+            target="_blank"
+            rel="noopener">Babbel</a
+          >, and a physics degree before that</Fragment
+        >
+      </Row>
     </Section>
+
+    <!-- A single closing line: an invitation in a peer's register, placed after
+         the evidence, not a "hire me" panel (decision 0005). No heading, no box —
+         body text at the section rhythm, aligned to the content column. -->
+    <p class="closing">
+      If you're building something interesting, I'd like to hear about it — <a
+        href="mailto:rezabina.dev@gmail.com">rezabina.dev@gmail.com</a>
+    </p>
   </div>
 </Base>
 
@@ -83,5 +136,37 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
 
   .all-writing:hover {
     text-decoration-color: currentColor;
+  }
+
+  /* Body text (inherits --font-mono 14px/1.7 --ink), spaced like the gap
+     between sections, and aligned to the content column so it reads in line
+     with the about rows above it. The 112px indent is the name column's
+     (96px date + 16px gap); it drops with the rows at 400px of container. */
+  .closing {
+    margin-top: 40px; /* the section rhythm */
+    margin-left: 112px;
+    max-width: 62ch;
+  }
+
+  /* Content links, never colour-only (WCAG 1.4.1): the same quiet underline
+     the rows and prose carry, sharpening on hover. The about-block links are
+     slotted into Row, so they sit in this page's scope, not Row's — which is
+     why the row's own `.row a` rule can't reach them and they're styled here. */
+  .closing a,
+  .about-link {
+    text-decoration: underline;
+    text-decoration-color: var(--rule-strong);
+    text-underline-offset: 0.15em;
+  }
+
+  .closing a:hover,
+  .about-link:hover {
+    text-decoration-color: currentColor;
+  }
+
+  @container page (max-width: 400px) {
+    .closing {
+      margin-left: 0;
+    }
   }
 </style>
