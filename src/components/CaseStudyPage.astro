@@ -88,6 +88,20 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
   }
 
   {
+    study.supportPath && (
+      <Section label="support" id="support">
+        <Row
+          name={`${study.name} support`}
+          href={study.supportPath}
+          description="Contact, privacy and common questions"
+          action="open →"
+          actionHref={study.supportPath}
+        />
+      </Section>
+    )
+  }
+
+  {
     study.shots && study.shots.length > 0 && (
       <Section label="screens" id="screens">
         <div class="case__shots">

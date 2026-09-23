@@ -1,0 +1,176 @@
+---
+import Base from '../../../layouts/Base.astro';
+import Row from '../../../components/Row.astro';
+import Section from '../../../components/Section.astro';
+import Prose from '../../../components/Prose.astro';
+import { veil } from '../../../data/veil';
+
+/**
+ * Veil's support page — the App Store Connect Support URL (Veil task 3,
+ * decision 0009 in the website plan folder). App Review opens it, so every
+ * claim here is checked against the app's own source (ProjectPrivacy):
+ *   · the contact address is the one the in-app "Something wasn't detected?"
+ *     button composes to (FeedbackStrings / PP-153) — keep them identical;
+ *   · the guarantees mirror the in-app Disclaimer (DisclaimerStrings);
+ *   · storage: the vault lives in Application Support, excluded from backup,
+ *     encrypted with a key kept in the keychain as this-device-only;
+ *   · restore: Settings → Veil Pro opens the paywall, which carries Restore.
+ * This page may state Veil's on-device facts (decision 0002 allows it on the
+ * app's own pages); nothing else on the site should lead with privacy.
+ */
+
+const email = 'rezabina.dev@gmail.com';
+
+const title = `${veil.name} support · Reza Bina`;
+const description =
+  'Contact, privacy and common questions for Veil, the iPhone app that finds and removes personal details from documents on the phone.';
+
+const site = Astro.site!.href;
+const breadcrumb = {
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: site },
+    { '@type': 'ListItem', position: 2, name: 'Apps', item: `${site}#apps` },
+    { '@type': 'ListItem', position: 3, name: veil.name, item: new URL('/work/veil/', site).href },
+    { '@type': 'ListItem', position: 4, name: 'Support' },
+  ],
+};
+---
+
+<Base title={title} description={description} ogSlug="work-veil" schema={breadcrumb}>
+  <article class="wrap support">
+    <header class="support__head">
+      <h1 class="support__title">Veil support</h1>
+      <p class="support__meta">
+        Questions, problems and things Veil missed · <a href="/work/veil">about the app</a>
+      </p>
+    </header>
+
+    <Section label="contact" id="contact">
+      <Row
+        name={email}
+        href={`mailto:${email}`}
+        description="The same address as the “Something wasn’t detected?” button in the app"
+      />
+      <Prose>
+        <p>
+          Veil has no analytics. It cannot tell me what it missed — so if it missed something,
+          please tell me. Everything that reaches me is an email you chose to send.
+        </p>
+      </Prose>
+    </Section>
+
+    <Section label="privacy" id="privacy">
+      <Prose>
+        <p>
+          Detection, redaction and storage all happen on your iPhone. Veil has no accounts, no
+          analytics and no server of its own, and your documents are never uploaded anywhere. The
+          one thing it downloads is the on-device detection model and its updates.
+        </p>
+        <p>
+          The App Store handles payment, so Veil never sees it. If you use the feedback button, the
+          email it opens contains a short prompt, whatever you write, and four lines about your setup: the Veil
+          version, the iOS version, the device model and the detection engine in use. Nothing
+          from your documents is in it, and nothing is sent until you press send.
+        </p>
+        <p>
+          This website is separate from the app: it counts page visits without cookies, and
+          <a href="/privacy">the website’s privacy page</a> says exactly what that means.
+        </p>
+      </Prose>
+    </Section>
+
+    <Section label="questions" id="questions">
+      <Prose>
+        <h3>What does Veil guarantee, and what doesn’t it?</h3>
+        <p>
+          Veil finds personal details in a document and removes the ones you choose, entirely on
+          the device. It does not guarantee that it found everything. Detection is assistive: the
+          models and rules behind it can miss a detail, misread one, or flag something that is not
+          sensitive at all. Review every proposed redaction on the document itself before you
+          share it, because the result is only as complete as that review.
+        </p>
+        <p>
+          Redaction mode matters too. Secure flattens each page to an image, so removed content
+          cannot be recovered from the file. Preserve formatting keeps the original layout, but
+          covered text may still be extractable, which is why the app warns against it for highly
+          sensitive documents. Veil is not legal advice, and redacting a document does not by
+          itself meet any legal or compliance obligation. The full wording is in Settings, under
+          Disclaimer.
+        </p>
+
+        <h3>Veil missed something. What should I do?</h3>
+        <p>
+          First, remove it by hand before you share: the review screen lists every detection
+          alongside the full recognised text, so you can select a detail the model never flagged.
+        </p>
+        <p>
+          Then tell me. Tap “Something wasn’t detected?” on the review screen or in Settings, which
+          opens a pre-filled email in your mail app, or write to
+          <a href={`mailto:${email}`}>{email}</a> directly. Describe the kind of detail and the kind
+          of document, for example “an account number on a US bank letter”. Please don’t paste the
+          detail itself or attach the document; the description is enough to go on.
+        </p>
+
+        <h3>How do I restore my Veil Pro purchase?</h3>
+        <p>
+          Veil Pro is a one-time purchase tied to your Apple ID, not to an account with me. On a
+          new iPhone or after reinstalling, open Settings in Veil, tap Veil Pro, then tap Restore
+          purchase. Make sure you are signed in to the App Store with the Apple ID that bought
+          it. If it still doesn’t unlock, email me and say roughly when you bought it; please
+          don’t send receipts or Apple ID details.
+        </p>
+
+        <h3>Where are my documents stored?</h3>
+        <p>
+          Documents you save in Veil stay in its encrypted vault on that one iPhone. The key never
+          leaves the device, and the vault is excluded from iCloud and computer backups on
+          purpose. The trade-off is real: saved documents do not move to a new phone, and deleting
+          Veil deletes them, with no copy anywhere that I or anyone else could recover. To keep a
+          document long term, share it from Veil to Files or wherever you keep your documents.
+        </p>
+      </Prose>
+    </Section>
+  </article>
+</Base>
+
+<style>
+  .support__head {
+    /* A page title is a bigger event than a section: 56, not 40. */
+    margin-top: 56px;
+  }
+
+  /* A page title: weight and colour, not a section label — no # marker. */
+  .support__title {
+    font-size: 14px;
+    line-height: 1.7;
+    font-weight: 600;
+  }
+
+  .support__meta {
+    color: var(--ink-2);
+  }
+
+  /* Muted chrome link in the meta line — underlined, never colour-only. */
+  .support__meta a {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: var(--rule-strong);
+    text-underline-offset: 0.15em;
+  }
+
+  .support__meta a:hover {
+    color: var(--ink);
+    text-decoration-color: currentColor;
+  }
+
+  /* The Row carries its own top hairline; give the Prose under it room. */
+  .support :global(.row + .prose) {
+    margin-top: 16px;
+  }
+
+  /* The FAQ block's first question sits directly under its section label. */
+  .support :global(.prose > h3:first-child) {
+    margin-top: 0;
+  }
+</style>
