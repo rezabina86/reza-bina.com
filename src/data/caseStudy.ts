@@ -43,6 +43,9 @@ export interface CaseStudy {
   /** The price and its shape, stated plainly beside the badge — e.g.
    *  "€9.99 one-time unlock · no subscription". Only when verified. */
   price?: string;
+  /** The app's support page (its App Store Connect Support URL), e.g.
+   *  `/work/veil/support/`. Rendered as one row on the case study. */
+  supportPath?: string;
   /** Real screen recording (HANDOFF §7.2). */
   video?: { src: string; poster?: string };
   /** Real screenshots. When present the device frame shows the first one. */

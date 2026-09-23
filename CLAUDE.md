@@ -268,7 +268,7 @@ welcome; don't manufacture tests for markup.
 
 ```
 src/
-  pages/          routes — index.astro, work/, writing/, privacy.astro, 404.astro, llms*.txt.ts
+  pages/          routes — index.astro, work/ (+ work/veil/support), writing/, privacy.astro, 404.astro, llms*.txt.ts
   layouts/        Base.astro — head/meta/JSON-LD, SiteHeader/SiteFooter, GoatCounter
   components/     Row, Section, Tag, Prose, SiteHeader, SiteFooter, AppStoreBadge,
                   CaseStudyPage, TableOfContents, SubscribeForm (all static .astro)
@@ -365,6 +365,20 @@ strings are `~/Developer/Documents/reza-bina.com/3-REFERENCE/Site-copy.md`. Load
   invitation, not a "hire me" panel. No new pages, no availability statement.
 - Only **Veil and ZumNum** are listed; DailySort and FocusInc are deprecated (decision
   0004) — off the site, though still in the App Store until pulled.
+
+### App support pages (2026-09-23, website decision 0009)
+`/work/veil/support/` (`src/pages/work/veil/support.astro`) is Veil's App Store Connect
+**Support URL** and an approved exception to "no new pages". Load-bearing:
+- **The contact address must match the in-app "Something wasn't detected?" button**
+  (`rezabina.dev@gmail.com`, `FeedbackStrings` in ProjectPrivacy). Change both or neither.
+- **Every claim is checked against the app's source**, because App Review reads it: the
+  guarantees mirror the in-app Disclaimer; the vault is excluded from backup with a
+  this-device-only key (so documents don't move to a new phone); Restore is under
+  Settings → Veil Pro. Re-verify these before editing the copy.
+- It may state Veil's on-device facts (it is the app's own page, per decision 0002), but it
+  links `/privacy` as *the website's* privacy page, because the page itself runs GoatCounter.
+- The case study links to it through the optional `supportPath` on `CaseStudy`, rendered
+  as one `# support` row. The homepage does not link to it.
 
 ### SEO / discoverability conventions
 The site's structured data is a JSON-LD `@graph` (`Base.astro`): always Person + WebSite, plus
