@@ -12,14 +12,20 @@
  *
  * Nav is --ink-2 (accent is reserved for links inside content); the section
  * of the current page carries aria-current="page" and reads --ink.
+ *
+ * /notes is not an Astro route: it is a single self-contained page built by
+ * ~/Developer/knowledge and copied into public/notes/, so it ships with the
+ * site but owns its own layout.
  */
 const path = Astro.url.pathname;
 const isHome = path === '/';
-const current: 'apps' | 'writing' | undefined = path.startsWith('/work/')
+const current: 'apps' | 'writing' | 'notes' | undefined = path.startsWith('/work/')
   ? 'apps'
   : path.startsWith('/writing')
     ? 'writing'
-    : undefined;
+    : path.startsWith('/notes')
+      ? 'notes'
+      : undefined;
 ---
 
 <header class="site-header" aria-label="Site header">
@@ -37,6 +43,7 @@ const current: 'apps' | 'writing' | undefined = path.startsWith('/work/')
     <nav class="site-header__nav" aria-label="Main">
       <a href="/#apps" aria-current={current === 'apps' ? 'page' : undefined}>apps</a>
       <a href="/writing" aria-current={current === 'writing' ? 'page' : undefined}>writing</a>
+      <a href="/notes/" aria-current={current === 'notes' ? 'page' : undefined}>notes</a>
       <a href="/#about">about</a>
     </nav>
   </div>
