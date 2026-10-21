@@ -1,0 +1,1280 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Push notifications, end to end — Mobile System Design | iOS Interview Field Guide</title>
+<meta name="description" content="&quot;Design how this app handles push notifications end to end on the client.&quot; Whiteboard questions, answered client-side.">
+<link rel="canonical" href="https://reza-bina.com/notes/system-design/push-notifications/">
+<meta name="author" content="Reza Bina">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="The iOS Interview Field Guide">
+<meta property="og:title" content="Push notifications, end to end — Mobile System Design | iOS Interview Field Guide">
+<meta property="og:description" content="&quot;Design how this app handles push notifications end to end on the client.&quot; Whiteboard questions, answered client-side.">
+<meta property="og:url" content="https://reza-bina.com/notes/system-design/push-notifications/">
+<meta property="og:image" content="https://reza-bina.com/og/notes.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="en_GB">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Push notifications, end to end — Mobile System Design | iOS Interview Field Guide">
+<meta name="twitter:description" content="&quot;Design how this app handles push notifications end to end on the client.&quot; Whiteboard questions, answered client-side.">
+<meta name="twitter:image" content="https://reza-bina.com/og/notes.png">
+<meta property="article:published_time" content="2026-10-20T12:35:03+02:00">
+<meta property="article:modified_time" content="2026-10-20T12:35:03+02:00">
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Person", "@id": "https://reza-bina.com/#person", "name": "Reza Bina", "url": "https://reza-bina.com/"}, {"@type": "TechArticle", "@id": "https://reza-bina.com/notes/system-design/push-notifications/#article", "url": "https://reza-bina.com/notes/system-design/push-notifications/", "mainEntityOfPage": "https://reza-bina.com/notes/system-design/push-notifications/", "headline": "Push notifications, end to end", "description": "\"Design how this app handles push notifications end to end on the client.\" Whiteboard questions, answered client-side.", "inLanguage": "en", "author": {"@id": "https://reza-bina.com/#person"}, "publisher": {"@id": "https://reza-bina.com/#person"}, "isPartOf": {"@id": "https://reza-bina.com/notes/system-design/#page"}, "image": "https://reza-bina.com/og/notes.png", "datePublished": "2026-10-20T12:35:03+02:00", "dateModified": "2026-10-20T12:35:03+02:00"}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "The iOS Interview Field Guide", "item": "https://reza-bina.com/notes/"}, {"@type": "ListItem", "position": 2, "name": "Mobile System Design", "item": "https://reza-bina.com/notes/system-design/"}, {"@type": "ListItem", "position": 3, "name": "Push notifications, end to end", "item": "https://reza-bina.com/notes/system-design/push-notifications/"}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+
+<style>
+:root{
+  --ground:#F6F1E6; --panel:#EFE8DA; --raised:#FBF8F1;
+  --ink:#1D1B16; --muted:#4E4738; --faint:#6B6252;
+  --rule:#DCD2BF; --rule-soft:#E7DFCE;
+  --accent:#8C2F2B; --accent-soft:#F0DFD8;
+  --link:#1F4E5F; --warm:#9A5B12; --warm-soft:#F5E7CF;
+  --code-bg:#F0EADD;
+  --t-kw:#9B2C6E; --t-typ:#1F4E5F; --t-str:#A33A1F; --t-com:#6B6252; --t-num:#3B3B8C; --t-atr:#6A3D8F;
+  --shadow:0 1px 2px rgba(60,45,20,.06), 0 10px 24px -14px rgba(60,45,20,.22);
+  --serif:'Fraunces',Georgia,'Times New Roman',serif;
+  --body:'Source Serif 4',Georgia,'Times New Roman',serif;
+  --sans:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#1A1814; --panel:#211E19; --raised:#27231D;
+    --ink:#ECE5D6; --muted:#B8AE9A; --faint:#968B77;
+    --rule:#3A342B; --rule-soft:#2D2922;
+    --accent:#E58C76; --accent-soft:#3A2420;
+    --link:#8CC6D8; --warm:#E3B062; --warm-soft:#33291A;
+    --code-bg:#211E19;
+    --t-kw:#FF8FB8; --t-typ:#8CC6D8; --t-str:#F0987A; --t-com:#968B77; --t-num:#D9C97C; --t-atr:#C9A6E6;
+    --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 24px -14px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+    --ground:#1A1814; --panel:#211E19; --raised:#27231D;
+    --ink:#ECE5D6; --muted:#B8AE9A; --faint:#968B77;
+    --rule:#3A342B; --rule-soft:#2D2922;
+    --accent:#E58C76; --accent-soft:#3A2420;
+    --link:#8CC6D8; --warm:#E3B062; --warm-soft:#33291A;
+    --code-bg:#211E19;
+    --t-kw:#FF8FB8; --t-typ:#8CC6D8; --t-str:#F0987A; --t-com:#968B77; --t-num:#D9C97C; --t-atr:#C9A6E6;
+    --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 24px -14px rgba(0,0,0,.7);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:var(--body); font-size:18px; line-height:1.7;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:var(--link)}
+.rail,.topbar,.outline,.pager,.card,table,.dg,.find input,.results .where,.burger,.ix-head .meta{font-family:var(--sans)}
+a:focus-visible,button:focus-visible,input:focus-visible{
+  outline:2px solid var(--accent); outline-offset:2px; border-radius:3px;
+}
+
+/* ------------------------------------------------------- programme rail */
+.tl-sect{
+  font-family:var(--mono); font-size:9.5px; letter-spacing:.11em; text-transform:uppercase;
+  color:var(--faint); margin:18px 0 8px;
+}
+.tl{position:relative; padding-left:16px; margin:0 0 4px}
+.tl::before{content:""; position:absolute; left:4px; top:8px; bottom:8px; width:1px; background:var(--rule)}
+.tl a{
+  position:relative; display:block; padding:6px 8px 6px 10px; border-radius:6px;
+  text-decoration:none; color:var(--ink); font-size:13px; line-height:1.35;
+}
+.tl a::before{
+  content:""; position:absolute; left:-16px; top:12px; width:7px; height:7px; border-radius:50%;
+  background:var(--accent); border:2px solid var(--ground);
+}
+.tl a:hover{background:var(--panel)}
+.tl a.on{background:var(--accent-soft); font-weight:500}
+.tl a.on::before{box-shadow:0 0 0 3px var(--accent-soft)}
+.tl a .n{font-family:var(--mono); font-size:10px; color:var(--faint); margin-right:6px}
+.tl a.soon{opacity:.45; pointer-events:none}
+.tl a.soon::before{background:none; border:2px solid var(--rule)}
+.tl-more{
+  display:block; width:100%; margin-top:2px; padding:5px 0 5px 26px; border:0; background:none;
+  color:var(--muted); font:inherit; font-size:12px; text-align:left; cursor:pointer;
+}
+.tl-more:hover{color:var(--accent)}
+
+.tp{border-top:1px solid var(--rule-soft)}
+.tp:last-of-type{border-bottom:1px solid var(--rule-soft)}
+.tp > button{
+  display:flex; align-items:center; gap:8px; width:100%; padding:10px 2px; border:0; background:none;
+  cursor:pointer; color:var(--ink); font:inherit; font-size:13.5px; text-align:left;
+}
+.tp > button .chev{color:var(--faint); font-size:9px; width:9px}
+.tp > button .nm{flex:1}
+.tp > button .ct{font-family:var(--mono); font-size:10px; color:var(--faint)}
+.tp.open > button .nm{color:var(--accent); font-weight:500}
+.tp .kids{padding:0 0 8px}
+
+/* --------------------------------------------------------- on this page */
+.outline{
+  position:sticky; top:0; align-self:start; height:100vh; overflow-y:auto;
+  padding:40px 18px 40px 20px; border-left:1px solid var(--rule);
+}
+.outline p.h{
+  font-family:var(--mono); font-size:9.5px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--faint); margin:0 0 10px;
+}
+.outline a{
+  display:block; padding:5px 0 5px 10px; border-left:2px solid var(--rule); color:var(--muted);
+  text-decoration:none; font-size:12.5px; line-height:1.35;
+}
+.outline a:hover{color:var(--ink)}
+.outline a.on{border-left-color:var(--accent); color:var(--ink)}
+.outline:empty{display:none}
+
+/* ------------------------------------------------------------- progress */
+.prog{display:flex; align-items:center; gap:12px; margin:0 0 26px}
+.prog .lb{
+  font-family:var(--mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--faint); white-space:nowrap;
+}
+.prog .bar{flex:1; height:3px; background:var(--rule-soft); border-radius:2px; overflow:hidden}
+.prog .bar i{display:block; height:100%; background:var(--accent)}
+
+/* ---------------------------------------------------------- index cards */
+.ix-head{display:flex; align-items:baseline; justify-content:space-between; gap:16px; margin-bottom:6px}
+.ix-head h1{font-family:var(--serif); font-weight:500; font-size:clamp(28px,4vw,36px); margin:0}
+.ix-head .meta{font-family:var(--mono); font-size:11px; color:var(--faint); white-space:nowrap}
+.ix-lede{color:var(--muted); max-width:62ch; margin:0 0 32px}
+.build{margin:0 0 28px}
+.build > h3{
+  font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--faint); font-weight:400; margin:0 0 12px; display:flex; gap:12px; align-items:center;
+}
+.build > h3::after{content:""; flex:1; height:1px; background:var(--rule-soft)}
+.cards{display:grid; grid-template-columns:repeat(auto-fill,minmax(228px,1fr)); gap:10px}
+.card{
+  display:block; padding:13px 14px; border:1px solid var(--rule); border-radius:8px;
+  background:var(--raised); text-decoration:none; color:var(--ink); box-shadow:var(--shadow);
+}
+.card:hover{border-color:var(--accent)}
+.card .n{font-family:var(--mono); font-size:10.5px; color:var(--accent); letter-spacing:.08em}
+.card b{display:block; font-size:14px; font-weight:600; margin:5px 0 4px; line-height:1.32}
+.card span.s{display:block; color:var(--muted); font-size:12.5px; line-height:1.45}
+.card.next{border-style:dashed; background:none; box-shadow:none; opacity:.62}
+.card.next .n{color:var(--faint)}
+
+.rail-foot .rail-home{display:block; color:var(--muted); text-decoration:none; margin-bottom:4px}
+.rail-foot .rail-home:hover{color:var(--accent)}
+
+/* ---------------------------------------------------------------- shell */
+.shell{display:grid; grid-template-columns:270px minmax(0,1fr); min-height:100vh}
+@media (min-width:1180px){.shell:has(.outline:not(:empty)){grid-template-columns:270px minmax(0,1fr) 220px}}
+@media (max-width:1179px){.outline{display:none}}
+@media (min-width:881px){
+  .shell.rail-hidden{grid-template-columns:minmax(0,1fr)}
+  .shell.rail-hidden .rail{display:none}
+  .shell.rail-hidden .topbar{display:flex}
+  .shell.rail-hidden .wrap{max-width:820px}
+}
+@media (min-width:1180px){.shell.rail-hidden:has(.outline:not(:empty)){grid-template-columns:minmax(0,1fr) 220px}}
+.rail-head{position:relative}
+.rail-hide{
+  position:absolute; top:2px; right:14px; width:28px; height:28px; padding:0;
+  border:1px solid var(--rule); border-radius:7px; background:var(--ground);
+  color:var(--muted); font-size:14px; line-height:1; cursor:pointer;
+}
+.rail-hide:hover{color:var(--accent); border-color:var(--accent)}
+.rail{
+  border-right:1px solid var(--rule); background:var(--panel);
+  position:sticky; top:0; height:100vh; overflow-y:auto;
+  padding:22px 0 40px; display:flex; flex-direction:column; gap:18px;
+}
+.rail-head{padding:0 20px; display:flex; flex-direction:column; gap:3px}
+.mark{
+  font-family:var(--serif); font-size:20px; font-weight:600; letter-spacing:-.01em;
+  background:none; border:0; padding:0; color:var(--ink); cursor:pointer; text-align:left;
+}
+.mark-sub{font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--faint)}
+
+.find{padding:0 20px}
+.find input{
+  width:100%; font-family:var(--sans); font-size:13px; color:var(--ink);
+  background:var(--raised); border:1px solid var(--rule); border-radius:7px;
+  padding:7px 10px;
+}
+.find input::placeholder{color:var(--faint)}
+
+.tree{display:flex; flex-direction:column; gap:22px; padding:0 12px}
+.tree-group{display:flex; flex-direction:column; gap:2px}
+.tree-title{
+  font-family:var(--mono); font-size:10.5px; letter-spacing:.11em; text-transform:uppercase;
+  color:var(--faint); padding:0 8px 6px;
+}
+.tree a{
+  display:grid; grid-template-columns:22px 1fr; gap:8px; align-items:baseline;
+  padding:5px 8px; border-radius:6px; text-decoration:none; color:var(--muted);
+  font-size:13.5px; line-height:1.4;
+}
+.tree a:hover{background:var(--rule-soft); color:var(--ink)}
+.tree a.on{background:var(--accent-soft); color:var(--ink); font-weight:500}
+.tree a.on .num{color:var(--accent)}
+.num{font-family:var(--mono); font-size:11px; color:var(--faint); font-variant-numeric:tabular-nums}
+.rail-foot{margin-top:auto; padding:0 20px; font-size:11.5px; color:var(--faint); font-family:var(--mono)}
+
+/* ---------------------------------------------------------------- main */
+main{padding:0 0 96px; min-width:0}
+.wrap{max-width:672px; margin:0 auto; padding-inline:28px}
+.topbar{
+  display:none; align-items:center; gap:12px; padding:12px 18px;
+  border-bottom:1px solid var(--rule); background:var(--ground);
+  position:sticky; top:0; z-index:20;
+}
+.burger{
+  font:500 13px/1 var(--sans); color:var(--ink); background:var(--panel);
+  border:1px solid var(--rule); border-radius:7px; padding:8px 11px; cursor:pointer;
+}
+
+/* ---------------------------------------------------------------- home */
+.hero{padding-block:64px 8px}
+.hero h1{
+  font-family:var(--serif); font-weight:500; font-size:clamp(34px,5.5vw,48px);
+  line-height:1.1; letter-spacing:-.02em; margin:0 0 14px; text-wrap:balance;
+}
+.hero p{font-size:17.5px; color:var(--muted); margin:0; max-width:56ch}
+.hr{height:1px; background:var(--rule); margin-block:40px}
+
+.topic-card{
+  border:1px solid var(--rule); border-radius:12px; background:var(--raised);
+  padding:26px 26px 20px; box-shadow:var(--shadow); margin-bottom:20px;
+}
+.topic-card h2{
+  font-family:var(--serif); font-weight:600; font-size:26px; letter-spacing:-.015em;
+  margin:0 0 4px;
+}
+.topic-card h2 a{color:inherit; text-decoration:none}
+.topic-card h2 a:hover{color:var(--accent)}
+.tagline{font-family:var(--mono); font-size:11.5px; letter-spacing:.05em; color:var(--accent); text-transform:uppercase; margin:0 0 12px}
+.topic-card>p.blurb{color:var(--muted); margin:0 0 20px; font-size:15px}
+.facts{
+  display:flex; flex-wrap:wrap; gap:18px; padding-top:16px; margin-top:4px;
+  border-top:1px solid var(--rule-soft);
+  font-family:var(--mono); font-size:11.5px; color:var(--faint); letter-spacing:.03em;
+}
+.facts b{color:var(--ink); font-weight:500; font-variant-numeric:tabular-nums}
+
+.chapters{list-style:none; margin:0; padding:0; display:flex; flex-direction:column}
+.chapters li{border-top:1px solid var(--rule-soft)}
+.chapters li:first-child{border-top:0}
+.chapters a{
+  display:grid; grid-template-columns:30px 1fr auto; gap:14px; align-items:baseline;
+  padding:11px 0; text-decoration:none; color:inherit;
+}
+.chapters a:hover .ch-t{color:var(--accent)}
+.ch-t{font-weight:500; font-size:15px}
+.ch-s{grid-column:2; color:var(--muted); font-size:13.5px; line-height:1.5; margin-top:1px}
+.ch-m{font-family:var(--mono); font-size:11px; color:var(--faint); font-variant-numeric:tabular-nums}
+
+/* ---------------------------------------------------------------- chapter */
+.eyebrow{
+  display:flex; align-items:center; gap:10px; padding-block:48px 0;
+  font-family:var(--mono); font-size:11px; letter-spacing:.11em; text-transform:uppercase; color:var(--faint);
+}
+.eyebrow a{color:var(--faint); text-decoration:none}
+.eyebrow a:hover{color:var(--accent)}
+.eyebrow .dot{width:3px; height:3px; border-radius:50%; background:var(--rule); display:inline-block}
+
+article h1{
+  font-family:var(--serif); font-weight:500; font-size:clamp(30px,4.6vw,40px);
+  line-height:1.15; letter-spacing:-.02em; margin:14px 0 10px; text-wrap:balance;
+}
+.lede{font-size:17px; text-wrap:pretty; color:var(--muted); margin:0 0 6px; max-width:58ch}
+
+article h2{
+  font-family:var(--serif); font-weight:600; font-size:25px; letter-spacing:-.015em;
+  margin:44px 0 12px; text-wrap:balance;
+}
+article h3{
+  font-family:var(--sans); font-weight:600; font-size:15.5px; letter-spacing:.005em;
+  margin:32px 0 8px; text-wrap:balance;
+}
+article p{margin:0 0 16px; text-wrap:pretty}
+article ul,article ol{margin:0 0 18px; padding-left:22px}
+article li{margin-bottom:7px}
+article li::marker{color:var(--faint)}
+article hr{border:0; height:1px; background:var(--rule); margin-block:36px}
+article strong{font-weight:600}
+article :not(pre) > code{overflow-wrap:anywhere}
+
+code{
+  font-family:var(--mono); font-size:.875em;
+  background:var(--code-bg); border:1px solid var(--rule-soft);
+  border-radius:4px; padding:.08em .32em;
+}
+pre{
+  font-family:var(--mono); font-size:13px; line-height:1.62;
+  background:var(--code-bg); border:1px solid var(--rule);
+  border-radius:9px; padding:16px 18px; margin:0; position:relative;
+}
+pre code{background:none; border:0; padding:0; font-size:inherit}
+pre::after{
+  content:attr(data-lang); position:absolute; top:8px; right:12px;
+  font-family:var(--mono); font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--faint);
+}
+.t-kw{color:var(--t-kw)} .t-typ{color:var(--t-typ)} .t-str{color:var(--t-str)}
+.t-com{color:var(--t-com); font-style:italic} .t-num{color:var(--t-num)} .t-atr{color:var(--t-atr)}
+.scroll{overflow-x:auto; margin:0 0 20px; max-width:100%}
+.codewrap{position:relative; margin:0 0 20px}
+.codewrap .scroll{margin:0}
+.codewrap pre::after{right:68px}
+.copy{
+  position:absolute; top:6px; right:8px; z-index:1; padding:2px 9px; border:1px solid var(--rule);
+  border-radius:6px; background:var(--panel); color:var(--muted); cursor:pointer;
+  font-family:var(--mono); font-size:10px; letter-spacing:.06em; text-transform:uppercase;
+}
+.copy:hover{color:var(--accent); border-color:var(--accent)}
+
+table{border-collapse:collapse; width:100%; font-size:13.5px; line-height:1.5}
+th,td{text-align:left; padding:9px 14px 9px 0; border-bottom:1px solid var(--rule-soft); vertical-align:top}
+th{
+  font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--faint); font-weight:400; border-bottom:1px solid var(--rule);
+}
+td:first-child{color:var(--ink); font-weight:500}
+
+.aside{margin:0 0 22px; padding:2px 0 2px 20px; border-left:2px solid var(--rule)}
+.aside p:last-child{margin-bottom:0}
+.aside-label{
+  font-family:var(--mono); font-size:10.5px; letter-spacing:.11em; text-transform:uppercase;
+  margin:0 0 6px !important;
+}
+.aside.office{border-left-color:var(--warm)}
+.aside.office .aside-label{color:var(--warm)}
+.aside.office p:not(.aside-label){font-family:var(--serif); font-size:17px; line-height:1.6}
+.aside.hood{border-left-color:var(--accent)}
+.aside.hood .aside-label{color:var(--accent)}
+.aside.hood p:not(.aside-label){font-size:14.5px; color:var(--muted)}
+.aside.hood code{font-size:.86em}
+
+/* ---------------------------------------------------------------- diagram */
+.dg{
+  margin:0 0 24px; padding:16px; border:1px solid var(--rule); border-radius:8px;
+  background:var(--panel); font-size:13.5px; line-height:1.45; overflow-x:auto;
+}
+.dg figcaption, .dg .dg-title{
+  font-family:var(--mono); font-size:10.5px; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--faint); margin:0 0 14px;
+}
+.dg-row{display:grid; grid-template-columns:78px minmax(0,1fr); gap:12px; align-items:center}
+.dg-lane{
+  font-family:var(--mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--faint); text-align:right; padding-top:2px;
+}
+.dg-nodes{display:flex; flex-wrap:wrap; gap:10px}
+.dg-node{
+  flex:1 1 150px; min-width:140px; padding:9px 11px; border:1px solid var(--rule);
+  border-radius:6px; background:var(--raised); color:var(--ink); box-shadow:var(--shadow);
+}
+.dg-node b{display:block; font-weight:600; font-size:13.5px}
+.dg-node span{display:block; margin-top:3px; color:var(--muted); font-size:12px}
+.dg-node code{background:none; padding:0; font-size:12px; color:var(--muted)}
+.dg-node.accent{border-color:var(--accent)}
+.dg-node.accent b{color:var(--accent)}
+.dg-node.warm{border-color:var(--warm)}
+.dg-node.warm b{color:var(--warm)}
+.dg-node.ghost{border-style:dashed; background:none; box-shadow:none}
+.dg-node.ghost b{color:var(--muted)}
+.dg-flow{
+  display:grid; grid-template-columns:78px minmax(0,1fr); gap:12px; align-items:center;
+  margin:8px 0; color:var(--muted); font-family:var(--mono); font-size:11px;
+}
+.dg-flow::before{content:"\2193"; text-align:right; color:var(--faint); font-size:15px}
+.dg-flow.up::before{content:"\2191"}
+.dg-flow.both::before{content:"\2195"}
+.dg-group{
+  border:1px dashed var(--rule); border-radius:8px; padding:12px 12px 4px; margin:0 0 10px;
+  position:relative; background:var(--ground);
+}
+.dg-group > .dg-group-label{
+  font-family:var(--mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--faint); margin:0 0 10px;
+}
+.dg-split{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:10px}
+.dg-note{margin:10px 0 0; color:var(--muted); font-size:12.5px}
+.dg-legend{display:flex; flex-wrap:wrap; gap:8px; margin-top:14px}
+.dg-legend span{
+  font-family:var(--mono); font-size:10px; letter-spacing:.06em; color:var(--muted);
+  border:1px solid var(--rule); border-radius:4px; padding:3px 7px;
+}
+@media (max-width:640px){
+  .dg-row,.dg-flow{grid-template-columns:1fr}
+  .dg-lane{text-align:left}
+  .dg-flow::before{text-align:left}
+  .dg-node{flex:1 1 100%}
+}
+
+/* ------------------------------------------------------- session details */
+article details{
+  margin:0 0 20px; padding:0 0 0 16px; border-left:2px solid var(--rule);
+}
+article details>summary{
+  cursor:pointer; list-style:none; color:var(--accent);
+  font-family:var(--mono); font-size:11.5px; letter-spacing:.06em; text-transform:uppercase;
+  padding:4px 0;
+}
+article details>summary::-webkit-details-marker{display:none}
+article details>summary::before{content:"\25B8  "}
+article details[open]>summary::before{content:"\25BE  "}
+article details[open]>summary{margin-bottom:10px}
+article details>*:last-child{margin-bottom:0}
+/* an H1 inside a session body is a divider, not the chapter title */
+article h1:not(.title){
+  font-family:var(--mono); font-size:12px; letter-spacing:.11em; text-transform:uppercase;
+  color:var(--faint); font-weight:400; margin:48px 0 20px; padding-top:20px;
+  border-top:1px solid var(--rule);
+}
+
+/* ----------------------------------------------------------------- reveal */
+details.reveal{margin:0 0 22px; border:1px solid var(--rule); border-radius:6px}
+details.reveal>summary{
+  cursor:pointer; list-style:none; padding:10px 14px;
+  font-family:var(--mono); font-size:11px; letter-spacing:.09em; text-transform:uppercase; color:var(--accent);
+}
+details.reveal>summary::-webkit-details-marker{display:none}
+details.reveal>summary::before{content:"\25B8  "}
+details.reveal[open]>summary::before{content:"\25BE  "}
+details.reveal[open]>summary{border-bottom:1px solid var(--rule)}
+.reveal-body{padding:14px 14px 2px}
+
+/* ---------------------------------------------------------------- sources */
+.sources{margin-top:52px; padding-top:24px; border-top:1px solid var(--rule)}
+.sources h2{font-family:var(--mono); font-size:11px; letter-spacing:.11em; text-transform:uppercase; color:var(--faint); margin:0 0 14px; font-weight:400}
+.src{display:flex; flex-direction:column; gap:2px}
+.src a{
+  display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:baseline;
+  padding:8px 0; text-decoration:none; color:var(--ink); font-size:14px;
+  border-bottom:1px solid var(--rule-soft);
+}
+.src a:hover .s-l{color:var(--accent)}
+.s-r{
+  font-family:var(--mono); font-size:10.5px; letter-spacing:.04em; color:var(--accent);
+  background:var(--accent-soft); border-radius:4px; padding:2px 6px; white-space:nowrap;
+}
+.s-r:empty{display:none}
+.s-l{line-height:1.45}
+.s-u{display:block; font-family:var(--mono); font-size:11px; color:var(--faint); word-break:break-all; margin-top:2px}
+
+.pager{display:flex; gap:12px; margin-top:44px}
+.pager a{
+  flex:1; min-width:0; text-decoration:none; color:inherit;
+  border:1px solid var(--rule); border-radius:9px; padding:14px 16px; background:var(--raised);
+}
+.pager a:hover{border-color:var(--accent)}
+.pager .dir{font-family:var(--mono); font-size:10px; letter-spacing:.11em; text-transform:uppercase; color:var(--faint); display:block; margin-bottom:3px}
+.pager .nm{font-weight:500; font-size:14.5px}
+.pager .next{text-align:right}
+
+/* ---------------------------------------------------------------- results */
+.results{list-style:none; padding:0; margin:0}
+.results li{border-bottom:1px solid var(--rule-soft)}
+.results a{display:block; padding:14px 0; text-decoration:none; color:inherit}
+.results a:hover .ch-t{color:var(--accent)}
+.results .where{font-family:var(--mono); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--faint); margin-bottom:3px}
+.empty{color:var(--muted); padding:28px 0}
+
+@media (max-width:880px){
+  .shell{grid-template-columns:1fr}
+  .rail{
+    position:fixed; inset:0 auto 0 0; width:280px; z-index:30;
+    transform:translateX(-100%); transition:transform .22s ease; box-shadow:var(--shadow);
+  }
+  .rail.open{transform:none}
+  .topbar{display:flex}
+  .wrap{padding-inline:20px}
+  .hero{padding-block:40px 4px}
+  .eyebrow{padding-block:30px 0}
+  .pager{flex-direction:column}
+  .pager .next{text-align:left}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none !important; scroll-behavior:auto !important}
+}
+@media (max-width:620px){
+  .ix-head{flex-direction:column; gap:4px}
+  .ix-head .meta{white-space:normal}
+}
+.wrap:has(.ix-head){max-width:1040px}
+
+/* --- rail overrides: the programme rail replaces the old tree layout --- */
+.tree{gap:0}
+.tree .tl a, .tree .tl-sect a{display:block; grid-template-columns:none; padding-left:10px}
+.tree .tl-sect a{padding:0; color:inherit; text-decoration:none}
+.tree .tl-sect a:hover{color:var(--accent)}
+.tree .tl a{padding:6px 8px 6px 10px}
+.tree .tp > button{padding:10px 8px}
+.tree .tp .kids a{display:grid}
+.tree .tl a .n{display:inline; color:var(--faint)}
+.tree .tp .kids a.kg{grid-template-columns:14px 1fr auto; color:var(--muted); font-size:12.5px}
+.tree .tp .kids a.kg .chev{color:var(--faint); font-size:9px}
+.tree .tp .kids a.kg .ct{font-family:var(--mono); font-size:10px; color:var(--faint)}
+.tree .tp .kids a.kg.cur{color:var(--ink); font-weight:500}
+.tree .tp .kids a.kc{padding-left:22px}
+.ix-group{margin:28px 0 0}
+.ix-group h3{font-size:13px; font-family:var(--mono); letter-spacing:.08em; text-transform:uppercase; color:var(--faint); font-weight:400; margin:0 0 4px}
+.chapters a.primer .ch-t{color:var(--accent)}
+.groups-list{list-style:none; margin:0; padding:0; columns:2; column-gap:28px}
+.groups-list li{break-inside:avoid; padding:6px 0; border-top:1px solid var(--rule-soft)}
+.groups-list a{display:flex; justify-content:space-between; gap:10px; text-decoration:none; color:inherit}
+.groups-list a:hover span:first-child{color:var(--accent)}
+.groups-list .ct{font-family:var(--mono); font-size:11px; color:var(--faint)}
+@media (max-width:620px){ .groups-list{columns:1} }
+
+
+/* ------------------------------------------------------- mermaid boards */
+:root{
+  --b-pres:#E3EEFC; --b-pres-s:#3D74C4; --b-dom:#F1E6F7; --b-dom-s:#9248B0;
+  --b-data:#E2F3E8; --b-data-s:#2E8553; --b-net:#FCE9E2; --b-net-s:#C25230;
+  --b-reuse:#EFE9DC; --b-reuse-s:#857B68; --b-lane:#FBF8F1;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --b-pres:#1F2B3D; --b-pres-s:#6EA6EE; --b-dom:#2D2236; --b-dom-s:#C88BE0;
+    --b-data:#1C2E24; --b-data-s:#6CC795; --b-net:#36241F; --b-net-s:#FF8F75;
+    --b-reuse:#2A261F; --b-reuse-s:#968B77; --b-lane:#201D18;
+  }
+}
+:root[data-theme="dark"]{
+  --b-pres:#1F2B3D; --b-pres-s:#6EA6EE; --b-dom:#2D2236; --b-dom-s:#C88BE0;
+  --b-data:#1C2E24; --b-data-s:#6CC795; --b-net:#36241F; --b-net-s:#FF8F75;
+  --b-reuse:#2A261F; --b-reuse-s:#968B77; --b-lane:#201D18;
+}
+.board{margin:0 0 22px; padding:20px 16px; border:1px solid var(--rule); border-radius:10px;
+  background:var(--panel) radial-gradient(var(--rule) 1px, transparent 1.2px) 0 0/18px 18px; overflow-x:auto}
+.board-src{margin:0; font:12px/1.5 var(--mono); color:var(--muted); white-space:pre; background:none}
+.board-svg svg{display:block; margin:0 auto; max-width:100%; height:auto}
+/* Sequence diagrams keep their natural size and the board scrolls sideways: shrinking a
+   seven-participant flow to fit makes its text unreadable. */
+.board-svg svg[aria-roledescription="sequence"]{max-width:none}
+.board-svg foreignObject{overflow:visible}
+/* ======================================================= the field guide */
+.mark{font-size:19px; line-height:1.12; font-weight:500; letter-spacing:-.01em; padding-right:40px}
+.mark-sub{margin-top:6px}
+.topbar{gap:14px}
+.tb-brand{font-family:var(--serif); font-size:16.5px; font-weight:500; color:var(--ink); text-decoration:none;
+  flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.tb-brand:hover{color:var(--accent)}
+.tb-brand .short{display:none}
+@media (max-width:620px){ .tb-brand .long{display:none} .tb-brand .short{display:inline} }
+/* the eyebrow wraps as a line of text, not as flex columns */
+.eyebrow{display:block; line-height:1.9}
+.eyebrow .dot{vertical-align:middle; margin:0 9px}
+.tb-find{font:13px/1.2 var(--sans); color:var(--ink); background:var(--raised); border:1px solid var(--rule);
+  border-radius:7px; padding:7px 10px; width:220px; min-width:0}
+.tb-find::placeholder{color:var(--faint)}
+@media (max-width:520px){ .tb-find{width:110px} }
+
+/* the home page is a title page: no rail, a running head instead */
+.shell.home{grid-template-columns:minmax(0,1fr) !important}
+.shell.home .rail, .shell.home .outline, .shell.home .burger{display:none}
+.shell.home .topbar{display:flex}
+.shell.home .wrap{max-width:1080px}
+
+.fg-title{text-align:center; padding:64px 0 52px; border-bottom:1px solid var(--rule)}
+.fg-bar{width:54px; height:4px; background:var(--accent); margin:0 auto 30px}
+.fg-title h1{font-family:var(--serif); font-weight:500; font-size:clamp(40px,7vw,78px); line-height:1;
+  letter-spacing:-.02em; margin:0}
+.fg-sub{font-style:italic; font-size:21px; color:var(--muted); margin:22px auto 0; max-width:40ch; line-height:1.5; text-wrap:balance}
+.fg-by{font:12px/1.5 var(--mono); letter-spacing:.1em; text-transform:uppercase; color:var(--faint); margin:26px 0 0}
+.fg-prog{display:flex; align-items:baseline; justify-content:space-between; gap:16px; max-width:640px;
+  margin:40px auto 0; padding:16px 20px; border:1px solid var(--rule); border-radius:10px; background:var(--raised);
+  color:var(--ink); text-decoration:none; font-family:var(--sans); font-size:15px}
+.fg-prog:hover{border-color:var(--accent)}
+.fg-prog span{font:12px var(--mono); color:var(--faint)}
+.fg-contents{padding:48px 0 8px}
+.fg-contents > h2{font:500 12px/1 var(--mono); letter-spacing:.16em; text-transform:uppercase; color:var(--accent);
+  text-align:center; margin:0 0 36px}
+.fg-parts{display:grid; grid-template-columns:repeat(auto-fit,minmax(min(400px,100%),1fr)); gap:48px 64px}
+.fg-ph{display:flex; align-items:baseline; gap:10px; padding-bottom:10px; border-bottom:1px solid var(--ink);
+  color:var(--ink); text-decoration:none}
+.fg-ph:hover .fg-pt{color:var(--accent)}
+.fg-pn{font-family:var(--serif); font-size:15px; color:var(--accent); min-width:58px; white-space:nowrap}
+.fg-pt{font-family:var(--serif); font-size:26px; font-weight:500; letter-spacing:-.01em; flex:1; line-height:1.2}
+.fg-pc{font:12px var(--mono); color:var(--faint); white-space:nowrap}
+.fg-tag{font-style:italic; font-size:16.5px; color:var(--muted); margin:10px 0 12px 68px; line-height:1.5}
+.fg-toc{list-style:none; margin:0 0 0 68px; padding:0; display:flex; flex-direction:column; gap:6px}
+.fg-toc a{display:flex; align-items:baseline; gap:8px; font-size:16px; line-height:1.4; color:var(--ink); text-decoration:none}
+.fg-toc a:hover .t{color:var(--accent)}
+.fg-toc .n{font:11.5px var(--mono); color:var(--faint); min-width:22px}
+.fg-toc .t{min-width:0}
+.fg-toc .lead{flex:1; min-width:16px; border-bottom:1px dotted var(--faint); opacity:.6; transform:translateY(-5px)}
+.fg-toc .m{font:11.5px var(--mono); color:var(--faint); white-space:nowrap}
+.fg-all{display:inline-block; margin:12px 0 0 68px; font:12px var(--mono); letter-spacing:.06em; text-transform:uppercase;
+  color:var(--accent); text-decoration:none}
+.fg-all:hover{text-decoration:underline}
+.fg-foot{margin-top:72px; padding:28px 0 8px; border-top:1px solid var(--rule); text-align:center;
+  font-style:italic; font-size:15.5px; color:var(--muted)}
+.fg-foot .meta{display:block; margin-top:8px; font:11.5px var(--mono); font-style:normal; letter-spacing:.06em; color:var(--faint)}
+.fg-foot .meta a{color:var(--faint)}
+@media (max-width:620px){
+  .fg-tag,.fg-toc,.fg-all{margin-left:0}
+  .fg-pn{min-width:0}
+  .fg-title{padding:40px 0 36px}
+  .fg-pt{font-size:23px}
+}
+
+/* part openers and chapter pages */
+.ix-part{font:12px var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin:56px 0 12px}
+.ix-part a{color:inherit; text-decoration:none}
+.ix-head h1{font-size:clamp(34px,5vw,50px); letter-spacing:-.02em; line-height:1.08}
+.ix-lede{font-style:italic; font-size:19px; line-height:1.55; margin-top:10px}
+.chapters a{grid-template-columns:34px 1fr auto}
+.chapters .ch-t{font-family:var(--serif); font-size:19px; font-weight:500; letter-spacing:-.005em}
+.chapters .ch-s{font-size:15.5px}
+.chapters .num, .chapters .ch-m{font-size:11.5px}
+.wrap{max-width:700px}
+.eyebrow .part{color:var(--accent)}
+article h1.title{font-size:clamp(34px,5vw,48px); line-height:1.1}
+.lede{font-style:italic; font-size:20px; line-height:1.55}
+article h2{font-weight:500; font-size:29px; letter-spacing:-.015em}
+article h3{font-family:var(--serif); font-size:20px; font-weight:600; letter-spacing:0}
+.tp > button .pn{font-family:var(--serif); font-size:12.5px; color:var(--accent); min-width:26px}
+</style>
+</head>
+<body>
+
+<div class="shell ">
+  <aside class="rail" id="rail">
+    <div class="rail-head">
+      <button class="rail-hide" id="rail-hide" title="Hide the sidebar" aria-label="Hide the sidebar">«</button>
+      <button class="mark" id="home-link">The iOS Interview<br>Field Guide</button>
+      <span class="mark-sub">Reza Bina · Berlin</span>
+    </div>
+    <div class="find"><input id="find" type="search" placeholder="Search every chapter…" autocomplete="off" aria-label="Search every chapter"></div>
+    <nav class="tree" id="tree"></nav>
+    <div class="rail-foot"><a href="https://reza-bina.com" class="rail-home">reza-bina.com</a><span id="foot"></span></div>
+  </aside>
+  <main>
+    <div class="topbar">
+      <button class="burger" id="burger">Contents</button>
+      <a class="tb-brand" href="#/"><span class="long">The iOS Interview Field Guide</span><span class="short">Field Guide</span></a>
+      <input id="find2" class="tb-find" type="search" placeholder="Search…" autocomplete="off" aria-label="Search every chapter">
+    </div>
+    <div class="wrap" id="view"><article><div class="eyebrow"><a class="part" href="/notes/system-design/">Part III</a><span class="dot"></span><a href="/notes/system-design/">Mobile System Design</a><span class="dot"></span>Chapter 10 of 16<span class="dot"></span>50 min</div><h1 class="title">10 · Push notifications, end to end</h1><p class="lede">&quot;Design how this app handles push notifications end to end on the client.&quot;</p><p><em>Push looks like one API call. It is five small problems: when to ask, which account owns the phone, what the OS allows before the user sees it, where a tap lands, and what you can't promise. One engine owns the OS, two repositories own two kinds of data, two use cases hold the rules.</em></p><blockquote class="aside plain"><p><strong>Interviewer:</strong> "Our grocery app delivers in ten minutes from local hubs. Design how this app handles push notifications end to end on the client."</p></blockquote><h2 id="run-it-as-a-round-not-as-reading">Run it as a round, not as reading</h2><p>Set a timer. Sketch. Talk the whole time. Open a section only when its slot is over.</p><div class="scroll"><table><thead><tr><th>Clock</th><th>Phase</th><th>What you do</th></tr></thead><tbody><tr><td>0:00–0:02</td><td>The prompt</td><td>Repeat it back in one sentence</td></tr><tr><td>0:02–0:07</td><td>Clarify</td><td>Ask yours, then read section 1</td></tr><tr><td>0:07–0:12</td><td>Scope</td><td>Out of scope first, then required, then later</td></tr><tr><td>0:12–0:24</td><td>High level</td><td>The idea · the parts · the sketch · one line each · two flows</td></tr><tr><td>0:24–0:40</td><td>Deep dives</td><td>The interviewer picks one of sections 9–11</td></tr><tr><td>0:40–0:45</td><td>Recap</td><td>Follow-ups, then the 60-second summary</td></tr></tbody></table></div><h2 id="what-this-question-is-really-testing">What this question is really testing</h2><ul><li><strong>Asking at the right moment.</strong> Provisional first, the real prompt when the value is obvious.</li><li><strong>A token that belongs to an account.</strong> Uploaded when it or the account changes, removed at sign-out.</li><li><strong>Knowing what the OS controls.</strong> The service extension's time limit, and silent pushes that may never come.</li><li><strong>A tap that always lands somewhere sensible</strong>: cold or warm, signed in or not.</li><li><strong>Counting each notification once</strong>, for the screen and for analytics.</li></ul><p><strong>Traps:</strong> asking for permission on first launch; uploading the token once and never again; leaving the old account's token live after sign-out; "we'll refresh the app with silent pushes"; personal data in the plain alert text; routing before the app knows who is signed in.</p><details class="reveal"><summary>Words used in this chapter</summary><div class="reveal-body"><ul><li><strong>Repository</strong> — the one owner of one kind of data. It turns the server's format into the app's model.</li><li><strong>Composite</strong> — a repository that only reads: it asks two repositories and combines their answers. Not needed here.</li><li><strong>Store</strong> — in-memory state that several screens show at once. Not needed here.</li><li><strong>Use case</strong> — one user intent with a product rule, like "a tap never opens someone else's order".</li><li><strong>View model</strong> — the screen's brain. It owns the screen's state and hands the screen one view state.</li><li><strong>APNs</strong> — Apple's push service. Our server sends to it; it delivers to the phone.</li><li><strong>Device token</strong> — the address APNs gives this app on this phone. It can change.</li><li><strong>Provisional authorization</strong> — permission to deliver quietly to Notification Center, granted without a prompt.</li><li><strong>Notification Service Extension</strong> — a small separate program that may change a push before it is shown.</li><li><strong>Category, action</strong> — a push's type, and the buttons shown when the user presses on it.</li><li><strong>Silent push</strong> — a push with no alert that wakes the app in the background. Best effort only.</li><li><strong>Route</strong> — where in the app a tap should land, like "order 8F3K".</li></ul></div></details><details class="reveal"><summary>1 · The interviewer answers your clarifying questions</summary><div class="reveal-body"><p><strong>"Which notifications do we send?"</strong> → <em>Order updates (picking, on the way, arriving, delivered, a problem) and a few offers a week.</em></p><p><strong>"Anything rich?"</strong> → <em>Order pushes name the rider and show her photo. Security wants names encrypted, not readable by APNs.</em></p><p><strong>"Buttons on the notification?"</strong> → <em>"Track order" on order updates, "See offer" on offers.</em></p><p><strong>"Signed-out users?"</strong> → <em>Order pushes need an account. Families share iPads: after sign-out, the old account's pushes must stop.</em></p><p><strong>"Do we measure opens?"</strong> → <em>Yes, per campaign and per order stage.</em></p><p><strong>"Silent pushes?"</strong> → <em>Marketing wants to refresh the home screen with them every few minutes. What do you say?</em></p><p><strong>"The lock-screen tracker?"</strong> → <em>That's a Live Activity, question 11. Mention where it plugs in.</em></p><p><strong>"Minimum OS, stack?"</strong> → <em>iOS 17, SwiftUI, Swift 6.</em></p></div></details><details class="reveal"><summary>2 · Requirements and scope — what you should have said</summary><div class="reveal-body"><p><strong>Out of scope, said first:</strong> the server's sending logic and campaign tool, Live Activities (question 11), a notification preferences screen, an in-app message inbox.</p><p><strong>Required for the prompt</strong></p><ol start="1"><li>Ask for permission at the right time: quietly first, properly after the first order.</li><li>Register, upload the token, keep it tied to the signed-in account, remove it at sign-out.</li><li>Show pushes well: foreground banners, categories and actions, a photo and decrypted text from the service extension.</li><li>A tap opens the right screen, cold or warm, after sign-in if needed, counted once.</li></ol><p><strong>What must feel good:</strong> never another account's order · a tap never lands on nothing · nothing personal readable outside the phone · works when the app was killed.</p><p><strong>Production considerations</strong> (say, don't draw): token rotation, retries, metrics, App Store review of permission copy. See section 12.</p><p><strong>Optional follow-ups</strong> (add only when asked):</p><div class="scroll"><pre data-lang="text"><code>Lock-screen order tracker       → a Live Activity with its own push token (Q11)
+Choose which pushes you get     → a preferences screen and endpoint
+A history of past notifications → a persisted inbox
+&quot;Rider arriving&quot; breaks Focus   → time-sensitive interruption level</code></pre></div><p><em>"I'll start simple and add each of these when the requirement appears."</em></p></div></details><details class="reveal"><summary>3 · The idea, in 30 seconds — before you draw anything</summary><div class="reveal-body"><blockquote class="aside plain"><p><em>"We ask provisionally on first launch, so order updates land quietly, and ask properly right after the first order, when the reason is obvious. A notification engine owns everything the OS hands us: it sets the delegate before launch finishes, declares the categories, and registers at every launch. A device repository sends the token with <code><span class="t-typ">PUT</span> /devices/{token}</code> whenever the token or the account changes, and <code><span class="t-typ">DELETE</span> /devices/{token}</code> at sign-out. A service extension, in its own process, decrypts the rider's name and attaches her photo inside its time limit, or shows the generic text. A tap goes into an inbox repository that drops repeats by notification ID and reports <code><span class="t-typ">POST</span> /notifications/{id}/opened</code>. An open use case turns the tap into a route, sign-in first, and the root view model navigates."</em></p></blockquote></div></details><details class="reveal"><summary>4 · What we need — the components, before the sketch</summary><div class="reveal-body"><div class="scroll"><table><thead><tr><th>#</th><th>Part</th><th>Type</th><th>Layer</th><th>Its one job</th></tr></thead><tbody><tr><td>1</td><td><strong>Root screen</strong></td><td><code><span class="t-typ">AppRootView</span></code></td><td>Presentation</td><td>Tabs and the navigation stack.</td></tr><tr><td>2</td><td><strong>Root view model</strong></td><td><code><span class="t-typ">AppRootViewModel</span></code></td><td>Presentation</td><td>Owns the tab and path; applies routes.</td></tr><tr><td>3</td><td><strong>Order confirmed</strong></td><td>reused from Q6</td><td>Reused</td><td>Shows the "Get delivery updates" card.</td></tr><tr><td>4</td><td><strong>Ask use case</strong></td><td><code><span class="t-typ">AskForPushUseCase</span></code></td><td>Domain</td><td>When and how to ask for permission.</td></tr><tr><td>5</td><td><strong>Open use case</strong></td><td><code><span class="t-typ">OpenNotificationUseCase</span></code></td><td>Domain</td><td>A tap → a safe route, counted once.</td></tr><tr><td>6</td><td><strong>Notification engine</strong></td><td><code><span class="t-typ">NotificationEngine</span></code></td><td>Data</td><td>Owns the OS: delegate, categories, registration.</td></tr><tr><td>7</td><td><strong>Inbox repository</strong></td><td><code><span class="t-typ">RemoteNotificationInboxRepository</span></code></td><td>Data</td><td>Taps waiting to be opened; opens reported.</td></tr><tr><td>8</td><td><strong>Device repository</strong></td><td><code><span class="t-typ">RemoteDeviceRepository</span></code></td><td>Data</td><td>This phone's token on the server.</td></tr><tr><td>chip</td><td><strong>Permission</strong></td><td><code><span class="t-typ">NotificationPermission</span></code></td><td>Domain</td><td>The promise card 6 keeps for card 4.</td></tr><tr><td>chip</td><td><strong>Inbox</strong></td><td><code><span class="t-typ">NotificationInbox</span></code></td><td>Domain</td><td>The read promise card 7 keeps for card 2.</td></tr><tr><td>chip</td><td><strong>Opens</strong></td><td><code><span class="t-typ">NotificationOpens</span></code></td><td>Domain</td><td>The write promise card 7 keeps for card 5.</td></tr></tbody></table></div><p>Eight cards, three chips. <code><span class="t-typ">NotificationTap</span></code> and <code><span class="t-typ">Route</span></code> aren't cards; they're at the top of section 6.</p><p><strong>Not drawn:</strong> the service extension (its own process, drawn in deep dive 10), <code><span class="t-typ">ForegroundPresentationPolicy</span></code> (a pure domain function the engine calls in <code>willPresent</code>), the session that says who is signed in, and the <code><span class="t-typ">HTTPClient</span></code> cards 7 and 8 share. <strong>Not on the list yet:</strong> everything under "optional follow-ups".</p></div></details><details class="reveal"><summary>5 · The sketch</summary><div class="reveal-body"><div class="board"><pre class="board-src">---
+config:
+  layout: elk
+---
+flowchart TB
+  subgraph P[&quot;PRESENTATION&quot;]
+    View[&quot;`**1 · Root screen**
+AppRootView`&quot;] -- &quot;actions → view state&quot; --&gt; VM[&quot;`**2 · Root view model**
+AppRootViewModel`&quot;]
+  end
+  Conf[&quot;`**3 · Order confirmed**
+reused from Q6`&quot;]
+  subgraph D[&quot;DOMAIN&quot;]
+    Ask[&quot;`**4 · Ask use case**
+AskForPushUseCase`&quot;]
+    Open[&quot;`**5 · Open use case**
+OpenNotificationUseCase`&quot;]
+    Perm[&quot;`«protocol»
+NotificationPermission`&quot;]
+    Inbox[&quot;`«protocol»
+NotificationInbox`&quot;]
+    Opens[&quot;`«protocol»
+NotificationOpens`&quot;]
+  end
+  subgraph DA[&quot;DATA&quot;]
+    Eng[&quot;`**6 · Notification engine**
+NotificationEngine
+UNUserNotificationCenter delegate`&quot;]
+    InboxImpl[&quot;`**7 · Inbox repository**
+RemoteNotificationInboxRepository
+POST /notifications/{id}/opened`&quot;]
+    Dev[&quot;`**8 · Device repository**
+RemoteDeviceRepository
+PUT /devices/{token}
+DELETE /devices/{token}`&quot;]
+  end
+  View ~~~ Conf
+  Conf -- &quot;ask → status&quot; --&gt; Ask
+  VM -- &quot;tap → route&quot; --&gt; Open
+  VM ~~~ Ask
+  VM -- &quot;watch → taps&quot; --&gt; Inbox
+  Ask -- &quot;request → granted&quot; --&gt; Perm
+  Open -- &quot;opened → ok&quot; --&gt; Opens
+  Ask ~~~ Inbox
+  Open ~~~ Inbox
+  Open ~~~ Perm
+  Ask ~~~ Opens
+  Perm ~~~ Eng
+  Eng -. &quot;implements&quot; .-&gt; Perm
+  Inbox ~~~ InboxImpl
+  InboxImpl -. &quot;implements&quot; .-&gt; Inbox
+  Opens ~~~ InboxImpl
+  InboxImpl -. &quot;implements&quot; .-&gt; Opens
+  Inbox ~~~ Eng
+  Opens ~~~ Eng
+  Eng -- &quot;tap → queued&quot; --&gt; InboxImpl
+  Eng -- &quot;token → saved&quot; --&gt; Dev
+  class View,VM pres
+  class Ask,Open,Perm,Inbox,Opens dom
+  class Eng,InboxImpl,Dev data
+  class Conf reuse</pre></div><p><strong>How to read it.</strong> Solid arrows: <em>request → reply</em>, asker to answerer. Dashed: <em>implements</em>. Grey: reused from question 6. The OS talks only to card 6, which hands taps to card 7 and tokens to card 8.</p><p><strong>Dependency inversion, in one line.</strong> The domain writes the three promises (the chips); cards 6 and 7 keep them, so the dashed arrows point <strong>up</strong> and no use case imports UserNotifications.</p><p><strong>One class, two promises.</strong> Card 7 is read by the root view model (taps) and written by the open use case (opens). Each sees only its half.</p><p><strong>No shared store on this sketch:</strong> no state here is shown on several screens. The route goes into the root's own path.</p><p><strong>On Miro:</strong> three frames, eight cards, three chips. Point at card 6: <em>"the only card that knows the OS exists."</em></p></div></details><details class="reveal"><summary>6 · Each component: its job, its interface, the choice inside it</summary><div class="reveal-body"><p><strong>The models everyone shares.</strong> Built by card 6 from the payload; the domain never sees <code><span class="t-typ">UNNotification</span></code>.</p><div class="scroll"><pre data-lang="swift"><code><span class="t-kw">struct</span> <span class="t-typ">NotificationTap</span>: <span class="t-typ">Equatable</span>, <span class="t-typ">Sendable</span> {
+    <span class="t-com">/// From the payload. Drops repeats, keys analytics.</span>
+    <span class="t-kw">let</span> id: <span class="t-typ">NotificationID</span>
+    <span class="t-com">/// Who the server sent it to</span>
+    <span class="t-kw">let</span> accountID: <span class="t-typ">AccountID</span>?
+    <span class="t-com">/// nil when this app version can&#x27;t read the route</span>
+    <span class="t-kw">let</span> route: <span class="t-typ">Route</span>?
+    <span class="t-com">/// .open (the body) or .trackOrder (the button)</span>
+    <span class="t-kw">let</span> action: <span class="t-typ">TapAction</span>
+}
+
+<span class="t-kw">enum</span> <span class="t-typ">Route</span>: <span class="t-typ">Hashable</span>, <span class="t-typ">Sendable</span> {
+    <span class="t-kw">case</span> home
+    <span class="t-kw">case</span> order(<span class="t-typ">OrderID</span>)
+    <span class="t-kw">case</span> offer(<span class="t-typ">OfferID</span>)
+    <span class="t-kw">case</span> signIn(then: <span class="t-typ">Route</span>)
+}</code></pre></div><h3 id="1-root-screen-approotview">1 · Root screen (<code><span class="t-typ">AppRootView</span></code>)</h3><p><strong>Job:</strong> draws the tabs and a <code><span class="t-typ">NavigationStack</span></code> bound to the view state's path. It decides nothing.</p><p><strong>Interface:</strong> reads <code>viewModel.viewState</code>; calls <code>onAppear()</code>, <code>select(_:)</code>, <code>pathChanged(_:)</code>.</p><p><strong>Choice:</strong> <code><span class="t-atr">@UIApplicationDelegateAdaptor</span></code> attaches the app delegate, so card 6 starts in <code>application(_:didFinishLaunchingWithOptions:)</code>. Universal links arrive through <code>onOpenURL</code> as the same <code><span class="t-typ">Route</span></code>.</p><h3 id="2-root-view-model-approotviewmodel">2 · Root view model (<code><span class="t-typ">AppRootViewModel</span></code>)</h3><p><strong>Job:</strong> owns the root's tab and path, and applies each route the open use case returns.</p><div class="scroll"><pre data-lang="swift"><code><span class="t-kw">struct</span> <span class="t-typ">AppRootViewState</span>: <span class="t-typ">Equatable</span> {
+    <span class="t-kw">let</span> tab: <span class="t-typ">Tab</span>
+    <span class="t-kw">let</span> path: [<span class="t-typ">Route</span>]
+}
+
+<span class="t-atr">@MainActor</span> <span class="t-atr">@Observable</span>
+<span class="t-kw">final</span> <span class="t-kw">class</span> <span class="t-typ">AppRootViewModel</span> {
+    <span class="t-kw">init</span>(inbox: <span class="t-typ">NotificationInbox</span>, openNotification: <span class="t-typ">OpenNotificationUseCase</span>)
+
+    <span class="t-kw">var</span> viewState: <span class="t-typ">AppRootViewState</span> { <span class="t-kw">get</span> }
+
+    <span class="t-com">/// Starts watching taps. Runs until the root goes away.</span>
+    <span class="t-kw">func</span> onAppear() <span class="t-kw">async</span>
+    <span class="t-kw">func</span> select(_ tab: <span class="t-typ">Tab</span>)
+    <span class="t-kw">func</span> pathChanged(_ path: [<span class="t-typ">Route</span>])
+}</code></pre></div><p><strong>Choices:</strong></p><ul><li><strong>It listens only once the UI exists.</strong> A cold-launch tap waits in card 7 until then.</li><li><strong>A route replaces the path.</strong> Three order taps leave one order screen, not three.</li></ul><h3 id="3-order-confirmed-reused-from-question-6">3 · Order confirmed (reused from question 6)</h3><p><strong>Job:</strong> after the first order, shows "Get delivery updates" with a Turn on button, and calls card 4.</p><p><strong>Choice:</strong> reused, plus one card. The ask lives where its reason is on screen.</p><h3 id="4-ask-use-case-askforpushusecase">4 · Ask use case (<code><span class="t-typ">AskForPushUseCase</span></code>)</h3><p><strong>Job:</strong> decides when to ask, and asks.</p><div class="scroll"><pre data-lang="swift"><code><span class="t-com">/// notAsked · quiet (provisional) · allowed · denied</span>
+<span class="t-kw">enum</span> <span class="t-typ">PushPermission</span>: <span class="t-typ">Equatable</span>, <span class="t-typ">Sendable</span> { … }
+
+<span class="t-atr">@MainActor</span>
+<span class="t-kw">protocol</span> <span class="t-typ">AskForPushUseCase</span> {
+    <span class="t-com">/// At launch: provisional, never a prompt.</span>
+    <span class="t-kw">func</span> askQuietly() <span class="t-kw">async</span>
+    <span class="t-com">/// After the first order: the real prompt, once. Returns the result.</span>
+    <span class="t-com">/// Denied → the caller shows a Settings link instead.</span>
+    <span class="t-kw">func</span> askAfterFirstOrder() <span class="t-kw">async</span> -&gt; <span class="t-typ">PushPermission</span>
+}</code></pre></div><p>Built with <code><span class="t-kw">init</span>(permission: <span class="t-typ">NotificationPermission</span>)</code>.</p><p><strong>Choices:</strong></p><ul><li><strong>The rule a product manager would state:</strong> "never interrupt a first launch; ask once, when it's obviously useful; after a no, offer Settings."</li><li><strong>Provisional first:</strong> no prompt, quiet delivery. The full prompt upgrades it.</li><li><strong>Denied is final in-app.</strong> iOS prompts only once; after that the button opens <code>openNotificationSettingsURLString</code>.</li></ul><h3 id="5-open-use-case-opennotificationusecase">5 · Open use case (<code><span class="t-typ">OpenNotificationUseCase</span></code>)</h3><p><strong>Job:</strong> turns a tap into a route that is safe to show, and counts it once.</p><div class="scroll"><pre data-lang="swift"><code><span class="t-atr">@MainActor</span>
+<span class="t-kw">protocol</span> <span class="t-typ">OpenNotificationUseCase</span> {
+    <span class="t-com">/// Never throws: the worst case is .home.</span>
+    <span class="t-com">/// The open is reported even if the caller stops waiting.</span>
+    <span class="t-kw">func</span> route(<span class="t-kw">for</span> tap: <span class="t-typ">NotificationTap</span>) <span class="t-kw">async</span> -&gt; <span class="t-typ">Route</span>
+}</code></pre></div><p>Built with <code><span class="t-kw">init</span>(opens: <span class="t-typ">NotificationOpens</span>, session: <span class="t-typ">Session</span>)</code>.</p><p><strong>Choices:</strong></p><ul><li><strong>The rule:</strong> "a tap opens what it's about, after sign-in; it never opens another account's order; anything unreadable opens Home."</li><li><strong>Signed out →</strong> <code>.signIn(then: .order(id))</code>. The route survives the sign-in screen.</li><li><strong>Why a use case here and not for registering:</strong> registration is delivery mechanics (send when changed), owned by card 8. Receiving has no rule.</li></ul><h3 id="6-notification-engine-notificationengine">6 · Notification engine (<code><span class="t-typ">NotificationEngine</span></code>)</h3><p><strong>Job:</strong> the only card that touches UserNotifications and APNs registration. It turns OS callbacks into app models.</p><div class="scroll"><pre data-lang="swift"><code><span class="t-com">/// Domain: the ask use case&#x27;s promise</span>
+<span class="t-kw">protocol</span> <span class="t-typ">NotificationPermission</span>: <span class="t-typ">Sendable</span> {
+    <span class="t-com">/// Never throws. A failed request reads as the current status.</span>
+    <span class="t-kw">func</span> current() <span class="t-kw">async</span> -&gt; <span class="t-typ">PushPermission</span>
+    <span class="t-kw">func</span> request(provisional: <span class="t-typ">Bool</span>) <span class="t-kw">async</span> -&gt; <span class="t-typ">PushPermission</span>
+}
+
+<span class="t-atr">@MainActor</span>
+<span class="t-kw">final</span> <span class="t-kw">class</span> <span class="t-typ">NotificationEngine</span>: <span class="t-typ">NSObject</span>, <span class="t-typ">NotificationPermission</span>, <span class="t-typ">UNUserNotificationCenterDelegate</span> {
+    <span class="t-kw">init</span>(center: <span class="t-typ">UNUserNotificationCenter</span>, inbox: <span class="t-typ">TapSink</span>, devices: <span class="t-typ">DeviceRegistration</span>,
+         presentation: <span class="t-typ">ForegroundPresentationPolicy</span>)
+
+    <span class="t-com">/// In didFinishLaunching: delegate, categories, register.</span>
+    <span class="t-kw">func</span> start()
+    <span class="t-com">/// From the app delegate</span>
+    <span class="t-kw">func</span> didRegister(deviceToken: <span class="t-typ">Data</span>)
+    <span class="t-com">/// Sign-in registers again. Sign-out removes the token first.</span>
+    <span class="t-kw">func</span> accountChanged(to account: <span class="t-typ">AccountID</span>?) <span class="t-kw">async</span>
+}</code></pre></div><p><strong>Choices:</strong></p><ul><li><strong>The delegate is set before launch finishes,</strong> as Apple requires, or a tap that launched the app is lost.</li><li><strong>Foreground presentation is a rule, not a hardcode:</strong> <code>willPresent</code> asks the policy. A banner, unless the user is already looking at that order, where the screen refreshes instead.</li><li><strong>Categories are declared once:</strong> <code><span class="t-typ">ORDER_UPDATE</span></code> with "Track order", <code><span class="t-typ">OFFER</span></code> with "See offer". Both open the app (<code>.foreground</code>). Order pushes of one order share a <code>threadIdentifier</code>, so they group.</li></ul><h3 id="7-inbox-repository-remotenotificationinboxrepository">7 · Inbox repository (<code><span class="t-typ">RemoteNotificationInboxRepository</span></code>)</h3><p><strong>Job:</strong> holds taps until the UI takes them, drops repeats by ID, and reports each open with <code><span class="t-typ">POST</span> /notifications/{id}/opened</code>.</p><div class="scroll"><pre data-lang="swift"><code><span class="t-com">/// Domain: the root view model&#x27;s promise</span>
+<span class="t-kw">protocol</span> <span class="t-typ">NotificationInbox</span>: <span class="t-typ">Sendable</span> {
+    <span class="t-com">/// Replays waiting taps on subscribe, then new ones.</span>
+    <span class="t-com">/// One stream per caller. Finishes when the caller&#x27;s task is cancelled.</span>
+    <span class="t-kw">func</span> taps() -&gt; <span class="t-typ">AsyncStream</span>&lt;<span class="t-typ">NotificationTap</span>&gt;
+}
+
+<span class="t-com">/// Domain: the open use case&#x27;s promise</span>
+<span class="t-kw">protocol</span> <span class="t-typ">NotificationOpens</span>: <span class="t-typ">Sendable</span> {
+    <span class="t-com">/// Reports once per ID. Not cancelled by the caller: it lands</span>
+    <span class="t-com">/// or is dropped after a few retries. Never throws.</span>
+    <span class="t-kw">func</span> markOpened(_ tap: <span class="t-typ">NotificationTap</span>) <span class="t-kw">async</span>
+}
+
+<span class="t-kw">actor</span> <span class="t-typ">RemoteNotificationInboxRepository</span>: <span class="t-typ">NotificationInbox</span>, <span class="t-typ">NotificationOpens</span>, <span class="t-typ">TapSink</span> {
+    <span class="t-kw">init</span>(http: <span class="t-typ">HTTPClient</span>)
+}</code></pre></div><p><strong>Choice:</strong> one actor, three narrow promises: the engine writes taps (<code><span class="t-typ">TapSink</span></code>, data-internal), the root reads, the use case reports. The seen-ID set is bookkeeping about its own data.</p><h3 id="8-device-repository-remotedevicerepository">8 · Device repository (<code><span class="t-typ">RemoteDeviceRepository</span></code>)</h3><p><strong>Job:</strong> keeps the server's record of this phone's token right: <code><span class="t-typ">PUT</span> /devices/{token}</code> on change, <code><span class="t-typ">DELETE</span> /devices/{token}</code> at sign-out.</p><div class="scroll"><pre data-lang="swift"><code><span class="t-com">/// Data-internal: the engine&#x27;s promise</span>
+<span class="t-kw">protocol</span> <span class="t-typ">DeviceRegistration</span>: <span class="t-typ">Sendable</span> {
+    <span class="t-com">/// Sends only if token or account differ from the last success.</span>
+    <span class="t-com">/// Throws on failure; the engine retries at the next launch.</span>
+    <span class="t-kw">func</span> register(token: <span class="t-typ">DeviceToken</span>, <span class="t-kw">for</span> account: <span class="t-typ">AccountID</span>?) <span class="t-kw">async</span> <span class="t-kw">throws</span>
+    <span class="t-com">/// Must finish before the session drops the credentials.</span>
+    <span class="t-kw">func</span> unregister() <span class="t-kw">async</span> <span class="t-kw">throws</span>
+}
+
+<span class="t-kw">actor</span> <span class="t-typ">RemoteDeviceRepository</span>: <span class="t-typ">DeviceRegistration</span> {
+    <span class="t-kw">init</span>(http: <span class="t-typ">HTTPClient</span>)
+}</code></pre></div><p><strong>Choices:</strong></p><ul><li><strong>The account comes from the auth header,</strong> not the body.</li><li><strong><code><span class="t-typ">PUT</span></code> is safe to repeat,</strong> so sending at every launch heals a missed upload.</li></ul><p><strong>Why these parts, and no more.</strong> Each card changes for one reason:</p><div class="scroll"><table><thead><tr><th>Card</th><th>Changes when</th></tr></thead><tbody><tr><td>1 · Root screen</td><td>the screen's design</td></tr><tr><td>2 · Root view model</td><td>the screen's behaviour (tabs, path)</td></tr><tr><td>4 · Ask use case</td><td>a product rule (when to ask)</td></tr><tr><td>5 · Open use case</td><td>a product rule (where a tap may go)</td></tr><tr><td>6 · Notification engine</td><td>a platform API (UserNotifications, APNs)</td></tr><tr><td>7 · Inbox repository</td><td>an endpoint or payload (<code>/opened</code>)</td></tr><tr><td>8 · Device repository</td><td>an endpoint or payload (<code>/devices</code>)</td></tr></tbody></table></div><p>Each protocol earns a fake or a smaller promise. Not added: a use case for registering, a store, a composite, a view-model protocol, a DI container.</p></div></details><details class="reveal"><summary>7 · Key flows through the sketch</summary><div class="reveal-body"><p><strong>Flow 1 — launch, sign-in, sign-out.</strong> The token follows the account.</p><div class="board"><pre class="board-src">sequenceDiagram
+  participant OS as iOS and APNs
+  participant E as Engine
+  participant D as Device repo
+  participant S as Server
+  E-&gt;&gt;OS: registerForRemoteNotifications()
+  OS--&gt;&gt;E: token T
+  E-&gt;&gt;D: register(T, account A)
+  D-&gt;&gt;S: PUT /devices/T
+  S--&gt;&gt;D: 204
+  Note over E: user signs out
+  E-&gt;&gt;D: unregister()
+  alt reachable
+    D-&gt;&gt;S: DELETE /devices/T
+    S--&gt;&gt;D: 204
+  else offline
+    D--&gt;&gt;E: error, retry later
+    Note over E: inbox drops taps for account A
+  end
+  E-&gt;&gt;OS: unregisterForRemoteNotifications()</pre></div><p><strong>Flow 2 — a tap on "Track order", app running.</strong></p><div class="board"><pre class="board-src">sequenceDiagram
+  participant E as Engine
+  participant I as Inbox repo
+  participant VM as Root view model
+  participant U as Open use case
+  E-&gt;&gt;I: tap(id 91, order 8F3K)
+  I--&gt;&gt;VM: tap (new ID)
+  VM-&gt;&gt;U: route(for: tap)
+  alt signed in as the same account
+    U-&gt;&gt;I: markOpened(91)
+    U--&gt;&gt;VM: .order(8F3K)
+  else signed out
+    U--&gt;&gt;VM: .signIn(then: .order(8F3K))
+  end
+  Note over VM: path = [route]</pre></div></div></details><details class="reveal"><summary>8 · The server contract</summary><div class="reveal-body"><div class="scroll"><pre data-lang="text"><code>PUT    /v1/devices/{token}
+       { &quot;platform&quot;: &quot;ios&quot;, &quot;environment&quot;: &quot;production&quot;,
+         &quot;appVersion&quot;: &quot;4.2.0&quot;, &quot;publicKey&quot;: &quot;…&quot; }       → 204
+DELETE /v1/devices/{token}                                 → 204
+POST   /v1/notifications/{id}/opened   { &quot;action&quot;: &quot;trackOrder&quot; }  → 204
+
+APNs payload the server sends (our contract with ourselves):
+{ &quot;aps&quot;: { &quot;alert&quot;: { &quot;title&quot;: &quot;On the way&quot;, &quot;body&quot;: &quot;Your order is on the way&quot; },
+           &quot;mutable-content&quot;: 1, &quot;category&quot;: &quot;ORDER_UPDATE&quot;,
+           &quot;thread-id&quot;: &quot;order-8F3K&quot; },
+  &quot;notificationId&quot;: &quot;91&quot;, &quot;accountId&quot;: &quot;a1&quot;,
+  &quot;route&quot;: &quot;orders/8F3K&quot;, &quot;orderVersion&quot;: 7,
+  &quot;secret&quot;: &quot;&lt;encrypted rider name&gt;&quot;, &quot;imageUrl&quot;: &quot;https://img…/rider/12.jpg&quot; }
+Header: apns-collapse-id: order-8F3K-onTheWay</code></pre></div><ul><li><strong>The plain alert is generic,</strong> because it shows if the extension fails. Personal text travels only encrypted.</li><li><strong>Repeats are harmless:</strong> the collapse ID merges server retries, <code>notificationId</code> dedupes taps, <code>orderVersion</code> drops stale updates.</li><li><strong>The route is a string the app parses,</strong> like a universal link's. Unknown means Home.</li></ul></div></details><details class="reveal"><summary>9 · Deep dive — "When do you ask for permission, and what if they say no?"</summary><div class="reveal-body"><p><strong>The decision:</strong> quiet first, then one real ask at the moment of value.</p><ol start="1"><li><strong>First launch:</strong> <code>requestAuthorization(options: [.provisional, .alert, .badge, .sound])</code>. No prompt. Order pushes arrive quietly in Notification Center.</li><li><strong>Order placed:</strong> the confirmed screen shows "Get delivery updates: we'll tell you when your rider is close." Turn on → the real <code>requestAuthorization</code>, without <code>.provisional</code>.</li><li><strong>Allowed:</strong> done. <strong>Denied:</strong> the card becomes "Updates are off · Open Settings", and never the system prompt again.</li><li><strong>Every launch,</strong> read the current status, because the user can change it in Settings at any time.</li></ol><p><strong>Register regardless.</strong> <code>registerForRemoteNotifications()</code> works without permission (pushes then arrive silently), so the token upload never waits for the prompt.</p><p><strong>Rejected: a full prompt on first launch.</strong> The reason is still abstract, and a "no" is permanent.</p></div></details><details class="reveal"><summary>10 · Deep dive — "The push says 'Ana is 2 minutes away', with her photo, encrypted. Walk me through it."</summary><div class="reveal-body"><p><strong>The decision:</strong> a Notification Service Extension, in its own process, that improves the push inside its time limit and otherwise lets the safe original through.</p><div class="board"><pre class="board-src">sequenceDiagram
+  participant A as APNs
+  participant X as Service extension
+  participant K as Shared keychain
+  participant C as Image CDN
+  participant L as Lock screen
+  A-&gt;&gt;X: didReceive(request), mutable-content 1
+  X-&gt;&gt;K: read the device key
+  K--&gt;&gt;X: key
+  Note over X: decrypt secret into the body
+  X-&gt;&gt;C: GET rider photo
+  alt done in time
+    C--&gt;&gt;X: image file
+    Note over X: attach UNNotificationAttachment
+    X-&gt;&gt;L: contentHandler(&quot;Ana is 2 minutes away&quot;, photo)
+  else time running out
+    Note over X: serviceExtensionTimeWillExpire()
+    X-&gt;&gt;L: contentHandler(decrypted text, no photo)
+  end</pre></div><ol start="1"><li><strong>It runs only</strong> when the payload has <code>mutable-content: <span class="t-num">1</span></code> and an alert. Never for silent pushes.</li><li><strong>About 30 seconds,</strong> then <code>serviceExtensionTimeWillExpire()</code> is the last chance. Use it: deliver what you have. If you don't, the original alert shows, which is why it must be generic.</li><li><strong>The key lives in a keychain access group</strong> shared with the app, made at sign-in (public half sent with the device registration), deleted at sign-out.</li><li><strong>Memory is small.</strong> Download a thumbnail to a file and attach it.</li></ol><p><strong>Rejected: the rider's name in plain text.</strong> APNs and lock screens see it. If decryption fails, "Your order is on the way" is still true.</p></div></details><details class="reveal"><summary>11 · Deep dive — "The app was killed. The user is signed out. They tap 'Track order'."</summary><div class="reveal-body"><p><strong>The decision:</strong> queue the tap until both the UI and the session are ready, then route through sign-in.</p><ol start="1"><li>iOS launches the app. In <code>didFinishLaunching</code> the engine sets itself as delegate, so <code>didReceive</code> arrives a moment later. The engine maps it to a <code><span class="t-typ">NotificationTap</span></code> and hands it to the inbox.</li><li>The inbox holds it. Nothing is listening yet.</li><li>The root appears and subscribes; the inbox replays the waiting tap.</li><li>The open use case sees no session: <code>.signIn(then: .order(8F3K))</code>. After sign-in, as the same account, the root shows the order. As a different account, Home.</li></ol><p><strong>Running already?</strong> Same path, minus the waiting.</p><p><strong>Why the account check:</strong> a family iPad signed out offline may still get the old account's push; the tap must not open someone else's order.</p><p><strong>Rejected: route straight from the app delegate.</strong> At cold launch the navigation stack doesn't exist yet and the session may still be loading. The tap would be lost.</p></div></details><details class="reveal"><summary>12 · Failure modes, production and scale</summary><div class="reveal-body"><p><strong>Failures</strong></p><div class="scroll"><table><thead><tr><th>Failure</th><th>Client behaviour</th></tr></thead><tbody><tr><td>Permission denied</td><td>Settings link on the card; register anyway</td></tr><tr><td>Registration fails</td><td>Log it; try again next launch</td></tr><tr><td>Token upload fails</td><td>Retry next launch; <code><span class="t-typ">PUT</span></code> is safe to repeat</td></tr><tr><td>Offline at sign-out</td><td>Retry <code><span class="t-typ">DELETE</span></code>; drop taps for the old account</td></tr><tr><td>Extension times out</td><td>Deliver what it has; the generic alert is the floor</td></tr><tr><td>Decryption fails</td><td>The generic alert stays</td></tr><tr><td>Unknown route</td><td>Open Home</td></tr><tr><td>Same push twice</td><td>Collapse ID merges it; the inbox drops a repeated ID</td></tr><tr><td>Older status after newer</td><td>The policy shows no banner; the screen keeps the newer</td></tr><tr><td>Silent push never arrives</td><td>Nothing breaks: the app refreshes on foreground</td></tr></tbody></table></div><p><strong>Production notes</strong> (short, not on the board)</p><ul><li><strong>Tokens:</strong> they change after a restore or reinstall. Send the APNs environment, or sandbox tokens pollute production.</li><li><strong>Badge:</strong> set by the server's payload; <code>setBadgeCount(<span class="t-num">0</span>)</code> when the user opens the order.</li><li><strong>Interruption:</strong> only "rider arriving" is time-sensitive.</li><li><strong>Metrics:</strong> opt-in rate by ask moment, upload failures, opens by category and stage, extension fallbacks.</li></ul><p><strong>Scale, back of the envelope</strong>, with the interviewer's numbers:</p><div class="scroll"><pre data-lang="text"><code>orders a day × pushes per order       = order pushes
+launches a day                        = token PUTs (small, idempotent)</code></pre></div><p>200,000 orders × 5 is a million pushes a day. The phone's cost is tiny; the fan-out is the server's question.</p><p><strong>Grow only when asked</strong></p><div class="scroll"><pre data-lang="text"><code>Lock-screen tracker   → a Live Activity; its own push token per order (Q11)
+Per-type opt-out      → a preferences screen, GET and PUT /notification-preferences
+History of pushes     → persist the inbox, show it as a screen
+Actions without opening → a background action that calls the API from didReceive</code></pre></div></div></details><details class="reveal"><summary>13 · Question bank — everything they can push on</summary><div class="reveal-body"><p>Answer out loud first, then open.</p><h3 id="scope-and-architecture">Scope and architecture</h3><details><summary>"Walk me through the layers."</summary><p>Presentation: the root screen and its view model. Domain: the tap and route models, three protocols, the ask and open use cases. Data: the notification engine, the inbox and the device repository.</p></details><details><summary>"Why does opening get a use case and registering doesn't?"</summary><p>Opening has a product rule: after sign-in, never another account's order, Home when unsure. Registering is delivery mechanics, "send it when it changed", which belongs to the repository that owns the token.</p></details><details><summary>"Show me dependency inversion."</summary><p>The permission, inbox and opens protocols live in the domain; the engine and the inbox repository implement them. No use case imports UserNotifications, so each is tested with a fake.</p></details><details><summary>"Where does mapping happen?"</summary><p>In the engine: the OS response and its <code>userInfo</code> become a <code><span class="t-typ">NotificationTap</span></code>. Nothing past card 6 sees an OS type.</p></details><details><summary>"Where does the combined state come from? Is there a store?"</summary><p>There's nothing to combine and nothing several screens show. The route lands in the root's own path. If the order screen also showed "unread updates", a store would appear.</p></details><details><summary>"Why is the foreground rule a separate policy?"</summary><p>It changes for product reasons, the engine for Apple's API. A pure function is also trivially tested.</p></details><h3 id="permission-and-tokens">Permission and tokens</h3><details><summary>"What does provisional authorization give you?"</summary><p>Quiet delivery to Notification Center, no prompt. The real prompt upgrades it later.</p></details><details><summary>"Do you need permission to get a device token?"</summary><p>No. Registration works regardless; without permission, pushes are delivered silently. So the token upload never waits for the prompt.</p></details><details><summary>"Why upload the token at every launch?"</summary><p>It can change (restore, reinstall), and an upload may have failed. A repeated <code><span class="t-typ">PUT</span></code> heals both.</p></details><details><summary>Follow-up chain: "Sign-out on a shared iPad."</summary><ol start="1"><li><em>"Mum signs out, the son signs in."</em> → <code><span class="t-typ">DELETE</span> /devices/{token}</code> before credentials go, then <code><span class="t-typ">PUT</span></code> again as the son.</li><li><em>"The delete failed, offline."</em> → It retries; meanwhile the server may still send Mum's push.</li><li><em>"The son taps it."</em> → The open use case sees a different account and opens Home.</li><li><em>"And the lock screen text?"</em> → Generic by design; the name was encrypted with a key deleted at sign-out.</li></ol></details><h3 id="delivery-and-the-extension">Delivery and the extension</h3><details><summary>"How long does the service extension have?"</summary><p>About 30 seconds. Then <code>serviceExtensionTimeWillExpire()</code> is the last chance to deliver what you have; otherwise the original alert shows.</p></details><details><summary>"What if the photo download is slow?"</summary><p>Deliver the decrypted text without the photo when time runs out. The photo is decoration; the text is the message.</p></details><details><summary>"How does the extension get the key?"</summary><p>A keychain access group shared by the app and the extension. The app creates the key at sign-in and deletes it at sign-out.</p></details><details><summary>"Can we keep the home screen fresh with silent pushes?"</summary><p>No. They're throttled, not guaranteed, and not delivered to a force-quit app; Apple says two or three an hour at most. Refresh on foreground.</p></details><details><summary>"How do you avoid showing the same update twice?"</summary><p>The server sends a collapse ID per order stage, so a retry replaces the first. The inbox drops a tap whose notification ID it already handled.</p></details><details><summary>"'Picking' arrives after 'On the way'. What happens?"</summary><p>In the foreground the policy compares <code>orderVersion</code> and shows no banner; the tracking screen keeps the newer status (question 11).</p></details><h3 id="taps-and-deep-links">Taps and deep links</h3><details><summary>"Where must the delegate be set, and why?"</summary><p>In <code>didFinishLaunching</code>, before launch ends. A tap that launched the app is delivered right after; set it later and it's lost.</p></details><details><summary>"How does a cold-launch tap reach the right screen?"</summary><p>The engine hands it to the inbox, which holds it until the root subscribes and replays it. Routing waits for the UI and the session.</p></details><details><summary>"The tap needs sign-in."</summary><p>The route becomes <code>.signIn(then: .order(id))</code>. After sign-in as the same account, the order opens.</p></details><details><summary>"An old app version gets a route it doesn't know."</summary><p>The parser returns nil, the use case returns Home. Never a crash, never a blank screen.</p></details><details><summary>"Push and universal link to the same order. One router or two?"</summary><p>One. Both become a <code><span class="t-typ">Route</span></code>; only the source differs. <code>onOpenURL</code> feeds the same root view model.</p></details><details><summary>"How do you count opens?"</summary><p>The open use case reports once per notification ID with <code><span class="t-typ">POST</span> /notifications/{id}/opened</code>. Delivery rate is the server's number; the phone can't see a push that never came.</p></details><h3 id="production-and-change">Production and change</h3><details><summary>"How do you test the cold-launch tap?"</summary><p>Queue a tap in the inbox, subscribe later, expect it replayed once. The open use case with a fake signed-out session returns the sign-in route.</p></details><details><summary>"Where do Live Activities plug in?"</summary><p>They have their own push token per activity, from <code>pushTokenUpdates</code>, sent to the server per order. That's question 11; this engine doesn't touch it.</p></details><details><summary>Follow-up chain: "Actions without opening the app."</summary><ol start="1"><li><em>"Add 'Leave at door' on the arriving push."</em> → An action without <code>.foreground</code>; <code>didReceive</code> runs in the background.</li><li><em>"Who sends it?"</em> → The engine maps it to a tap with that action; a use case with the rule calls the orders endpoint.</li><li><em>"Locked phone?"</em> → Mark it <code>.authenticationRequired</code>.</li><li><em>"Guaranteed?"</em> → No: it must finish in the short background time; on failure, tell the user.</li></ol></details></div></details><details class="reveal"><summary>14 · Scorecard — mark yourself, 0 / 1 / 2</summary><div class="reveal-body"><div class="scroll"><table><thead><tr><th></th><th>Did you…</th><th>0–2</th></tr></thead><tbody><tr><td>1</td><td>Talk the whole time, and listen when interrupted</td><td></td></tr><tr><td>2</td><td>Clarify before designing</td><td></td></tr><tr><td>3</td><td>Give a trade-off for each choice</td><td></td></tr><tr><td>4</td><td>Say out of scope first; separate required from later</td><td></td></tr><tr><td>5</td><td>Say the idea, list the parts, then sketch</td><td></td></tr><tr><td>6</td><td>Keep the sketch to nine type cards, one line each</td><td></td></tr><tr><td>7</td><td>Name the three endpoints</td><td></td></tr><tr><td>8</td><td>Ask provisionally first, properly at the moment of value</td><td></td></tr><tr><td>9</td><td>Tie the token to the account; delete it at sign-out</td><td></td></tr><tr><td>10</td><td>Set the delegate before launch finishes</td><td></td></tr><tr><td>11</td><td>Give the extension's time limit and its fallback</td><td></td></tr><tr><td>12</td><td>Say silent pushes are throttled and not guaranteed</td><td></td></tr><tr><td>13</td><td>Route a cold-launch tap through the session, counted once</td><td></td></tr><tr><td>14</td><td>Land the recap inside 60 seconds</td><td></td></tr></tbody></table></div><p>14+ is a pass.A zero names the thing to read about next.:::</p><details class="reveal"><summary>15 · The 60-second recap</summary><div class="reveal-body"><p>We ask provisionally at first launch and properly after the first order, and offer Settings after a no. One engine owns the OS: it sets the delegate before launch ends, declares the categories, and registers every launch; a device repository puts the token with <code><span class="t-typ">PUT</span> /devices/{token}</code> when it or the account changes and deletes it at sign-out. A service extension decrypts the rider's name and attaches her photo within about 30 seconds, and the plain alert is always generic, because it's the fallback. A tap goes into an inbox that holds it until the UI exists and drops repeats; an open use case routes it through sign-in, never to another account's order, and reports the open once. Silent pushes are hints, never the plan.</p></div></details></div></details><section class="sources"><h2>Sources for this chapter</h2><div class="src"><a href="https://github.com/weeeBox/mobile-system-design" target="_blank" rel="noopener"><span class="s-r"></span><span class="s-l">weeeBox · Mobile system design, a framework for mobile system design interviews<span class="s-u">https://github.com/weeeBox/mobile-system-design</span></span></a><a href="https://www.systemdesignhandbook.com/guides/ios-system-design-interview/" target="_blank" rel="noopener"><span class="s-r"></span><span class="s-l">System Design Handbook · iOS system design interview<span class="s-u">https://www.systemdesignhandbook.com/guides/ios-system-design-interview/</span></span></a><a href="https://developer.apple.com/videos/play/wwdc2020/10095/" target="_blank" rel="noopener"><span class="s-r">WWDC20</span><span class="s-l">The Push Notifications primer<span class="s-u">https://developer.apple.com/videos/play/wwdc2020/10095/</span></span></a><a href="https://developer.apple.com/documentation/usernotifications/unusernotificationcenter/requestauthorization(options:completionhandler:)" target="_blank" rel="noopener"><span class="s-r"></span><span class="s-l">Apple · requestAuthorization(options:completionHandler:)<span class="s-u">https://developer.apple.com/documentation/usernotifications/unusernotificationcenter/requestauthorization(options:completionhandler:)</span></span></a><a href="https://developer.apple.com/documentation/usernotifications/unauthorizationoptions/provisional" target="_blank" rel="noopener"><span class="s-r"></span><span class="s-l">Apple · UNAuthorizationOptions.provisional<span class="s-u">https://developer.apple.com/documentation/usernotifications/unauthorizationoptions/provisional</span></span></a><a href="https://developer.apple.com/documentation/uikit/uiapplication/opennotificationsettingsurlstring" target="_blank" rel="noopener"><span class="s-r"></span><span class="s-l">Apple · UIApplication.openNotificationSettingsURLString<span class="s-u">https://developer.apple.com/documentation/uikit/uiapplication/opennotificationsettingsurlstring</span></span></a><a href="https://developer.apple.com/documentation/uikit/uiapplication/registerforremotenotifications()" target="_blank" rel="noopener"><span class="s-r"></span><span class="s-l">Apple · registerForRemoteNotifications()<span class="s-u">https://developer.apple.com/documentation/uikit/uiapplication/registerforremotenotifications()</span></span></a><a href="https://developer.apple.com/documentation/uikit/uiapplicationdelegate/application(_:didregisterforremotenotificationswithdevicetoken:)" target="_blank" rel="noopener"><span class="s-r"></span><span class="s-l">Apple · application(_:didRegisterForRemoteNotificationsWithDeviceToken:)<span class="s-u">https://developer.apple.com/documentation/uikit/uiapplicationdelegate/application(_:didregisterforremotenotificationswithdevicetoken:)</span></span></a><a href="https://developer.apple.com/documentation/uikit/uiapplication/unregisterforremotenotifications()" target="_blank" rel="noopener"><span class="s-r"></span><span class="s-l">Apple · unregisterForRemoteNotifications()<span class="s-u">https://developer.apple.com/documentation/uikit/uiapplication/unregisterforremotenotifications()</span></span></a><a href="https://developer.apple.com/documentation/swiftui/uiapplicationdelegateadaptor" target="_blank" rel="noopener"><span class="s-r"></span><span class="s-l">Apple · UIApplicationDelegateAdaptor<span class="s-u">https://developer.apple.com/documentation/swiftui/uiapplicationdelegateadaptor</span></span></a><a href="https://developer.apple.com/documentation/uikit/uiapplicationdelegate/application(_:didfinishlaunchingwithoptions:)" target="_blank" rel="noopener"><span class="s-r"></span><span class="s-l">Apple · application(_:didFinishLaunchingWithOptions:)<span class="s-u">https://developer.apple.com/documentation/uikit/uiapplicationdelegate/application(_:didfinishlaunchingwithoptions:)</span></span></a><a href="https://developer.apple.com/documentation/swiftui/navigationstack" target="_blank" rel="noopener"><span class="s-r"></span><span class="s-l">Apple · NavigationStack<span class="s-u">https://developer.apple.com/documentation/swiftui/navigationstack</span></span></a><a href="https://developer.apple.com/documentation/usernotifications/unusernotificationcenter/delegate" target="_blank" rel="noopener"><span class="s-r"></span><span class="s-l">Apple · UNUserNotificationCenter.delegate<span class="s-u">https://developer.apple.com/documentation/usernotifications/unusernotificationcenter/delegate</span></span></a><a href="https://developer.apple.com/documentation/usernotifications/unusernotificationcenterdelegate/usernotificationcenter(_:willpresent:withcompletionhandler:)" target="_blank" rel="noopener"><span class="s-r"></span><span class="s-l">Apple · userNotificationCenter(_:willPresent:withCompletionHandler:)<span class="s-u">https://developer.apple.com/documentation/usernotifications/unusernotificationcenterdelegate/usernotificationcenter(_:willpresent:withcompletionhandler:)</span></span></a><a href="https://developer.apple.com/documentation/usernotifications/unusernotificationcenterdelegate/usernotificationcenter(_:didreceive:withcompletionhandler:)" target="_blank" rel="noopener"><span class="s-r"></span><span class="s-l">Apple · userNotificationCenter(_:didReceive:withCompletionHandler:)<span class="s-u">https://developer.apple.com/documentation/usernotifications/unusernotificationcenterdelegate/usernotificationcenter(_:didreceive:withcompletionhandler:)</span></span></a><a href="https://developer.apple.com/documentation/usernotifications/unnotificationcategory" target="_blank" rel="noopener"><span class="s-r"></span><span class="s-l">Apple · UNNotificationCategory<span class="s-u">https://developer.apple.com/documentation/usernotifications/unnotificationcategory</span></span></a><a href="https://developer.apple.com/documentation/usernotifications/unnotificationaction" target="_blank" rel="noopener"><span class="s-r"></span><span class="s-l">Apple · UNNotificationAction<span class="s-u">https://developer.apple.com/documentation/usernotifications/unnotificationaction</span></span></a><a href="https://developer.apple.com/documentation/usernotifications/unnotificationactionoptions/authenticationrequired" target="_blank" rel="noopener"><span class="s-r"></span><span class="s-l">Apple · UNNotificationActionOptions.authenticationRequired<span class="s-u">https://developer.apple.com/documentation/usernotifications/unnotificationactionoptions/authenticationrequired</span></span></a><a href="https://developer.apple.com/documentation/usernotifications/unnotificationcontent/threadidentifier" target="_blank" rel="noopener"><span class="s-r"></span><span class="s-l">Apple · UNNotificationContent.threadIdentifier<span class="s-u">https://developer.apple.com/documentation/usernotifications/unnotificationcontent/threadidentifier</span></span></a><a href="https://developer.apple.com/documentation/usernotifications/unnotificationinterruptionlevel/timesensitive" target="_blank" rel="noopener"><span class="s-r"></span><span class="s-l">Apple · UNNotificationInterruptionLevel.timeSensitive<span class="s-u">https://developer.apple.com/documentation/usernotifications/unnotificationinterruptionlevel/timesensitive</span></span></a><a href="https://developer.apple.com/documentation/usernotifications/unnotificationserviceextension" target="_blank" rel="noopener"><span class="s-r"></span><span class="s-l">Apple · UNNotificationServiceExtension<span class="s-u">https://developer.apple.com/documentation/usernotifications/unnotificationserviceextension</span></span></a><a href="https://developer.apple.com/documentation/usernotifications/unnotificationserviceextension/didreceive(_:withcontenthandler:)" target="_blank" rel="noopener"><span class="s-r"></span><span class="s-l">Apple · didReceive(_:withContentHandler:)<span class="s-u">https://developer.apple.com/documentation/usernotifications/unnotificationserviceextension/didreceive(_:withcontenthandler:)</span></span></a><a href="https://developer.apple.com/documentation/usernotifications/unnotificationserviceextension/serviceextensiontimewillexpire()" target="_blank" rel="noopener"><span class="s-r"></span><span class="s-l">Apple · serviceExtensionTimeWillExpire()<span class="s-u">https://developer.apple.com/documentation/usernotifications/unnotificationserviceextension/serviceextensiontimewillexpire()</span></span></a><a href="https://developer.apple.com/documentation/usernotifications/modifying-content-in-newly-delivered-notifications" target="_blank" rel="noopener"><span class="s-r"></span><span class="s-l">Apple · Modifying content in newly delivered notifications<span class="s-u">https://developer.apple.com/documentation/usernotifications/modifying-content-in-newly-delivered-notifications</span></span></a><a href="https://developer.apple.com/documentation/usernotifications/unnotificationattachment" target="_blank" rel="noopener"><span class="s-r"></span><span class="s-l">Apple · UNNotificationAttachment<span class="s-u">https://developer.apple.com/documentation/usernotifications/unnotificationattachment</span></span></a><a href="https://developer.apple.com/documentation/security/sharing-access-to-keychain-items-among-a-collection-of-apps" target="_blank" rel="noopener"><span class="s-r"></span><span class="s-l">Apple · Sharing access to keychain items among a collection of apps<span class="s-u">https://developer.apple.com/documentation/security/sharing-access-to-keychain-items-among-a-collection-of-apps</span></span></a><a href="https://developer.apple.com/documentation/usernotifications/pushing-background-updates-to-your-app" target="_blank" rel="noopener"><span class="s-r"></span><span class="s-l">Apple · Pushing background updates to your App<span class="s-u">https://developer.apple.com/documentation/usernotifications/pushing-background-updates-to-your-app</span></span></a><a href="https://developer.apple.com/documentation/uikit/uiapplicationdelegate/application(_:didreceiveremotenotification:fetchcompletionhandler:)" target="_blank" rel="noopener"><span class="s-r"></span><span class="s-l">Apple · application(_:didReceiveRemoteNotification:fetchCompletionHandler:)<span class="s-u">https://developer.apple.com/documentation/uikit/uiapplicationdelegate/application(_:didreceiveremotenotification:fetchcompletionhandler:)</span></span></a><a href="https://developer.apple.com/documentation/usernotifications/sending-notification-requests-to-apns" target="_blank" rel="noopener"><span class="s-r"></span><span class="s-l">Apple · Sending notification requests to APNs (apns-collapse-id)<span class="s-u">https://developer.apple.com/documentation/usernotifications/sending-notification-requests-to-apns</span></span></a><a href="https://developer.apple.com/documentation/usernotifications/unusernotificationcenter/setbadgecount(_:withcompletionhandler:)" target="_blank" rel="noopener"><span class="s-r"></span><span class="s-l">Apple · setBadgeCount(_:withCompletionHandler:)<span class="s-u">https://developer.apple.com/documentation/usernotifications/unusernotificationcenter/setbadgecount(_:withcompletionhandler:)</span></span></a><a href="https://developer.apple.com/documentation/swiftui/view/onopenurl(perform:)" target="_blank" rel="noopener"><span class="s-r"></span><span class="s-l">Apple · onOpenURL(perform:)<span class="s-u">https://developer.apple.com/documentation/swiftui/view/onopenurl(perform:)</span></span></a><a href="https://developer.apple.com/documentation/activitykit/activity/pushtokenupdates-swift.property" target="_blank" rel="noopener"><span class="s-r"></span><span class="s-l">Apple · Activity.pushTokenUpdates<span class="s-u">https://developer.apple.com/documentation/activitykit/activity/pushtokenupdates-swift.property</span></span></a></div></section><nav class="pager"><a href="/notes/system-design/networking-layer/"><span class="dir">Previous</span><span class="nm">09 · The networking layer</span></a><a class="next" href="/notes/system-design/order-tracking/"><span class="dir">Next</span><span class="nm">11 · Tracking the order to the door</span></a></nav></article></div>
+  </main>
+  <aside class="outline" id="outline"></aside>
+</div>
+
+<script type="application/json" id="payload">{"mode": "pages", "base": "/notes/", "built": "2026-10-21", "topics": [{"title": "Live coding", "slug": "live-coding", "tagline": "Fix the project, then extend it", "summary": "Small starter projects in the shape companies hand out for the live round: make it build, find what's wrong, fix what matters, then add a feature on top of your fixes and test it. Each round has a runnable project in LiveCodingLab.", "status": "in progress", "accentIndex": 6, "order": 1, "unit": "rounds", "minutes": 375, "chapters": [{"slug": "how-the-round-works", "title": "00 · How the live-coding round works", "summary": "The five shapes the iOS technical round actually takes at Uber, Doctolib, GetYourGuide, SumUp, Babbel, Revolut and others — what you're given, how long you get, and what the interviewer is scoring.", "minutes": "15", "group": "Start here"}, {"slug": "the-transactions-that-dont-add-up", "title": "01 · The transactions that don't add up", "summary": "A modern SwiftUI transactions list — @Observable, NavigationStack, .task, .refreshable — with its service in a local package. It doesn't build, rows don't open, one record blanks the screen and refresh doubles the list. Fix it, then add merchant search and a spend total, and test both.", "minutes": "60", "group": "Rounds"}, {"slug": "the-driver-who-drives-backwards", "title": "02 · The driver who drives backwards", "summary": "A SwiftUI ride-tracking screen fed by an AsyncStream of driver positions, with an ETA request per position. It doesn't build under Swift 6, freezes when it opens, shows an ETA that jumps back up, never says the driver arrived, and keeps tracking after you leave. Fix it, then add an \"almost here\" banner and a Cancel ride button, and test both with a fake stream.", "minutes": "60", "group": "Rounds"}, {"slug": "the-reviews-that-wont-stop-loading", "title": "03 · The reviews that won't stop loading", "summary": "A paged SwiftUI reviews list for one tour, with its service in a local package. It doesn't build, it opens on a CancellationError, the rating is always a whole number, and scrolling to the end wipes the list. Fix it, then switch to the cursor endpoint, add a minimum-stars filter, and test the paging.", "minutes": "60", "group": "Rounds"}, {"slug": "the-photo-from-another-row", "title": "04 · The photo from another row", "summary": "A modern UIKit product list — diffable data source, cell registrations, list content configurations — with photos loaded async from a local package. It doesn't build, it crashes on launch, rows show other products' photos after a fast scroll, every photo is downloaded three times and memory triples. Fix it, then build a real image loader step by step, the way the interviewer escalates: share in-flight downloads, then cap the memory. Test it by counting downloads.", "minutes": "60", "group": "Rounds"}, {"slug": "the-flag-that-was-never-off", "title": "05 · The flag that was never off", "summary": "A wallet home screen whose features hang on a synchronous, UserDefaults-backed flag singleton. It doesn't build under Swift 6, an unfinished feature is live, hiding the balance doesn't stick, and the existing tests only pass in one order. Fix it, then migrate the screen to an async flag client that can fail, keeping its tests.", "minutes": "60", "group": "Rounds"}, {"slug": "the-basket-that-charges-twice", "title": "06 · The basket that charges twice", "summary": "A SwiftUI basket with a Pay button, reviewed the way a payments team reviews a pull request. It doesn't build, it says €50.00 and still charges shipping, totals go stale, quantities go negative, an empty basket can be paid for, and two taps charge the card twice. Fix it, then add promotion codes, where every rule needs a question first, and test the money.", "minutes": "60", "group": "Rounds"}]}, {"title": "Code review", "slug": "code-review", "tagline": "Read the snippet the way the interviewer does", "summary": "Real-interview code-review snippets in Swift, reviewed from the interviewer's side, with fixes and follow-ups.", "status": "in progress", "accentIndex": 4, "order": 2, "unit": "snippets", "minutes": 615, "chapters": [{"slug": "how-the-round-works", "title": "00 · How the code-review round works", "summary": "What the interviewer is scoring when they hand you a Swift snippet, the order to say things in, and how to fix and test without rewriting.", "minutes": "15", "group": "Start here"}, {"slug": "the-cell-that-shows-the-wrong-photo", "title": "01 · The cell that shows the wrong photo", "summary": "A feed screen with an image cell, a refresh timer and a notification observer — review it.", "minutes": "20", "group": "Review this PR"}, {"slug": "what-does-this-print-queues", "title": "02 · What does this print? — queues", "summary": "Four short GCD puzzles on serial vs concurrent and sync vs async, including the two that crash.", "minutes": "15", "group": "What does this print?"}, {"slug": "what-does-this-print-closures-and-values", "title": "03 · What does this print? — closures and values", "summary": "Value vs reference semantics, capture lists, loop captures and defer — five lines of output to predict.", "minutes": "15", "group": "What does this print?"}, {"slug": "the-converter-that-shows-the-wrong-answer", "title": "04 · The converter that shows the wrong answer", "summary": "A currency-converter view model built on async/await — review it, then fix what QA reported.", "minutes": "20", "group": "Review this PR"}, {"slug": "a-cache-for-any-type", "title": "05 · A cache for any type", "summary": "A generic cache built on a protocol with an associated type — review it, then make it safe for account data.", "minutes": "25", "group": "Review, then extend"}, {"slug": "the-swiftui-list-that-forgets", "title": "06 · The SwiftUI list that forgets", "summary": "A SwiftUI transactions screen that reloads, loses its data and stutters — review it.", "minutes": "20", "group": "Review this PR"}, {"slug": "the-network-layer-written-poorly", "title": "07 · The network layer written poorly", "summary": "A completion-handler API client that crashes, hangs and updates UI off main — debug it, then rebuild it with async/await and retries.", "minutes": "30", "group": "Review, then extend"}, {"slug": "the-ad-that-clicks-itself", "title": "08 · The ad that clicks itself", "summary": "A feed with an ad cell whose tap handlers pile up on reused cells — find why ads open when nobody tapped them, and why clicks are counted twice.", "minutes": "20", "group": "Find the bug"}, {"slug": "find-the-leak", "title": "09 · Find the leak", "summary": "A profile screen that never deallocates — find all five reasons, explain weak versus unowned, and prove the fix.", "minutes": "20", "group": "Find the bug"}, {"slug": "the-json-that-only-decodes-on-a-good-day", "title": "10 · The JSON that only decodes on a good day", "summary": "A menu model and a getItemData() decoder that crash the app the first time the backend sends something slightly different — find why.", "minutes": "20", "group": "Find the bug"}, {"slug": "a-struct-holding-a-class", "title": "11 · A struct holding a class", "summary": "Copy a struct that holds a class, a class that holds a struct, an array of objects and a copy-on-write type — then count the instances.", "minutes": "15", "group": "What does this print?"}, {"slug": "protocol-extension-who-gets-called", "title": "12 · Protocol extensions — who gets called?", "summary": "Same method, same object, three different answers — static vs dynamic dispatch through protocol extensions and subclasses.", "minutes": "15", "group": "What does this print?"}, {"slug": "initializer-order", "title": "13 · Initializer order", "summary": "Convenience to designated, two-phase init, the didSet that doesn't fire, an overridden method called from super.init, required and failable inits.", "minutes": "15", "group": "What does this print?"}, {"slug": "optional-of-an-optional", "title": "14 · Optional of an optional", "summary": "Int?? from a dictionary of optionals, ?? and if let peeling one layer, map vs flatMap, try? flattening, optional chaining, and an isNil you write yourself.", "minutes": "15", "group": "What does this print?"}, {"slug": "the-token-refresh-that-fires-twice", "title": "15 · The token refresh that fires twice", "summary": "A session manager that logs users out at random when two requests need a fresh token at once — find the race, then find it again after it's \"fixed\" with an actor.", "minutes": "20", "group": "Find the bug"}, {"slug": "bad-wiring-and-a-race", "title": "16 · Bad wiring and a race condition", "summary": "A cart screen where Clear adds items, Add adds twice, the count lags by one and big baskets crash — find each cause and say how you'd debug it.", "minutes": "20", "group": "Find the bug"}, {"slug": "the-main-thread-doing-heavy-lifting", "title": "17 · The main thread doing heavy lifting", "summary": "An articles list that freezes on open and stutters on scroll — find the work that shouldn't be on the main thread, and move it.", "minutes": "20", "group": "Find the bug"}, {"slug": "core-data-saved-from-the-wrong-thread", "title": "18 · Core Data saved from the wrong thread", "summary": "A photo downloader that saves to Core Data from many threads at once — find the crashes, then answer how many managed object contexts it really needs.", "minutes": "20", "group": "Find the bug"}, {"slug": "the-login-screen-that-remembers-too-much", "title": "19 · The login screen that remembers too much", "summary": "A login view model with a \"remember me\" switch that stores far more than it should, in the wrong places — review it.", "minutes": "20", "group": "Review this PR"}, {"slug": "pull-to-refresh-merge", "title": "20 · The pull-to-refresh merge", "summary": "Merge freshly fetched stories on top of the ones on screen — no duplicates, order kept — review a candidate's version, then make it fast.", "minutes": "25", "group": "Review, then extend"}, {"slug": "the-favourite-that-doesnt-stick", "title": "21 · The favourite that doesn't stick", "summary": "A list and a detail screen each with a favourite button that drift apart — review it, then fix it with one source of truth and persist it.", "minutes": "25", "group": "Review, then extend"}, {"slug": "three-prs-rising-stakes", "title": "22 · Three PRs, rising stakes", "summary": "Three small pull requests in one round — a naming PR with a hidden float bug, a threading PR and an architecture PR — and how to split your time.", "minutes": "45", "group": "Review this PR"}, {"slug": "the-presenter-that-holds-the-view", "title": "23 · The presenter that holds the view", "summary": "An MVP orders screen — a view controller, a presenter and a view protocol — that leaks, updates the table off the main thread and hides its business rule in didSelect. Review it, fix it without leaving MVP, and write the classic presenter tests.", "minutes": "20", "group": "Review this PR"}, {"slug": "the-tests-that-pass-for-the-wrong-reason", "title": "24 · The tests that pass for the wrong reason", "summary": "A PR that only adds tests — green on the author's Mac, red on CI once a day. Review the tests themselves, fix them minimally, then write the one that was missing.", "minutes": "20", "group": "Review this PR"}, {"slug": "the-pr-that-is-mostly-fine", "title": "25 · The PR that is mostly fine", "summary": "A clean, small SwiftUI settings row with one real problem and one judgement call. The test is restraint — find the one thing, say what's fine and why, and approve with comments.", "minutes": "15", "group": "Review this PR"}, {"slug": "the-search-that-shows-old-results", "title": "26 · The search that shows old results", "summary": "A Combine search pipeline that shows results for what you typed a second ago, stops working after one network error, and never deallocates — find all of it.", "minutes": "20", "group": "Find the bug"}, {"slug": "the-swiftui-screen-inside-a-uikit-app", "title": "27 · The SwiftUI screen inside a UIKit app", "summary": "A UIKit account screen that hosts a SwiftUI header through UIHostingController — the everyday mid-migration setup — with a crash, a leak, stacked headers and two copies of the same number. Review it and fix it without leaving UIKit.", "minutes": "20", "group": "Review this PR"}, {"slug": "the-checkout-that-does-everything", "title": "28 · The checkout that does everything", "summary": "A payment class that prices, stores, logs, calls the network and formats text — review it for SOLID and clean architecture.", "minutes": "25", "group": "Review this PR"}, {"slug": "the-means-of-payment-that-never-loads", "title": "29 · The means of payment that never loads", "summary": "A \"clean architecture\" use case that fetches a member's card — layered on paper, but it hangs on two paths, imports UIKit into the domain and builds its own dependencies. Review it.", "minutes": "20", "group": "Review this PR"}]}, {"title": "Mobile System Design", "slug": "system-design", "tagline": "Whiteboard questions, answered client-side", "summary": "Whiteboard questions as interviewers actually ask them, each with a full answer in the shape a 45-minute round rewards: clarifying questions, scope, the box diagram with one job per box, the API, two or three deep dives with their trade-offs, and the follow-ups that come after a good answer. Client-side throughout; no backend sharding.", "status": "in progress", "accentIndex": 3, "order": 3, "minutes": 807, "chapters": [{"slug": "the-shape-of-the-round", "title": "The shape of the round", "summary": "How a session runs as a simulated 45-minute interview, what is graded, and how each question chapter is laid out.", "minutes": "7"}, {"slug": "image-loading-and-caching-library", "title": "01 · Image loading and caching library", "summary": "\"Design an image loading library, something like Kingfisher or Nuke.\"", "minutes": "50"}, {"slug": "infinite-photo-feed", "title": "02 · Infinite photo feed", "summary": "\"We have a feed of photos that scrolls forever. Design the client.\"", "minutes": "50"}, {"slug": "chat-client", "title": "03 · Chat client", "summary": "\"Design the client side of a chat app.\"", "minutes": "50"}, {"slug": "offline-notes-sync", "title": "04 · Offline notes that sync", "summary": "\"Design a notes app that works fully offline and syncs.\"", "minutes": "50"}, {"slug": "grocery-catalogue-by-address", "title": "05 · A grocery catalogue that depends on the address", "summary": "\"Design the home and catalogue screens of a 10-minute grocery app, where what's in stock depends on the address.\"", "minutes": "50"}, {"slug": "grocery-cart-and-checkout", "title": "06 · A cart where stock changes while you shop", "summary": "\"Design the cart and checkout for our grocery delivery app. Stock and prices can change while the customer is shopping, and we must never charge twice.\"", "minutes": "50"}, {"slug": "photo-upload", "title": "07 · Uploading fifty photos", "summary": "\"The user picks 50 photos and uploads them. Design that.\"", "minutes": "50"}, {"slug": "modular-app-structure", "title": "08 · Forty engineers, one app target", "summary": "\"We're 40 engineers in one app target. Design the module structure.\"", "minutes": "50"}, {"slug": "networking-layer", "title": "09 · The networking layer", "summary": "\"How would you structure the networking layer of this app?\"", "minutes": "50"}, {"slug": "push-notifications", "title": "10 · Push notifications, end to end", "summary": "\"Design how this app handles push notifications end to end on the client.\"", "minutes": "50"}, {"slug": "order-tracking", "title": "11 · Tracking the order to the door", "summary": "\"Design the order-tracking screen for a delivery app.\"", "minutes": "50"}, {"slug": "spec-to-screen", "title": "12 · Architect this screen, and tell me why", "summary": "\"Here's a spec and a wireframe. Architect this screen, and tell me why.\"", "minutes": "50"}, {"slug": "uikit-to-swiftui", "title": "13 · Adding SwiftUI to a large UIKit app", "summary": "\"We have a large UIKit app and we're adding SwiftUI. How do you structure that?\"", "minutes": "50"}, {"slug": "analytics-sdk", "title": "14 · An analytics SDK for other teams", "summary": "\"Design an analytics SDK we'd ship to other teams.\"", "minutes": "50"}, {"slug": "live-prices", "title": "15 · Prices that move several times a second", "summary": "\"Design a screen showing live prices that update several times a second.\"", "minutes": "50"}, {"slug": "video-player", "title": "16 · A video player screen", "summary": "\"Design a video player screen for our app.\"", "minutes": "50"}]}, {"title": "DSA for Interviews", "slug": "dsa", "tagline": "89 problems, 18 topics, mostly medium", "summary": "The coding problems interviews keep asking, grouped by topic. Each topic opens with a primer: the technique, the words that point to it, a Swift template. Each problem gives starter code and tests to paste into Xcode or a playground, then — hidden until you have tried — the cue, the approach in plain words, a compiled and tested Swift solution, the Swift trap and the follow-ups. Blind 75 at its core, plus the problems German loops (Zalando, Sixt, Delivery Hero, N26) are documented asking.", "status": "in progress", "accentIndex": 2, "order": 4, "minutes": 2297, "chapters": [{"slug": "the-method", "title": "The method", "summary": "How to use this catalogue, how to talk while solving, and the cue that names each of the 18 topics.", "minutes": "6", "group": "Start here"}, {"slug": "arrays-and-hashing", "title": "Arrays and hashing — the idea", "summary": "Trade memory for speed by remembering what you've already seen, so each question about the past costs one lookup instead of another pass.", "minutes": "8", "group": "Arrays and hashing"}, {"slug": "contains-duplicate", "title": "1 · Contains Duplicate", "summary": "Given a list of whole numbers, say whether any value appears in it more than once.", "minutes": "15", "group": "Arrays and hashing"}, {"slug": "valid-anagram", "title": "2 · Valid Anagram", "summary": "Given two words, say whether the second uses exactly the same letters as the first, the same number of times each.", "minutes": "15", "group": "Arrays and hashing"}, {"slug": "two-sum", "title": "3 · Two Sum", "summary": "Given a list of whole numbers and a target, return the positions of the two numbers that add up to it.", "minutes": "25", "group": "Arrays and hashing"}, {"slug": "group-anagrams", "title": "4 · Group Anagrams", "summary": "Given a list of words, gather together the ones that are made of exactly the same letters.", "minutes": "25", "group": "Arrays and hashing"}, {"slug": "top-k-frequent-elements", "title": "5 · Top K Frequent Elements", "summary": "Given a list of numbers and a count k, return the k values that appear most often.", "minutes": "25", "group": "Arrays and hashing"}, {"slug": "encode-and-decode-strings", "title": "6 · Encode and Decode Strings", "summary": "Turn a list of strings into one single string, and back again, so that the round trip always returns exactly the original list.", "minutes": "25", "group": "Arrays and hashing"}, {"slug": "longest-consecutive-sequence", "title": "7 · Longest Consecutive Sequence", "summary": "Given an unsorted list of whole numbers, find how long the longest unbroken run of consecutive values is.", "minutes": "25", "group": "Arrays and hashing"}, {"slug": "prefix-sums", "title": "Prefix sums — the idea", "summary": "Keep a running total as you walk an array, so the sum of any stretch becomes the difference of two numbers you already have.", "minutes": "8", "group": "Prefix sums"}, {"slug": "product-of-array-except-self", "title": "8 · Product of Array Except Self", "summary": "For each position in a list of whole numbers, return the product of all the other numbers, without using division.", "minutes": "25", "group": "Prefix sums"}, {"slug": "subarray-sum-equals-k", "title": "9 · Subarray Sum Equals K", "summary": "Given a list of whole numbers and a target, count how many unbroken stretches of the list add up to exactly that target.", "minutes": "25", "group": "Prefix sums"}, {"slug": "continuous-subarray-sum", "title": "10 · Continuous Subarray Sum", "summary": "Given a list of whole numbers and a number k, say whether some stretch of at least two neighbouring entries adds up to a multiple of k.", "minutes": "25", "group": "Prefix sums"}, {"slug": "two-pointers", "title": "Two pointers — the idea", "summary": "Two positions walking through one array, usually toward each other, so that every step rules something out for good.", "minutes": "8", "group": "Two pointers"}, {"slug": "valid-palindrome", "title": "11 · Valid Palindrome", "summary": "Decide whether a sentence reads the same forwards and backwards once you ignore case, spaces and punctuation.", "minutes": "25", "group": "Two pointers"}, {"slug": "two-sum-ii-input-array-is-sorted", "title": "12 · Two Sum II — Input Array Is Sorted", "summary": "Given a list of whole numbers already in ascending order and a target, find the two entries that add up to it, using no extra memory.", "minutes": "25", "group": "Two pointers"}, {"slug": "3sum", "title": "13 · 3Sum", "summary": "Given a list of whole numbers, find every distinct set of three entries that adds up to zero.", "minutes": "25", "group": "Two pointers"}, {"slug": "container-with-most-water", "title": "14 · Container With Most Water", "summary": "Given a row of vertical walls, pick the two that hold the most water between them.", "minutes": "25", "group": "Two pointers"}, {"slug": "sort-colors", "title": "15 · Sort Colors", "summary": "Rearrange an array of 0s, 1s and 2s so equal values sit together, in place and in one pass.", "minutes": "25", "group": "Two pointers"}, {"slug": "trapping-rain-water", "title": "16 · Trapping Rain Water", "summary": "Given the heights of a row of bars, work out how much rain stays caught between them after a storm.", "minutes": "30", "group": "Two pointers"}, {"slug": "sliding-window", "title": "Sliding window — the idea", "summary": "A stretch of consecutive elements that grows on the right and shrinks on the left, so every stretch worth checking is seen in one pass.", "minutes": "8", "group": "Sliding window"}, {"slug": "best-time-to-buy-and-sell-stock", "title": "17 · Best Time to Buy and Sell Stock", "summary": "Given a share's price on each day, find the most you could make by buying once and selling once later.", "minutes": "25", "group": "Sliding window"}, {"slug": "longest-substring-without-repeating-characters", "title": "18 · Longest Substring Without Repeating Characters", "summary": "Find the length of the longest run of consecutive characters in a string where no character appears twice.", "minutes": "25", "group": "Sliding window"}, {"slug": "longest-repeating-character-replacement", "title": "19 · Longest Repeating Character Replacement", "summary": "Change at most k letters in a string so that the longest possible stretch of one repeated letter appears, and return its length.", "minutes": "25", "group": "Sliding window"}, {"slug": "minimum-window-substring", "title": "20 · Minimum Window Substring", "summary": "Find the shortest stretch of a text that contains every character of a second string, counting repeats.", "minutes": "25", "group": "Sliding window"}, {"slug": "stack", "title": "Stack — the idea", "summary": "How to spot a problem where the most recent unfinished thing is always the next one to deal with, and the two shapes the code takes.", "minutes": "8", "group": "Stack"}, {"slug": "valid-parentheses", "title": "21 · Valid Parentheses", "summary": "Decide whether a string made only of round, square and curly brackets closes every bracket correctly.", "minutes": "25", "group": "Stack"}, {"slug": "min-stack", "title": "22 · Min Stack", "summary": "Build a stack of integers that can also report its smallest element at any moment, with every operation in constant time.", "minutes": "25", "group": "Stack"}, {"slug": "evaluate-reverse-polish-notation", "title": "23 · Evaluate Reverse Polish Notation", "summary": "Compute the value of an arithmetic expression written with each operator after the two numbers it applies to.", "minutes": "25", "group": "Stack"}, {"slug": "daily-temperatures", "title": "24 · Daily Temperatures", "summary": "For each day in a list of temperatures, count how many days you'd wait for a strictly warmer one.", "minutes": "25", "group": "Stack"}, {"slug": "decode-string", "title": "25 · Decode String", "summary": "Expand a compressed string in which a number followed by text in square brackets means that text repeated, with repeats allowed inside repeats.", "minutes": "25", "group": "Stack"}, {"slug": "binary-search-the-idea", "title": "Binary search — the idea", "summary": "How to spot a problem where each check can rule out half of what's left, and the two loop shapes that cover almost every version of it.", "minutes": "9", "group": "Binary search"}, {"slug": "binary-search", "title": "26 · Binary Search", "summary": "Find the position of a target number in a sorted list of distinct numbers, or report that it isn't there, without checking every entry.", "minutes": "25", "group": "Binary search"}, {"slug": "search-in-rotated-sorted-array", "title": "27 · Search in Rotated Sorted Array", "summary": "Find a target in a list of distinct numbers that was sorted and then shifted around in a circle, in logarithmic time.", "minutes": "25", "group": "Binary search"}, {"slug": "find-minimum-in-rotated-sorted-array", "title": "28 · Find Minimum in Rotated Sorted Array", "summary": "Find the smallest number in a list of distinct numbers that was sorted and then shifted around in a circle, in logarithmic time.", "minutes": "25", "group": "Binary search"}, {"slug": "koko-eating-bananas", "title": "29 · Koko Eating Bananas", "summary": "Find the slowest steady eating speed that still finishes every pile of bananas within a given number of hours.", "minutes": "25", "group": "Binary search"}, {"slug": "time-based-key-value-store", "title": "30 · Time Based Key-Value Store", "summary": "Build a key-value store that keeps every value a key has had over time and answers what the value was at any given moment.", "minutes": "25", "group": "Binary search"}, {"slug": "linked-list", "title": "Linked list — the idea", "summary": "How to rewire a chain of nodes safely, the two helpers that remove most special cases, and the Swift details that make lists different from arrays.", "minutes": "8", "group": "Linked list"}, {"slug": "reverse-linked-list", "title": "31 · Reverse Linked List", "summary": "Turn a chain of nodes around so the last node comes first, by changing the links rather than the values.", "minutes": "15", "group": "Linked list"}, {"slug": "merge-two-sorted-lists", "title": "32 · Merge Two Sorted Lists", "summary": "Combine two linked lists that are each in ascending order into one ascending list, reusing their nodes.", "minutes": "15", "group": "Linked list"}, {"slug": "linked-list-cycle", "title": "33 · Linked List Cycle", "summary": "Decide whether following the links of a list from its first node ever leads back to a node already visited.", "minutes": "15", "group": "Linked list"}, {"slug": "add-two-numbers", "title": "34 · Add Two Numbers", "summary": "Two whole numbers are stored as linked lists of digits, ones digit first; return their sum stored the same way.", "minutes": "25", "group": "Linked list"}, {"slug": "reorder-list", "title": "35 · Reorder List", "summary": "Rearrange a linked list in place so that it alternates first, last, second, second-to-last, and so on toward the middle.", "minutes": "25", "group": "Linked list"}, {"slug": "remove-nth-node-from-end-of-list", "title": "36 · Remove Nth Node From End of List", "summary": "Delete the node that sits a given number of places from the end of a linked list, walking the list only once.", "minutes": "25", "group": "Linked list"}, {"slug": "lru-cache", "title": "37 · LRU Cache", "summary": "Design a fixed-size key-value store where reads and writes are constant time and, when full, it drops the entry that was used longest ago.", "minutes": "30", "group": "Linked list"}, {"slug": "trees", "title": "Trees — the idea", "summary": "How to walk a tree depth-first and level by level, what a binary search tree promises, and where Swift's recursion runs out of stack.", "minutes": "10", "group": "Trees"}, {"slug": "invert-binary-tree", "title": "38 · Invert Binary Tree", "summary": "Turn a binary tree into its mirror image, so every left branch becomes a right branch and the other way round.", "minutes": "20", "group": "Trees"}, {"slug": "maximum-depth-of-binary-tree", "title": "39 · Maximum Depth of Binary Tree", "summary": "Count how many levels a binary tree has, from the root down to its deepest leaf.", "minutes": "20", "group": "Trees"}, {"slug": "same-tree", "title": "40 · Same Tree", "summary": "Decide whether two binary trees have exactly the same shape and the same value in every matching position.", "minutes": "20", "group": "Trees"}, {"slug": "subtree-of-another-tree", "title": "41 · Subtree of Another Tree", "summary": "Decide whether a small binary tree appears inside a bigger one as a complete branch, every descendant included.", "minutes": "25", "group": "Trees"}, {"slug": "lowest-common-ancestor-of-a-binary-search-tree", "title": "42 · Lowest Common Ancestor of a Binary Search Tree", "summary": "In a binary search tree, find the deepest node that has both of two given values somewhere below it or is one of them.", "minutes": "25", "group": "Trees"}, {"slug": "binary-tree-level-order-traversal", "title": "43 · Binary Tree Level Order Traversal", "summary": "List a binary tree's values row by row, top to bottom and left to right, one list per row.", "minutes": "25", "group": "Trees"}, {"slug": "validate-binary-search-tree", "title": "44 · Validate Binary Search Tree", "summary": "Decide whether a binary tree keeps the search-tree ordering at every node, not just between parents and children.", "minutes": "25", "group": "Trees"}, {"slug": "kth-smallest-element-in-a-bst", "title": "45 · Kth Smallest Element in a BST", "summary": "Find the value that would be in position k if all the values of a binary search tree were sorted.", "minutes": "25", "group": "Trees"}, {"slug": "lowest-common-ancestor-of-a-binary-tree", "title": "46 · Lowest Common Ancestor of a Binary Tree", "summary": "In a binary tree with no ordering, find the deepest node that has both of two given nodes somewhere below it or is one of them.", "minutes": "25", "group": "Trees"}, {"slug": "construct-binary-tree-from-preorder-and-inorder-traversal", "title": "47 · Construct Binary Tree from Preorder and Inorder Traversal", "summary": "Rebuild a binary tree from two listings of its values, one written root-first and one written left-to-right.", "minutes": "25", "group": "Trees"}, {"slug": "binary-tree-maximum-path-sum", "title": "48 · Binary Tree Maximum Path Sum", "summary": "Find the largest total you can collect along any path between two nodes of a binary tree whose values may be negative.", "minutes": "30", "group": "Trees"}, {"slug": "serialize-and-deserialize-binary-tree", "title": "49 · Serialize and Deserialize Binary Tree", "summary": "Turn a binary tree into a single string and back again, so that the rebuilt tree is identical to the original.", "minutes": "30", "group": "Trees"}, {"slug": "tries", "title": "Tries — the idea", "summary": "A tree of letters in which words that start the same share a path, so prefix questions cost the length of the prefix, not the number of words.", "minutes": "7", "group": "Tries"}, {"slug": "implement-trie-prefix-tree", "title": "50 · Implement Trie (Prefix Tree)", "summary": "Build a word store that can add words, say whether an exact word was added, and say whether any added word starts with a given beginning.", "minutes": "25", "group": "Tries"}, {"slug": "design-add-and-search-words-data-structure", "title": "51 · Design Add and Search Words Data Structure", "summary": "Build a word store whose search accepts a dot as a stand-in for any single letter.", "minutes": "25", "group": "Tries"}, {"slug": "heap", "title": "Heap — the idea", "summary": "A structure that always hands you the smallest (or largest) item it holds, cheaply, even while items keep arriving.", "minutes": "10", "group": "Heap"}, {"slug": "kth-largest-element-in-an-array", "title": "52 · Kth Largest Element in an Array", "summary": "Given a list of numbers and a position k, return the number that would sit kth from the top if the list were sorted from largest to smallest.", "minutes": "25", "group": "Heap"}, {"slug": "k-closest-points-to-origin", "title": "53 · K Closest Points to Origin", "summary": "Given points on a flat grid and a count k, return the k points that lie nearest to the centre (0, 0).", "minutes": "25", "group": "Heap"}, {"slug": "task-scheduler", "title": "54 · Task Scheduler", "summary": "Given a list of labelled jobs and a rest period that must pass between two jobs with the same label, find the shortest total time to finish them all.", "minutes": "25", "group": "Heap"}, {"slug": "merge-k-sorted-lists", "title": "55 · Merge K Sorted Lists", "summary": "Given several linked lists that are each already in ascending order, join them into one ascending linked list.", "minutes": "35", "group": "Heap"}, {"slug": "find-median-from-data-stream", "title": "56 · Find Median from Data Stream", "summary": "Build an object that accepts numbers one at a time and can report, after any of them, the middle value of everything it has received.", "minutes": "35", "group": "Heap"}, {"slug": "backtracking", "title": "Backtracking — the idea", "summary": "Build every possible answer one choice at a time, undoing the last choice to try the next one, and stop early on branches that can't work.", "minutes": "10", "group": "Backtracking"}, {"slug": "subsets", "title": "57 · Subsets", "summary": "Given a list of different numbers, return every possible selection of them, from picking none to picking all.", "minutes": "25", "group": "Backtracking"}, {"slug": "permutations", "title": "58 · Permutations", "summary": "Given a list of different numbers, return every order in which they can be arranged.", "minutes": "25", "group": "Backtracking"}, {"slug": "combination-sum", "title": "59 · Combination Sum", "summary": "Given a set of different positive numbers and a target, list every way to reach the target by adding numbers from the set, where each number may be used as often as you like.", "minutes": "25", "group": "Backtracking"}, {"slug": "word-search", "title": "60 · Word Search", "summary": "Given a grid of letters and a word, say whether the word can be traced through the grid by stepping between side-by-side cells without using any cell twice.", "minutes": "25", "group": "Backtracking"}, {"slug": "graphs", "title": "Graphs — the idea", "summary": "How to see a grid, a web of references or a list of dependencies as nodes and edges, and the three walks that answer almost every question about them.", "minutes": "10", "group": "Graphs"}, {"slug": "number-of-islands", "title": "61 · Number of Islands", "summary": "Count the separate patches of land on a map of land and water cells, where land touches land only up, down, left and right.", "minutes": "25", "group": "Graphs"}, {"slug": "clone-graph", "title": "62 · Clone Graph", "summary": "Given one node of a web of objects that point at each other, build a completely separate copy of the whole web with the same shape.", "minutes": "25", "group": "Graphs"}, {"slug": "rotting-oranges", "title": "63 · Rotting Oranges", "summary": "Rot spreads each minute from bad oranges to the fresh ones beside them; find how many minutes until none are fresh, or say it never happens.", "minutes": "25", "group": "Graphs"}, {"slug": "pacific-atlantic-water-flow", "title": "64 · Pacific Atlantic Water Flow", "summary": "On a height map bordered by two oceans, find every cell from which rain could run downhill into both of them.", "minutes": "25", "group": "Graphs"}, {"slug": "course-schedule", "title": "65 · Course Schedule", "summary": "An app is split into numbered modules, some of which must be built before others; decide whether every module can be built at all.", "minutes": "25", "group": "Graphs"}, {"slug": "intervals", "title": "Intervals — the idea", "summary": "How to handle lists of start-and-end pairs — merging, inserting, trimming and counting overlaps — by sorting them first and sweeping once.", "minutes": "8", "group": "Intervals"}, {"slug": "insert-interval", "title": "66 · Insert Interval", "summary": "Add one new range to a sorted list of separate ranges, joining it with any it overlaps, and keep the list sorted and separate.", "minutes": "25", "group": "Intervals"}, {"slug": "merge-intervals", "title": "67 · Merge Intervals", "summary": "Given ranges in any order, join every group that overlaps into one range and return the result sorted.", "minutes": "25", "group": "Intervals"}, {"slug": "non-overlapping-intervals", "title": "68 · Non-overlapping Intervals", "summary": "Remove as few ranges as possible from a list so that the ones left never overlap, and return how many you removed.", "minutes": "25", "group": "Intervals"}, {"slug": "meeting-rooms-ii", "title": "69 · Meeting Rooms II", "summary": "Given a day's meetings as start and end times, find the smallest number of rooms that lets every meeting happen.", "minutes": "25", "group": "Intervals"}, {"slug": "greedy", "title": "Greedy — the idea", "summary": "How to solve a problem in one pass by making the choice that looks best right now and never revisiting it, and how to tell when that is safe.", "minutes": "8", "group": "Greedy"}, {"slug": "maximum-subarray", "title": "70 · Maximum Subarray", "summary": "Find the largest total you can get by adding up a run of consecutive numbers from a list that may contain negatives.", "minutes": "25", "group": "Greedy"}, {"slug": "jump-game", "title": "71 · Jump Game", "summary": "Standing on the first square of a row, where each square says how far you may jump from it, decide whether you can land on the last square.", "minutes": "20", "group": "Greedy"}, {"slug": "dynamic-programming-1d", "title": "1-D dynamic programming — the idea", "summary": "Answer a big question by answering a row of smaller copies of it, each one once, and building on the ones already answered.", "minutes": "10", "group": "1-D dynamic programming"}, {"slug": "climbing-stairs", "title": "72 · Climbing Stairs", "summary": "Count the different orders of one-step and two-step moves that take you up a staircase of n steps.", "minutes": "15", "group": "1-D dynamic programming"}, {"slug": "house-robber", "title": "73 · House Robber", "summary": "Pick amounts from a row of houses to collect the largest total, never taking from two houses next to each other.", "minutes": "20", "group": "1-D dynamic programming"}, {"slug": "house-robber-ii", "title": "74 · House Robber II", "summary": "Pick amounts from houses arranged in a circle to collect the largest total, never taking from two neighbours, where the first and last houses are neighbours too.", "minutes": "20", "group": "1-D dynamic programming"}, {"slug": "coin-change", "title": "75 · Coin Change", "summary": "Given coin values you can use as often as you like, find the fewest coins that add up to an amount exactly, or report that no combination does.", "minutes": "25", "group": "1-D dynamic programming"}, {"slug": "maximum-product-subarray", "title": "76 · Maximum Product Subarray", "summary": "Find the largest product you can get by multiplying a run of neighbouring numbers in an array that may hold negatives and zeros.", "minutes": "25", "group": "1-D dynamic programming"}, {"slug": "word-break", "title": "77 · Word Break", "summary": "Decide whether a string with no spaces can be cut into pieces that are all words from a given list.", "minutes": "25", "group": "1-D dynamic programming"}, {"slug": "decode-ways", "title": "78 · Decode Ways", "summary": "Count how many ways a string of digits can be read back as letters when A is 1, B is 2, and so on up to Z as 26.", "minutes": "25", "group": "1-D dynamic programming"}, {"slug": "longest-increasing-subsequence", "title": "79 · Longest Increasing Subsequence", "summary": "Find how many numbers you can keep from an array, in their original order, so that each kept number is strictly bigger than the one before.", "minutes": "25", "group": "1-D dynamic programming"}, {"slug": "longest-palindromic-substring", "title": "80 · Longest Palindromic Substring", "summary": "Return the longest run of consecutive characters in a string that reads the same forwards and backwards.", "minutes": "25", "group": "1-D dynamic programming"}, {"slug": "palindromic-substrings", "title": "81 · Palindromic Substrings", "summary": "Count how many runs of consecutive characters in a string read the same forwards and backwards, counting each position separately.", "minutes": "20", "group": "1-D dynamic programming"}, {"slug": "dynamic-programming-2d", "title": "2-D dynamic programming — the idea", "summary": "When one position isn't enough to describe a smaller question, describe it with two — a row and a column, or a place in each of two strings — and fill a grid of answers.", "minutes": "8", "group": "2-D dynamic programming"}, {"slug": "unique-paths", "title": "82 · Unique Paths", "summary": "Count the routes from the top-left corner of a grid to the bottom-right corner when every move goes one square right or one square down.", "minutes": "20", "group": "2-D dynamic programming"}, {"slug": "longest-common-subsequence", "title": "83 · Longest Common Subsequence", "summary": "Find how many characters two strings can share in the same order, when each string may skip characters freely.", "minutes": "25", "group": "2-D dynamic programming"}, {"slug": "matrix", "title": "Matrix — the idea", "summary": "Treat a grid of numbers as rows of rows, walk it by row and column, and change it in place without a second copy.", "minutes": "8", "group": "Matrix"}, {"slug": "set-matrix-zeroes", "title": "84 · Set Matrix Zeroes", "summary": "Wherever a grid holds a 0, wipe that cell's whole row and whole column to 0, changing the grid you were given and using almost no extra memory.", "minutes": "25", "group": "Matrix"}, {"slug": "spiral-matrix", "title": "85 · Spiral Matrix", "summary": "Read every value of a rectangular grid in the order you meet them walking clockwise around its edge and then inward, ring by ring.", "minutes": "25", "group": "Matrix"}, {"slug": "rotate-image", "title": "86 · Rotate Image", "summary": "Turn a square grid of numbers a quarter turn clockwise, changing the grid you were given instead of building a new one.", "minutes": "25", "group": "Matrix"}, {"slug": "bit-manipulation", "title": "Bit manipulation — the idea", "summary": "Read a whole number as the row of 1s and 0s the machine stores, and answer questions about it with a few operators that work on all those digits at once.", "minutes": "10", "group": "Bit manipulation"}, {"slug": "number-of-1-bits", "title": "87 · Number of 1 Bits", "summary": "Given a non-negative whole number, say how many of the digits in its binary form are 1.", "minutes": "15", "group": "Bit manipulation"}, {"slug": "counting-bits", "title": "88 · Counting Bits", "summary": "For every whole number from 0 up to n, report how many 1s its binary form contains, in one list.", "minutes": "15", "group": "Bit manipulation"}, {"slug": "missing-number", "title": "89 · Missing Number", "summary": "A list holds all but one of the whole numbers from 0 to its own length, each at most once; find the one that isn't there.", "minutes": "15", "group": "Bit manipulation"}]}, {"title": "Swift Concurrency", "slug": "swift-concurrency", "tagline": "How it actually works, from cores upward", "summary": "Threads, tasks, actors and isolation — built up from first principles, with the mechanism from Apple's own material. Answers the three questions that stay confusing: what an actor really is, how it differs from a thread, and why @MainActor is not the main thread.", "status": "complete", "accentIndex": 0, "order": 5, "minutes": 64, "chapters": [{"slug": "why-concurrency-exists", "title": "Why concurrency exists", "summary": "Cores, threads, and the two genuinely different reasons one thread isn't enough.", "minutes": "6"}, {"slug": "what-went-wrong-before", "title": "What went wrong before", "summary": "Callbacks, GCD thread explosion, locks — and the single root cause underneath all three.", "minutes": "5"}, {"slug": "tasks-async-await", "title": "Tasks, async and await", "summary": "The move that makes everything else possible — separating the work from the worker.", "minutes": "8"}, {"slug": "actors", "title": "Actors", "summary": "What an actor is, and the difference between an actor and a thread.", "minutes": "9"}, {"slug": "reentrancy", "title": "Reentrancy", "summary": "The honest limitation — an actor stops data races, not the world moving while you wait.", "minutes": "7"}, {"slug": "isolation-and-mainactor", "title": "Isolation, and why @MainActor is not the main thread", "summary": "Isolation domains are compile-time; threads are runtime. Four reasons they're not the same.", "minutes": "10"}, {"slug": "sendable", "title": "Sendable", "summary": "What is allowed to cross a boundary — and the two separate jobs the one keyword does.", "minutes": "6"}, {"slug": "structured-concurrency-and-cancellation", "title": "Structured concurrency and cancellation", "summary": "Child tasks that cannot outlive their parent, and why cancellation is a flag rather than a kill.", "minutes": "7"}, {"slug": "decision-guide", "title": "The decision guide", "summary": "Apple's ladder, the full map, and the questions to answer out loud.", "minutes": "6"}]}, {"title": "ARC and Memory", "slug": "arc-and-memory", "tagline": "Who owns this object, and when does it go", "summary": "Automatic reference counting from the ground up — what memory is, why something has to decide when an object dies, and how Swift made the compiler do it. Answers the questions that stay confusing: why ARC isn't a garbage collector, why an object can die before the end of its scope, what weak actually costs, and why a retain cycle is a design mistake rather than a bug.", "status": "complete", "accentIndex": 1, "order": 6, "minutes": 77, "chapters": [{"slug": "why-memory-management-exists", "title": "Why memory management exists", "summary": "What memory is, the two places a program puts things, and why one of them needs somebody to decide when things die.", "minutes": "7"}, {"slug": "what-went-wrong-before", "title": "What went wrong before", "summary": "Manual retain/release, garbage collection, and why Swift took neither — plus the one bill ARC leaves you to pay.", "minutes": "6"}, {"slug": "how-arc-works", "title": "How ARC actually works", "summary": "Where the count lives, who inserts the retains, and why an object can die before the end of its scope.", "minutes": "8"}, {"slug": "strong-weak-unowned", "title": "Strong, weak, unowned", "summary": "The three kinds of reference, what each costs at runtime, and the rule for picking one.", "minutes": "9"}, {"slug": "retain-cycles", "title": "Retain cycles", "summary": "The five shapes a cycle actually takes in an iOS app, how to spot each, and why \"make it a tree\" beats sprinkling weak.", "minutes": "8"}, {"slug": "closures-and-capture-lists", "title": "Closures and capture lists", "summary": "Why a closure is an object, what a capture list actually captures, and when [weak self] is wrong.", "minutes": "8"}, {"slug": "value-types-and-cow", "title": "Value types and copy-on-write", "summary": "Why a struct sidesteps the whole problem, the trap of a struct holding a class, and how Array avoids copying everything.", "minutes": "8"}, {"slug": "arc-under-concurrency", "title": "ARC under concurrency", "summary": "Why the count is thread-safe and the object isn't, what a task keeps alive, and which thread runs deinit.", "minutes": "8"}, {"slug": "finding-memory-problems", "title": "Finding memory problems", "summary": "Leaked, abandoned, useful — telling them apart, and the tool for each.", "minutes": "8"}, {"slug": "decision-guide", "title": "The decision guide", "summary": "The ladder, the cheat sheet, the full map, and the questions to answer out loud.", "minutes": "7"}]}], "page": {"key": "system-design/push-notifications", "outline": [{"a": "run-it-as-a-round-not-as-reading", "t": "Run it as a round, not as reading"}, {"a": "what-this-question-is-really-testing", "t": "What this question is really testing"}], "day": ""}}</script>
+<script>
+(function () {
+  var DATA = JSON.parse(document.getElementById('payload').textContent);
+  // Two builds share this script: one file with hash routes (#/topic/chapter), and one page
+  // per chapter at a real path, where the reading view is already in the HTML.
+  var PAGES = DATA.mode === 'pages', BASE = DATA.base || '';
+  // A link from before the page build (/notes/#/topic/chapter) opens that chapter's own page.
+  if (PAGES && /^#\//.test(location.hash)) {
+    var old = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
+    location.replace(BASE + (old.length ? old.join('/') + '/' : ''));
+    return;
+  }
+  var view = document.getElementById('view');
+  var tree = document.getElementById('tree');
+  var rail = document.getElementById('rail');
+  var find = document.getElementById('find');
+  var find2 = document.getElementById('find2');
+  var outline = document.getElementById('outline');
+  var shell = rail.parentNode;
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function pad(n) { return n < 10 ? '0' + n : String(n); }
+  function topicCount(t) {
+    var gs = groupsOf(t);
+    return gs ? gs.reduce(function (a, g) { return a + problemCount(g); }, 0) : t.chapters.length;
+  }
+  function groupsOf(t) {
+    var gs = [], by = {};
+    t.chapters.forEach(function (c, i) {
+      if (!c.group) return;
+      if (!by[c.group]) { by[c.group] = { name: c.group, items: [] }; gs.push(by[c.group]); }
+      by[c.group].items.push({ c: c, i: i });
+    });
+    return gs.length ? gs : null;
+  }
+  function splitTitle(c) {
+    var m = /^(\d+) · (.*)$/.exec(c.title);
+    return m ? { n: m[1], t: m[2] } : { n: '', t: c.title };
+  }
+  // "00 · How the round works" is the method, not a problem.
+  function problemCount(g) {
+    return g.items.filter(function (x) { var n = splitTitle(x.c).n; return n && !/^0+$/.test(n); }).length;
+  }
+  function roman(n) {
+    return ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'][n] || String(n);
+  }
+  // A chapter's number: the one in its title ("03 · Chat client"), else its position.
+  function chNum(t, c, i) {
+    var st = splitTitle(c);
+    if (st.n) return st;
+    var numbered = t.chapters.some(function (x) { return splitTitle(x).n; });
+    return { n: numbered ? '·' : pad(i + 1), t: c.title };
+  }
+  function href(topic, chapter) {
+    if (PAGES) return BASE + (topic ? topic + '/' + (chapter ? chapter + '/' : '') : '');
+    return '#/' + (topic ? topic + (chapter ? '/' + chapter : '') : '');
+  }
+  function topicBy(slug) { return DATA.topics.filter(function (t) { return t.slug === slug; })[0]; }
+
+  document.getElementById('foot').textContent = 'Built ' + DATA.built;
+  document.querySelector('.tb-brand').setAttribute('href', href());
+
+  /* ------------------------------------------------------------- sidebar */
+  var showAllUpcoming = false;
+
+  function sessionRail(t, route) {
+    var out = '', group = null;
+    t.chapters.forEach(function (c) {
+      if (c.group !== group) {
+        out += (group === null ? '' : '</div>') + '<p class="tl-sect">' + esc(c.group) + '</p><div class="tl">';
+        group = c.group;
+      }
+      var on = route.topic === t.slug && route.chapter === c.slug;
+      out += '<a class="' + (on ? 'on' : '') + '" href="' + href(t.slug, c.slug) + '" title="' +
+             esc(c.title) + '"><span class="n">' + esc(c.day.replace(/^0+/, '')) + '</span>' +
+             esc(c.short || c.title) + '</a>';
+    });
+    var up = (t.upcoming || []);
+    var shown = showAllUpcoming ? up : up.slice(0, 2);
+    shown.forEach(function (u) {
+      if (u.group !== group) {
+        out += '</div><p class="tl-sect">' + esc(u.group) + '</p><div class="tl">';
+        group = u.group;
+      }
+      out += '<a class="soon" title="' + esc(u.full || u.short) + '"><span class="n">' + esc(u.day) + '</span>' +
+             esc(u.short) + '</a>';
+    });
+    out += group === null ? '' : '</div>';
+    if (up.length > 2) {
+      out += '<button class="tl-more" data-more="1">' +
+             (showAllUpcoming ? 'Show less' : 'Show the remaining ' + (up.length - 2) + ' days') + '</button>';
+    }
+    var done = t.chapters.filter(function (c) { return c.day && c.day.indexOf('S') !== 0; }).length;
+    return '<p class="tl-sect" style="margin-top:4px"><a href="' + href(t.slug) + '" style="color:inherit;text-decoration:none">' +
+           esc(t.title) + ' · ' + done + ' of ' + (t.total || t.chapters.length) + '</a></p>' + out;
+  }
+
+  function paintTree(route) {
+    var sessions = DATA.topics.filter(function (t) { return t.kind === 'sessions'; });
+    var others = DATA.topics.filter(function (t) { return t.kind !== 'sessions'; });
+
+    var html = sessions.map(function (t) { return sessionRail(t, route); }).join('');
+    if (others.length) html += '<p class="tl-sect">Contents</p>';
+
+    html += others.map(function (t) {
+      var open = route.topic === t.slug;
+      var gs = open && groupsOf(t);
+      var kids = !open ? '' : gs ? '<div class="kids">' + gs.map(function (g) {
+        var cur = g.items.some(function (x) { return x.c.slug === route.chapter; });
+        var count = problemCount(g);
+        var head = '<a class="kg' + (cur ? ' cur' : '') + '" href="' + href(t.slug, g.items[0].c.slug) + '">' +
+          '<span class="chev">' + (cur ? '▾' : '▸') + '</span><span>' + esc(g.name) + '</span>' +
+          '<span class="ct">' + (count || '') + '</span></a>';
+        if (!cur) return head;
+        return head + g.items.map(function (x) {
+          var st = splitTitle(x.c), on = route.chapter === x.c.slug;
+          return '<a class="kc' + (on ? ' on' : '') + '" href="' + href(t.slug, x.c.slug) + '">' +
+                 '<span class="num">' + esc(st.n) + '</span><span>' + esc(st.t) + '</span></a>';
+        }).join('');
+      }).join('') + '</div>' : '<div class="kids">' + t.chapters.map(function (c, i) {
+        var on = route.chapter === c.slug, st = chNum(t, c, i);
+        return '<a class="' + (on ? 'on' : '') + '" href="' + href(t.slug, c.slug) + '">' +
+               '<span class="num">' + esc(st.n) + '</span><span>' + esc(st.t) + '</span></a>';
+      }).join('') + '</div>';
+      return '<div class="tp' + (open ? ' open' : '') + '"><button data-topic="' + esc(t.slug) + '">' +
+        '<span class="chev">' + (open ? '▾' : '▸') + '</span><span class="pn">' + roman(DATA.topics.filter(function (x) { return x.kind !== 'sessions'; }).indexOf(t) + 1) + '</span><span class="nm">' + esc(t.title) + '</span>' +
+        '<span class="ct">' + topicCount(t) + '</span></button>' + kids + '</div>';
+    }).join('');
+
+    tree.innerHTML = html;
+  }
+
+  tree.addEventListener('click', function (e) {
+    var more = e.target.closest('[data-more]');
+    if (more) { showAllUpcoming = !showAllUpcoming; paintTree(currentRoute()); return; }
+    var head = e.target.closest('[data-topic]');
+    if (head) { location.href = href(head.getAttribute('data-topic')); }
+  });
+
+  function copyFallback(text) {
+    var area = document.createElement('textarea');
+    area.value = text; area.style.position = 'fixed'; area.style.opacity = '0';
+    document.body.appendChild(area); area.select();
+    try { document.execCommand('copy'); } finally { document.body.removeChild(area); }
+  }
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text).catch(function () { copyFallback(text); });
+    }
+    copyFallback(text);
+    return Promise.resolve();
+  }
+
+  function addCopyButtons() {
+    view.querySelectorAll('.scroll > pre[data-lang]').forEach(function (pre) {
+      var scroll = pre.parentNode, wrap = document.createElement('div');
+      wrap.className = 'codewrap';
+      scroll.parentNode.insertBefore(wrap, scroll);
+      wrap.appendChild(scroll);
+      var button = document.createElement('button');
+      button.type = 'button'; button.className = 'copy'; button.textContent = 'Copy';
+      button.addEventListener('click', function () {
+        copyText(pre.innerText).then(function () {
+          button.textContent = 'Copied';
+          setTimeout(function () { button.textContent = 'Copy'; }, 1500);
+        });
+      });
+      wrap.appendChild(button);
+    });
+  }
+
+
+  /* ------------------------------------------------------- mermaid boards */
+  var mermaidLib = null, elkLoaded = false;
+  function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+  function boardClasses() {
+    function def(name, fill, stroke, extra) {
+      return 'classDef ' + name + ' fill:' + cssVar(fill) + ',stroke:' + cssVar(stroke) +
+             ',stroke-width:1.5px,color:' + cssVar('--ink') + (extra || '') + ';';
+    }
+    return [def('pres', '--b-pres', '--b-pres-s'), def('dom', '--b-dom', '--b-dom-s'),
+            def('data', '--b-data', '--b-data-s'), def('net', '--b-net', '--b-net-s'),
+            def('reuse', '--b-reuse', '--b-reuse-s', ',stroke-dasharray:5 4'),
+            def('focus', '--b-pres', '--b-pres-s', ',stroke-width:3px')].join('\n');
+  }
+  function renderBoards() {
+    var srcs = view.querySelectorAll('pre.board-src');
+    if (!srcs.length) return;
+    mermaidLib = mermaidLib || import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs')
+      .then(function (m) { return m.default; });
+    // Mermaid sizes every box by measuring its label. Measure with the real web font, or the box is
+    // sized for the fallback face and the label is clipped once Plex Sans arrives.
+    var fontsReady = document.fonts && document.fonts.load
+      ? Promise.all(['400 15px "IBM Plex Sans"', '600 15px "IBM Plex Sans"'].map(function (f) {
+          return document.fonts.load(f);
+        })).then(function () { return document.fonts.ready; }).catch(function () {})
+      : Promise.resolve();
+    // A board opts into the ELK layout ("config: layout: elk" front matter) when dagre can't stack its
+    // frames; ELK is loaded only for pages that have such a board.
+    var needsElk = Array.prototype.some.call(srcs, function (p) { return /layout:\s*elk/.test(p.textContent); });
+    Promise.all([mermaidLib, fontsReady]).then(function (r) { return r[0]; }).then(function (mermaid) {
+      if (!needsElk || elkLoaded) return mermaid;
+      return import('https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0/dist/mermaid-layout-elk.esm.min.mjs')
+        .then(function (e) { mermaid.registerLayoutLoaders(e.default); elkLoaded = true; return mermaid; })
+        .catch(function () { return mermaid; });
+    }).then(function (mermaid) {
+      mermaid.initialize({
+        startOnLoad: false, securityLevel: 'strict', theme: 'base',
+        fontFamily: "'IBM Plex Sans', -apple-system, sans-serif",
+        themeCSS: 'b, strong { font-weight: 600; }',
+        htmlLabels: false,
+        flowchart: { htmlLabels: false, curve: 'basis', nodeSpacing: 36, rankSpacing: 46, padding: 14, wrappingWidth: 400 },
+        sequence: { useMaxWidth: false, mirrorActors: false, messageAlign: 'center', actorFontSize: 15, messageFontSize: 15, noteFontSize: 14 },
+        themeVariables: {
+          fontSize: '15px', background: cssVar('--panel'), primaryColor: cssVar('--raised'),
+          primaryTextColor: cssVar('--ink'), primaryBorderColor: cssVar('--faint'),
+          lineColor: cssVar('--muted'), textColor: cssVar('--ink'), titleColor: cssVar('--ink'),
+          clusterBkg: cssVar('--b-lane'), clusterBorder: cssVar('--rule'),
+          edgeLabelBackground: cssVar('--panel'), actorBkg: cssVar('--raised'),
+          actorBorder: cssVar('--faint'), actorTextColor: cssVar('--ink'),
+          signalColor: cssVar('--muted'), signalTextColor: cssVar('--ink'),
+          noteBkgColor: cssVar('--accent-soft'), noteBorderColor: cssVar('--accent'),
+          noteTextColor: cssVar('--ink'), activationBkgColor: cssVar('--accent-soft'),
+          activationBorderColor: cssVar('--accent'), labelBoxBkgColor: cssVar('--raised'),
+          labelBoxBorderColor: cssVar('--faint'), loopTextColor: cssVar('--ink')
+        }
+      });
+      Array.prototype.forEach.call(srcs, function (pre, i) {
+        var text = pre.textContent;
+        if (/^\s*(---[\s\S]*?---\s*)?flowchart/.test(text)) text += '\n' + boardClasses();
+        mermaid.render('board-' + Date.now() + '-' + i, text).then(function (r) {
+          var host = pre.parentNode, old = host.querySelector('.board-svg');
+          if (old) old.remove();
+          var div = document.createElement('div');
+          div.className = 'board-svg';
+          div.innerHTML = r.svg;
+          // Frame labels top-left, like a Miro frame, so arrows entering from above don't cross them.
+          Array.prototype.forEach.call(div.querySelectorAll('g.cluster'), function (c) {
+            var rect = c.querySelector('rect'), label = c.querySelector('.cluster-label');
+            if (!rect || !label) return;
+            var m = /translate\(\s*([-\d.]+)[ ,]+([-\d.]+)\s*\)/.exec(label.getAttribute('transform') || '');
+            if (!m) return;
+            label.setAttribute('transform', 'translate(' + (parseFloat(rect.getAttribute('x')) + 10) + ', ' + m[2] + ')');
+          });
+          host.appendChild(div);
+          pre.hidden = true;
+        }).catch(function () { pre.hidden = false; });
+      });
+    }).catch(function () { /* offline: the source stays visible */ });
+  }
+  if (window.matchMedia) {
+    var mq = window.matchMedia('(prefers-color-scheme: dark)');
+    (mq.addEventListener ? mq.addEventListener.bind(mq, 'change') : mq.addListener.bind(mq))(renderBoards);
+  }
+
+  var spy = null;
+  function paintOutline(c) {
+    var items = c.outline || [];
+    if (items.length < 3) { outline.innerHTML = ''; return; }
+    outline.innerHTML = '<p class="h">' + (c.day ? 'This session' : 'On this page') + '</p>' + items.map(function (o) {
+      return '<a href="#' + esc(o.a) + '" data-anchor="' + esc(o.a) + '">' + esc(o.t) + '</a>';
+    }).join('');
+
+    if (spy) spy.disconnect();
+    var links = {};
+    outline.querySelectorAll('a').forEach(function (a) { links[a.getAttribute('data-anchor')] = a; });
+    spy = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        var a = links[e.target.id];
+        if (!a) return;
+        if (e.isIntersecting) {
+          outline.querySelectorAll('a.on').forEach(function (x) { x.classList.remove('on'); });
+          a.classList.add('on');
+        }
+      });
+    }, { rootMargin: '0px 0px -75% 0px' });
+    items.forEach(function (o) {
+      var el = document.getElementById(o.a);
+      if (el) spy.observe(el);
+    });
+  }
+
+  /* -------------------------------------------------------------- search */
+  // The page build keeps the full text out of every page and fetches it on the first search.
+  var searchIndex = null, lastQuery = '';
+  function loadSearch() {
+    if (!searchIndex) {
+      searchIndex = PAGES
+        ? fetch(BASE + 'search.json').then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+        : Promise.resolve(DATA.search);
+      searchIndex.catch(function () { searchIndex = null; });
+    }
+    return searchIndex;
+  }
+  function search(q) {
+    lastQuery = q;
+    outline.innerHTML = '';
+    loadSearch().then(function (index) {
+      if (q !== lastQuery) return;
+      var hits = [];
+      index.forEach(function (e) {
+        var t = topicBy(e.t), i = -1;
+        if (!t) return;
+        t.chapters.forEach(function (c, j) { if (c.slug === e.c) i = j; });
+        if (i === -1) return;
+        var c = t.chapters[i];
+        if ((c.title + ' ' + c.summary).toLowerCase().indexOf(q) !== -1 || e.x.indexOf(q) !== -1) {
+          hits.push({ t: t, c: c, i: i });
+        }
+      });
+      view.innerHTML = '<div class="eyebrow">' + hits.length + ' chapter' + (hits.length === 1 ? '' : 's') +
+        ' matching &ldquo;' + esc(q) + '&rdquo;</div>' +
+        (hits.length ? '<ul class="results">' + hits.map(function (h) {
+          return '<li><a href="' + href(h.t.slug, h.c.slug) + '">' +
+            '<div class="where">' + esc(h.t.title) + ' · ' + esc(chNum(h.t, h.c, h.i).n) + '</div>' +
+            '<div class="ch-t">' + esc(h.c.title) + '</div>' +
+            '<div class="ch-s">' + esc(h.c.summary) + '</div></a></li>';
+        }).join('') + '</ul>' : '<p class="empty">Nothing here yet. Try a different word.</p>');
+    }).catch(function () {
+      if (q !== lastQuery) return;
+      view.innerHTML = '<p class="empty">Search could not load. Check the connection and try again.</p>';
+    });
+  }
+
+  /* -------------------------------------------------------------- router */
+  var initialView = view.innerHTML;
+  function currentRoute() {
+    var key = PAGES ? DATA.page.key : (location.hash || '#/').replace(/^#\/?/, '');
+    var parts = key.split('/').filter(Boolean);
+    var r = { topic: parts[0], chapter: parts[1], key: parts.join('/') };
+    if (!PAGES && !DATA.views[r.key]) r = { key: '' };
+    return r;
+  }
+  // Put the reading view on screen, then the parts that need a browser.
+  function show(r, first) {
+    if (PAGES) {
+      if (!first && !view.hasAttribute('data-searching')) return;
+      if (!first) view.innerHTML = initialView;
+      view.removeAttribute('data-searching');
+      paintOutline(DATA.page);
+    } else {
+      var v = DATA.views[r.key];
+      view.removeAttribute('data-searching');
+      view.innerHTML = v.html;
+      document.title = v.title;
+      paintOutline(v);
+      window.scrollTo(0, 0);
+    }
+    renderBoards();
+    addCopyButtons();
+  }
+  function route(first) {
+    var q = find.value.trim().toLowerCase();
+    var r = currentRoute();
+    shell.classList.toggle('home', !r.topic);
+    paintTree(r);
+    if (q.length > 1) { view.setAttribute('data-searching', '1'); search(q); return; }
+    show(r, first === true);
+    rail.classList.remove('open');
+  }
+
+  if (!PAGES) window.addEventListener('hashchange', function () { route(); });
+  find.addEventListener('input', function () { find2.value = find.value; route(); });
+  find2.addEventListener('input', function () { find.value = find2.value; route(); });
+  function wide() { return window.matchMedia('(min-width:881px)').matches; }
+  function setRailHidden(hidden) {
+    shell.classList.toggle('rail-hidden', hidden);
+    try { localStorage.setItem('railHidden', hidden ? '1' : '0'); } catch (e) {}
+  }
+  try { if (localStorage.getItem('railHidden') === '1') shell.classList.add('rail-hidden'); } catch (e) {}
+  document.getElementById('burger').addEventListener('click', function () {
+    if (wide()) setRailHidden(false); else rail.classList.toggle('open');
+  });
+  document.getElementById('rail-hide').addEventListener('click', function () {
+    if (wide()) setRailHidden(true); else rail.classList.remove('open');
+  });
+  document.getElementById('home-link').addEventListener('click', function () {
+    find.value = ''; find2.value = '';
+    if (PAGES) { location.href = BASE; return; }
+    location.hash = '#/';
+    if (location.hash === '#/') route();
+  });
+  route(true);
+})();
+</script>
+<script data-goatcounter="https://rezabina.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
