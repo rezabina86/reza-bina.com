@@ -16,9 +16,9 @@
  * The interview handbook sits after a thin divider and always reads --ink:
  * it is a free resource for anyone, set apart from the pages about me.
  *
- * /notes is not an Astro route: it is a single self-contained page built by
- * ~/Developer/knowledge and copied into public/notes/, so it ships with the
- * site but owns its own layout.
+ * /notes is not an Astro route: it is a folder of static pages (one per
+ * chapter) built by ~/Developer/knowledge and copied into public/notes/, so it
+ * ships with the site but owns its own layout, sitemap and analytics tag.
  */
 const path = Astro.url.pathname;
 const isHome = path === '/';

@@ -29,6 +29,15 @@ export async function getStaticPaths() {
       },
     },
     {
+      // Shared by every page of /notes (built by ~/Developer/knowledge, not by Astro).
+      params: { slug: 'notes' },
+      props: {
+        eyebrow: 'ios handbook',
+        title: 'The iOS Interview Field Guide.',
+        subtitle: 'Every round of a senior iOS loop, worked through from the interviewer’s chair.',
+      },
+    },
+    {
       params: { slug: 'writing' },
       props: {
         eyebrow: 'writing',

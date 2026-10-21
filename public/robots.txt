@@ -33,3 +33,5 @@ User-agent: *
 Allow: /
 
 Sitemap: https://reza-bina.com/sitemap-index.xml
+# The interview handbook is built outside Astro and carries its own sitemap.
+Sitemap: https://reza-bina.com/notes/sitemap.xml
