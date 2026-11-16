@@ -46,6 +46,9 @@ export interface CaseStudy {
   /** The app's support page (its App Store Connect Support URL), e.g.
    *  `/work/veil/support/`. Rendered as one row on the case study. */
   supportPath?: string;
+  /** The app's privacy policy (its App Store Connect Privacy Policy URL), e.g.
+   *  `/work/veil/privacy/`. Rendered as a row under the support row. */
+  privacyPath?: string;
   /** Real screen recording (HANDOFF §7.2). */
   video?: { src: string; poster?: string };
   /** Real screenshots. When present the device frame shows the first one. */

@@ -97,6 +97,15 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
           action="open →"
           actionHref={study.supportPath}
         />
+        {study.privacyPath && (
+          <Row
+            name={`${study.name} privacy policy`}
+            href={study.privacyPath}
+            description="What the app does with your data"
+            action="open →"
+            actionHref={study.privacyPath}
+          />
+        )}
       </Section>
     )
   }

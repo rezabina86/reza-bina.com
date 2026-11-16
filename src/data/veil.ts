@@ -32,6 +32,8 @@ export const veil: CaseStudy = {
   price: 'free to try · €9.99 one-time unlock · no subscription',
   // The App Store Connect Support URL — contact, privacy note, FAQs.
   supportPath: '/work/veil/support/',
+  // The App Store Connect Privacy Policy URL — the app's own policy.
+  privacyPath: '/work/veil/privacy/',
   summary:
     "People paste documents into chatbots to get help with them — a tax letter, a payslip, a contract — and hand over their name, address and account numbers in the process. Veil is the step in between: photograph or import the document, let it find the personal details, remove the ones you choose, and share the redacted copy instead. Detection, redaction and storage all happen on your iPhone; the original never leaves the device.",
   features: [

@@ -1,0 +1,241 @@
+---
+import Base from '../../../layouts/Base.astro';
+import Section from '../../../components/Section.astro';
+import Prose from '../../../components/Prose.astro';
+import { veil } from '../../../data/veil';
+
+/**
+ * Veil's app privacy policy — the App Store Connect Privacy Policy URL
+ * (website decision 0010, extending 0009's support-page exception). App Review
+ * and users read it as a legal statement, so every claim is checked against
+ * the app's source (ProjectPrivacy, develop @ 8444297, 2026-11-16):
+ *   · OCR is Apple's Vision framework; detection (Lite rules, or the GLiNER
+ *     model on the GPU) and redaction run in-process; no server of its own;
+ *   · the vault: AES-GCM, a 256-bit key in the keychain as
+ *     WhenUnlockedThisDeviceOnly, files written with complete file protection,
+ *     directory excluded from backup (SecureStorageDirectoryProvider); the
+ *     model snapshot is excluded too (ModelSnapshotBackupExcluder);
+ *   · the only network code is OnDeviceModelDownloader: HEAD + ranged GETs of
+ *     five public files of fastino/gliner2-base-v1 from huggingface.co, no
+ *     custom headers, only when the on-device engine is chosen (~800 MB);
+ *   · feedback: FeedbackMessageFactory can only see bundle, device, settings
+ *     and the GPU probe; it hands a mailto: to the system (SendFeedbackUseCase);
+ *   · export: RedactionExporter clears PDF documentAttributes (PP-85); share
+ *     stagings in tmp/ are swept on the next launch;
+ *   · purchase: StoreKit, product veil.pro.lifetime; rating prompt is the
+ *     system requestReview.
+ * The contact address must match FeedbackContact.address in the app and the
+ * support page. Re-verify all of this before editing the copy, and move the
+ * effective date with any change of substance.
+ */
+
+const email = 'rezabina.dev@gmail.com';
+const effective = { iso: '2026-11-16', label: '16 November 2026' };
+
+const title = `${veil.name} privacy policy · Reza Bina`;
+const description =
+  'The privacy policy for Veil, the iPhone app. Documents are processed and stored on the phone; the app has no accounts, analytics, ads or server of its own.';
+
+const site = Astro.site!.href;
+const breadcrumb = {
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: site },
+    { '@type': 'ListItem', position: 2, name: 'Apps', item: `${site}#apps` },
+    { '@type': 'ListItem', position: 3, name: veil.name, item: new URL('/work/veil/', site).href },
+    { '@type': 'ListItem', position: 4, name: 'Privacy policy' },
+  ],
+};
+---
+
+<Base title={title} description={description} ogSlug="work-veil" schema={breadcrumb}>
+  <article class="wrap policy">
+    <header class="policy__head">
+      <h1 class="policy__title">Veil privacy policy</h1>
+      <p class="policy__meta">
+        Effective <time datetime={effective.iso}>{effective.label}</time> ·
+        <a href="/work/veil">about the app</a> · <a href="/work/veil/support">support</a>
+      </p>
+    </header>
+
+    <Section label="in short" id="summary">
+      <Prose>
+        <p>
+          Veil does not collect any data about you. Your documents are read, checked for personal
+          details, redacted and stored on your iPhone, and they are never uploaded anywhere. Veil
+          has no accounts, no analytics, no advertising, no tracking and no server of its own.
+        </p>
+        <p>
+          This policy covers the Veil app for iPhone, published on the App Store by me, Reza Bina,
+          an independent developer in Berlin, Germany. This website is separate and has
+          <a href="/privacy">its own privacy page</a>.
+        </p>
+      </Prose>
+    </Section>
+
+    <Section label="your documents" id="documents">
+      <Prose>
+        <p>
+          When you scan a document with the camera, pick one from your photos, or open a PDF or
+          image in Veil from another app, everything that happens to it happens on the device. The
+          text is recognised with Apple’s on-device text recognition. Personal details are found
+          either by the built-in Lite engine or by the on-device AI model, and the redaction is
+          drawn on the phone too. Neither engine sends your document, or anything taken from it,
+          over the network.
+        </p>
+        <p>
+          Documents you save stay in Veil’s vault on that iPhone. The vault is encrypted with a key
+          that is created on the device, kept in its keychain and never leaves it. The vault is
+          also excluded from iCloud and computer backups on purpose, so your saved documents do not
+          end up in a backup on Apple’s servers or on another machine.
+        </p>
+      </Prose>
+    </Section>
+
+    <Section label="camera and photos" id="camera-and-photos">
+      <Prose>
+        <p>
+          Veil asks for the camera only so you can scan a document, and for your photo library only
+          so you can choose a document to redact. It reads just the pictures you capture or pick,
+          processes them on the device, and does nothing else with either permission. You can turn
+          both off at any time in the iPhone’s Settings app.
+        </p>
+      </Prose>
+    </Section>
+
+    <Section label="the one download" id="model-download">
+      <Prose>
+        <p>
+          The only network connection Veil makes on its own is to download the on-device detection
+          model, about 800 MB, and only if you choose the on-device engine. The Lite engine needs no
+          download at all. The model is a set of public files fetched from Hugging Face
+          (huggingface.co and its content delivery network), and once they are on your phone Veil
+          does not download them again unless they are removed.
+        </p>
+        <p>
+          Those requests ask for the model files and nothing more. They contain no document, no
+          detected detail, no identifier for you or your device, and nothing about how you use the
+          app. Like any connection to a website, they do reveal your IP address and standard
+          technical details (such as the iOS networking version) to Hugging Face, which handles
+          them under <a href="https://huggingface.co/privacy" rel="noopener">its own privacy
+          policy</a>. I receive nothing from these downloads. The model is also excluded from
+          backups, so a restored phone downloads it again rather than copying it.
+        </p>
+      </Prose>
+    </Section>
+
+    <Section label="purchases" id="purchases">
+      <Prose>
+        <p>
+          Veil Pro is a one-time in-app purchase made through Apple’s App Store. Apple handles the
+          payment and your Apple ID. Veil only learns from Apple whether Pro is unlocked on your
+          account, and I never see your name, payment details or Apple ID. Apple’s own privacy
+          policy covers the purchase itself, and the same goes for the occasional system prompt
+          that asks you to rate the app.
+        </p>
+      </Prose>
+    </Section>
+
+    <Section label="feedback" id="feedback">
+      <Prose>
+        <p>
+          The “Something wasn’t detected?” button opens a new email in your own mail app, addressed
+          to me. It is pre-filled with a short prompt and four lines about your setup: the Veil
+          version, the iOS version, the device model and the detection engine in use. The part of
+          the app that writes that email has no access to your documents, so nothing from them can
+          end up in it. You see the whole message before anything is sent, and nothing is sent
+          unless you press send yourself.
+        </p>
+        <p>
+          If you do write to me, by that button or directly, I receive your email address and
+          whatever you chose to write. I use it only to reply and to improve detection, I never
+          share it or add you to any list, and I will delete the conversation if you ask. Please
+          describe a missed detail rather than sending it or attaching the document.
+        </p>
+      </Prose>
+    </Section>
+
+    <Section label="sharing a redacted copy" id="sharing">
+      <Prose>
+        <p>
+          When you share or save a redacted copy, it goes only where you send it through the iPhone’s
+          share sheet, such as Files, Mail or an AI assistant. Veil strips the document information
+          (author, title, creator and similar fields) from exported PDFs, and the temporary copy it
+          prepares for sharing is removed the next time the app starts. Once the copy reaches
+          another app or service, that service’s own privacy policy applies to it.
+        </p>
+      </Prose>
+    </Section>
+
+    <Section label="keeping and deleting" id="deletion">
+      <Prose>
+        <p>
+          Veil keeps your documents for as long as you keep them in the vault, and you can delete
+          any of them in the app at any time. Deleting the app deletes the vault, your settings and
+          the downloaded model. iOS may keep the vault’s encryption key in the device keychain
+          afterwards, but it is a random key with nothing left to unlock. Because nothing is stored
+          anywhere but your phone, there is no copy that I or anyone else could recover, and
+          nothing about you for me to export or delete on request beyond any email you sent me.
+        </p>
+      </Prose>
+    </Section>
+
+    <Section label="children" id="children">
+      <Prose>
+        <p>
+          Veil is not directed at children, and it collects no personal information from anyone,
+          children included.
+        </p>
+      </Prose>
+    </Section>
+
+    <Section label="changes" id="changes">
+      <Prose>
+        <p>
+          If what Veil does with data ever changes, this page changes before that version of the
+          app is released, and the effective date at the top moves with it.
+        </p>
+      </Prose>
+    </Section>
+
+    <Section label="contact" id="contact">
+      <Prose>
+        <p>
+          Questions about this policy or about your data are welcome at
+          <a href={`mailto:${email}`}>{email}</a>, the same address as the feedback button in the app.
+        </p>
+      </Prose>
+    </Section>
+  </article>
+</Base>
+
+<style>
+  .policy__head {
+    /* A page title is a bigger event than a section: 56, not 40. */
+    margin-top: 56px;
+  }
+
+  /* A page title: weight and colour, not a section label — no # marker. */
+  .policy__title {
+    font-size: 14px;
+    line-height: 1.7;
+    font-weight: 600;
+  }
+
+  .policy__meta {
+    color: var(--ink-2);
+  }
+
+  /* Muted chrome links in the meta line — underlined, never colour-only. */
+  .policy__meta a {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: var(--rule-strong);
+    text-underline-offset: 0.15em;
+  }
+
+  .policy__meta a:hover {
+    color: var(--ink);
+    text-decoration-color: currentColor;
+  }
+</style>

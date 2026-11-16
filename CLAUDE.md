@@ -380,6 +380,21 @@ strings are `~/Developer/Documents/reza-bina.com/3-REFERENCE/Site-copy.md`. Load
 - The case study links to it through the optional `supportPath` on `CaseStudy`, rendered
   as one `# support` row. The homepage does not link to it.
 
+### App privacy policies (2026-11-16, website decision 0010)
+`/work/veil/privacy/` (`src/pages/work/veil/privacy.astro`) is Veil's App Store Connect
+**Privacy Policy URL** — the app's own policy, distinct from the website's `/privacy`.
+Same rules as the support page, plus:
+- **Every claim is verified against ProjectPrivacy's source** (the file header lists what was
+  checked and at which commit). The one network call is the opt-in ~800 MB model download
+  from Hugging Face (`OnDeviceModelDownloader`); the policy says what it reveals (IP + standard
+  HTTP details to Hugging Face) rather than claiming "no network". Re-verify before editing,
+  and move the effective date with any change of substance.
+- It must agree with the App Store privacy label ("Data Not Collected"). If the app ever
+  starts collecting anything, the policy changes **before** that build ships.
+- Linked from the case study's `# support` section (optional `privacyPath` on `CaseStudy`),
+  from the support page's privacy section, and from the website's `/privacy` (one line saying
+  that page covers the website only). The homepage does not link to it.
+
 ### SEO / discoverability conventions
 The site's structured data is a JSON-LD `@graph` (`Base.astro`): always Person + WebSite, plus
 per-page schema passed via the `schema` prop, which takes **one object or an array**. Posts pass
