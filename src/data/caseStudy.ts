@@ -12,13 +12,41 @@ export interface CaseStudyFeature {
   body: string;
 }
 
-/** A screenshot shown in the device frame / gallery. */
+/** A screenshot shown in the contact sheet. */
 export interface CaseStudyShot {
   src: string;
   /** Describes what the screen shows — used as the image's alt text. */
   alt: string;
   /** Short caption under the shot in the gallery. */
   caption: string;
+  /** Intrinsic pixel size, so the browser reserves the space (no CLS).
+   *  Defaults to the original 720×1565 iPhone set. */
+  width?: number;
+  height?: number;
+}
+
+/** The one full-frame picture under the title block (website decision 0011).
+ *  A real capture of the app, shown at the frame's width, loaded eagerly
+ *  because it is the page's largest paint. */
+export interface CaseStudyLead {
+  src: string;
+  alt: string;
+  caption: string;
+  width: number;
+  height: number;
+}
+
+/** One App Store release in the case study's `# releases` log, newest first.
+ *  Every line must match what actually shipped (CHANGELOG + the store's
+ *  release notes); `date` is the iTunes lookup's release date. */
+export interface CaseStudyRelease {
+  /** ISO date the version went live on the App Store. */
+  date: string;
+  version: string;
+  /** The headline change — the row's bold name. */
+  title: string;
+  /** The rest of the release, `·`-separated, sentence case, no full stop. */
+  notes: string;
 }
 
 export interface CaseStudy {
@@ -49,6 +77,10 @@ export interface CaseStudy {
   /** The app's privacy policy (its App Store Connect Privacy Policy URL), e.g.
    *  `/work/veil/privacy/`. Rendered as a row under the support row. */
   privacyPath?: string;
+  /** Full-frame figure under the title block. */
+  lead?: CaseStudyLead;
+  /** Releases, newest first — rendered as the `# releases` log. */
+  releases?: CaseStudyRelease[];
   /** Real screen recording (HANDOFF §7.2). */
   video?: { src: string; poster?: string };
   /** Real screenshots. When present the device frame shows the first one. */
