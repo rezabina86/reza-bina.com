@@ -395,6 +395,26 @@ Same rules as the support page, plus:
   from the support page's privacy section, and from the website's `/privacy` (one line saying
   that page covers the website only). The homepage does not link to it.
 
+### Case-study lead figure + release log (2026-11-17, website decision 0011)
+Reza picked mock 2 + 1's spread from the five-mock Artifact
+(https://claude.ai/artifact/RHUysNVPhhh5wwyzXpp68m) when Veil 1.2.0 (iPhone Duo) went live.
+Two optional `CaseStudy` fields, rendered by `CaseStudyPage.astro`. Load-bearing:
+- **`lead`**: one real capture at the frame's full width under the title block, 1px `--rule`
+  border, 12.5px caption, eager + `fetchpriority="high"` (it is the LCP). A capture with
+  synthetic data only, never the styled store artwork, and never a device frame or video.
+- **`releases`**: `# releases`, one standard `Row` per App Store version, newest first. Date
+  = store release date (iTunes lookup), bold name = the headline change, description =
+  `version · notes`. Only what actually shipped (app CHANGELOG + store release notes). The
+  title meta appends the latest version and date; `releases[0]` also feeds JSON-LD
+  `softwareVersion`. **Shipping a Veil release = add one entry here.**
+- **Budget is tight:** `/work/veil` is 29,994 B HTML+CSS against the 30 KB budget (was
+  27,029). Anything added to that page must be paid for by cutting copy or alt text.
+- Veil's captures live in `~/Developer/Assets/Veil/captures/` (fictional Sherlock Holmes
+  letter); they are copied into `public/shots/veil/` as WebP (≤1312px, cwebp q78), never
+  edited in place. The old `review.webp`/`preview.webp` are unreferenced but kept, so their
+  URLs keep resolving. Mixed aspect ratios in the contact sheet sit on `align-items: start`,
+  with the shorter Duo outer-screen shot last.
+
 ### SEO / discoverability conventions
 The site's structured data is a JSON-LD `@graph` (`Base.astro`): always Person + WebSite, plus
 per-page schema passed via the `schema` prop, which takes **one object or an array**. Posts pass

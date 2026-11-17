@@ -17,6 +17,7 @@ const app = {
   author: { '@id': new URL('/#person', Astro.site).href },
   image: new URL('/og/work-veil.png', Astro.site).href,
   ...(veil.appStoreUrl ? { installUrl: veil.appStoreUrl } : {}),
+  ...(veil.releases?.[0] ? { softwareVersion: veil.releases[0].version } : {}),
 };
 
 const site = Astro.site!.href;

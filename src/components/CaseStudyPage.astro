@@ -8,8 +8,9 @@ import AppStoreBadge from './AppStoreBadge.astro';
 
 /**
  * The case-study page body, shared by every /work/<slug> route. v3 changelog
- * layout: title block → prose summary → one badge (the page's single,
- * fully-compliant badge) → capability rows → stack table → related writing.
+ * layout: title block → optional lead figure → prose summary → one badge
+ * (the page's single, fully-compliant badge) → optional release log →
+ * capability rows → stack table → related writing → support → screens.
  */
 
 interface Props {
@@ -28,6 +29,7 @@ const related = (await getCollection('blog'))
   .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
+const latest = study.releases?.[0];
 ---
 
 <article class="wrap case">
@@ -36,8 +38,25 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
     <p class="case__meta">
       {study.tagline}
       {study.shipped && <span> · shipped {study.shipped}</span>}
+      {latest && <span> · {latest.version}, {latest.date}</span>}
     </p>
   </header>
+
+  {
+    study.lead && (
+      <figure class="case__lead">
+        <img
+          src={study.lead.src}
+          alt={study.lead.alt}
+          width={study.lead.width}
+          height={study.lead.height}
+          decoding="async"
+          fetchpriority="high"
+        />
+        <figcaption>{study.lead.caption}</figcaption>
+      </figure>
+    )
+  }
 
   <Section label="what it does" id="what-it-does">
     <Prose>
@@ -46,6 +65,16 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
     {appId && <AppStoreBadge appId={appId} label={study.name} />}
     {study.price && <p class="case__price">{study.price}</p>}
   </Section>
+
+  {
+    study.releases && study.releases.length > 0 && (
+      <Section label="releases" id="releases">
+        {study.releases.map((r) => (
+          <Row date={r.date} name={r.title} description={`${r.version} · ${r.notes}`} />
+        ))}
+      </Section>
+    )
+  }
 
   <Section label="how it works" id="how-it-works">
     {study.features.map((f) => <Row name={f.title} description={f.body} />)}
@@ -116,7 +145,14 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
         <div class="case__shots">
           {study.shots.map((shot) => (
             <figure class="case__shot">
-              <img src={shot.src} alt={shot.alt} loading="lazy" decoding="async" width="720" height="1565" />
+              <img
+                src={shot.src}
+                alt={shot.alt}
+                loading="lazy"
+                decoding="async"
+                width={shot.width ?? 720}
+                height={shot.height ?? 1565}
+              />
               <figcaption>{shot.caption}</figcaption>
             </figure>
           ))}
@@ -140,6 +176,26 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
 
   .case__meta {
     color: var(--ink-2);
+  }
+
+  /* The lead figure: one real capture at the frame's full width, the only
+     picture above the fold (decision 0011). Same 1px rule and 12.5px caption
+     as the contact sheet — a figure, not a hero: no shadow, no device frame. */
+  .case__lead {
+    margin: 24px 0 0;
+  }
+
+  .case__lead img {
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--rule);
+  }
+
+  .case__lead figcaption {
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--ink-2);
+    margin-top: 8px;
   }
 
   /* The price, stated plainly beside the badge — hiding the number reads as
@@ -181,6 +237,8 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 24px;
+    /* Mixed aspect ratios (iPhone, the Duo's outer screen) share a top edge. */
+    align-items: start;
   }
 
   @container page (max-width: 400px) {
